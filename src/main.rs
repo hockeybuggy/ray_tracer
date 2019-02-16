@@ -97,6 +97,32 @@ fn vector(x: f64, y: f64, z: f64) -> Tuple {
     Tuple { x, y, z, w: 0.0 }
 }
 
+fn magnitude(v: &Tuple) -> f64 {
+    (v.x * v.x + v.y * v.y + v.z * v.z).sqrt()
+}
+
+fn normalize(v: &Tuple) -> Tuple {
+    let mag = magnitude(v);
+    Tuple {
+        x: v.x / mag,
+        y: v.y / mag,
+        z: v.z / mag,
+        w: v.w / mag,
+    }
+}
+
+fn dot(a: &Tuple, b: &Tuple) -> f64 {
+    a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w
+}
+
+fn cross(a: &Tuple, b: &Tuple) -> Tuple {
+    return vector(
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x,
+    );
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -250,7 +276,7 @@ mod tests {
     }
 
     #[test]
-    fn test_devision_by_a_scalar() {
+    fn test_division_by_a_scalar() {
         let tuple1 = Tuple {
             x: 1.0,
             y: -2.0,
@@ -265,5 +291,65 @@ mod tests {
             w: -2.0,
         };
         assert_eq!(tuple1 / 2.0, expected_tuple);
+    }
+
+    #[test]
+    fn test_magnitude_unit_vectors() {
+        let vectorx = vector(1.0, 0.0, 0.0);
+        let vectory = vector(0.0, 1.0, 0.0);
+        let vectorz = vector(0.0, 0.0, 1.0);
+        assert_eq!(magnitude(&vectorx), 1.0);
+        assert_eq!(magnitude(&vectory), 1.0);
+        assert_eq!(magnitude(&vectorz), 1.0);
+    }
+
+    #[test]
+    fn test_magnitude_positive_nonunit() {
+        let vector1 = vector(1.0, 2.0, 3.0);
+        assert_eq!(magnitude(&vector1), 14.0_f64.sqrt());
+    }
+
+    #[test]
+    fn test_magnitude_negitive_nonunit() {
+        let vector1 = vector(-1.0, -2.0, -3.0);
+        assert_eq!(magnitude(&vector1), 14.0_f64.sqrt());
+    }
+
+    #[test]
+    fn test_normalize_simple_vector() {
+        let vector1 = vector(4.0, 0.0, 0.0);
+        assert_eq!(normalize(&vector1), vector(1.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn test_normalize_non_simple_vector() {
+        let vector1 = vector(1.0, 2.0, 3.0);
+        let expected_vector = vector(
+            1.0 / 14_f64.sqrt(),
+            2.0 / 14_f64.sqrt(),
+            3.0 / 14_f64.sqrt(),
+        );
+        assert_eq!(normalize(&vector1), expected_vector);
+    }
+
+    #[test]
+    fn test_magnitude_of_normialized_vector_is_1() {
+        let vector1 = vector(1.0, 2.0, 3.0);
+        assert_eq!(magnitude(&normalize(&vector1)), 1.0);
+    }
+
+    #[test]
+    fn test_dot_product_of_two_vectors() {
+        let vector1 = vector(1.0, 2.0, 3.0);
+        let vector2 = vector(2.0, 3.0, 4.0);
+        assert_eq!(dot(&vector1, &vector2), 20.0);
+    }
+
+    #[test]
+    fn test_cross_product_of_two_vectors() {
+        let vector1 = vector(1.0, 2.0, 3.0);
+        let vector2 = vector(2.0, 3.0, 4.0);
+        assert_eq!(cross(&vector1, &vector2), vector(-1.0, 2.0, -1.0));
+        assert_eq!(cross(&vector2, &vector1), vector(1.0, -2.0, 1.0));
     }
 }
