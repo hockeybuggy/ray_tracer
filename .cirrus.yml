@@ -1,0 +1,10 @@
+container:
+  image: rust:1.32
+
+test_task:
+  test_script: cargo test
+
+check_fmt_task:
+  check_fmt_script:
+    - rustup component add rustfmt
+    - cargo fmt --all -- --check
