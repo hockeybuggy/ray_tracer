@@ -1,4 +1,4 @@
-use std::ops::Index;
+use std::ops::{Index, Mul};
 
 #[derive(Debug, PartialEq)]
 pub struct Matrix4 {
@@ -28,6 +28,30 @@ impl Index<(u64, u64)> for Matrix4 {
 
     fn index(&self, key: (u64, u64)) -> &Self::Output {
         &self.m[key.0 as usize][key.1 as usize]
+    }
+}
+
+impl Mul for Matrix4 {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self {
+        let mut result = matrix4((
+            (0.0, 0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0, 0.0),
+        ));
+
+        for x in 0..4 {
+            for y in 0..4 {
+                result.m[x][y] = self.m[x][0] * other.m[0][y]
+                    + self.m[x][1] * other.m[1][y]
+                    + self.m[x][2] * other.m[2][y]
+                    + self.m[x][3] * other.m[3][y];
+                ;
+            }
+        }
+        result
     }
 }
 
@@ -198,5 +222,33 @@ mod tuple_tests {
         let matrix2 = matrix::matrix2(((2.0, 3.0), (6.0, 7.0)));
 
         assert_ne!(matrix1, matrix2);
+    }
+
+    #[test]
+    fn test_mutiplication() {
+        let matrix1 = matrix::matrix4((
+            (1.0, 2.0, 3.0, 4.0),
+            (5.0, 6.0, 7.0, 8.0),
+            (9.0, 8.0, 7.0, 6.0),
+            (5.0, 4.0, 3.0, 2.0),
+        ));
+        let matrix2 = matrix::matrix4((
+            (-2.0, 1.0, 2.0, 3.0),
+            (3.0, 2.0, 1.0, -1.0),
+            (4.0, 3.0, 6.0, 5.0),
+            (1.0, 2.0, 7.0, 8.0),
+        ));
+
+        let matrix3 = matrix1 * matrix2;
+
+        assert_eq!(
+            matrix3,
+            matrix::matrix4((
+                (20.0, 22.0, 50.0, 48.0),
+                (44.0, 54.0, 114.0, 108.0),
+                (40.0, 58.0, 110.0, 102.0),
+                (16.0, 26.0, 46.0, 42.0),
+            ))
+        );
     }
 }
