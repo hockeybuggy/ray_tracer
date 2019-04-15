@@ -1,5 +1,6 @@
 use std::ops::Index;
 
+#[derive(Debug, PartialEq)]
 pub struct Matrix4 {
     m: [[f64; 4]; 4],
 }
@@ -30,6 +31,7 @@ impl Index<(u64, u64)> for Matrix4 {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Matrix3 {
     m: [[f64; 3]; 3],
 }
@@ -52,6 +54,7 @@ impl Index<(u64, u64)> for Matrix3 {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Matrix2 {
     m: [[f64; 2]; 2],
 }
@@ -127,5 +130,73 @@ mod tuple_tests {
 
         assert_eq!(matrix1[(1, 0)], 5.5);
         assert_eq!(matrix1[(1, 1)], 6.5);
+    }
+
+    #[test]
+    fn test_4_by_4_eq() {
+        let matrix1 = matrix::matrix4((
+            (1.0, 2.0, 3.0, 4.0),
+            (5.0, 6.0, 7.0, 8.0),
+            (9.0, 8.0, 7.0, 6.0),
+            (5.0, 4.0, 3.0, 2.0),
+        ));
+        let matrix2 = matrix::matrix4((
+            (1.0, 2.0, 3.0, 4.0),
+            (5.0, 6.0, 7.0, 8.0),
+            (9.0, 8.0, 7.0, 6.0),
+            (5.0, 4.0, 3.0, 2.0),
+        ));
+
+        assert_eq!(matrix1, matrix2);
+    }
+
+    #[test]
+    fn test_4_by_4_ne() {
+        let matrix1 = matrix::matrix4((
+            (1.0, 2.0, 3.0, 4.0),
+            (5.0, 6.0, 7.0, 8.0),
+            (9.0, 8.0, 7.0, 6.0),
+            (5.0, 4.0, 3.0, 2.0),
+        ));
+        let matrix2 = matrix::matrix4((
+            (2.0, 3.0, 4.0, 5.0),
+            (6.0, 7.0, 8.0, 9.0),
+            (8.0, 7.0, 6.0, 5.0),
+            (4.0, 3.0, 2.0, 1.0),
+        ));
+
+        assert_ne!(matrix1, matrix2);
+    }
+
+    #[test]
+    fn test_3_by_3_eq() {
+        let matrix1 = matrix::matrix3(((1.0, 2.0, 3.0), (5.0, 6.0, 7.0), (9.0, 8.0, 7.0)));
+        let matrix2 = matrix::matrix3(((1.0, 2.0, 3.0), (5.0, 6.0, 7.0), (9.0, 8.0, 7.0)));
+
+        assert_eq!(matrix1, matrix2);
+    }
+
+    #[test]
+    fn test_3_by_3_ne() {
+        let matrix1 = matrix::matrix3(((1.0, 2.0, 3.0), (5.0, 6.0, 7.0), (9.0, 8.0, 7.0)));
+        let matrix2 = matrix::matrix3(((2.0, 3.0, 4.0), (6.0, 7.0, 8.0), (8.0, 7.0, 6.0)));
+
+        assert_ne!(matrix1, matrix2);
+    }
+
+    #[test]
+    fn test_2_by_2_eq() {
+        let matrix1 = matrix::matrix2(((1.0, 2.0), (5.0, 6.0)));
+        let matrix2 = matrix::matrix2(((1.0, 2.0), (5.0, 6.0)));
+
+        assert_eq!(matrix1, matrix2);
+    }
+
+    #[test]
+    fn test_2_by_2_ne() {
+        let matrix1 = matrix::matrix2(((1.0, 2.0), (5.0, 6.0)));
+        let matrix2 = matrix::matrix2(((2.0, 3.0), (6.0, 7.0)));
+
+        assert_ne!(matrix1, matrix2);
     }
 }
