@@ -157,7 +157,6 @@ fn minor3(input: &Matrix3, row_to_exclude: u64, col_to_exclude: u64) -> f64 {
 }
 
 fn minor4(input: &Matrix4, row_to_exclude: u64, col_to_exclude: u64) -> f64 {
-    // TODO Write test
     determinant3(&submatrix4(&input, row_to_exclude, col_to_exclude))
 }
 
@@ -179,7 +178,6 @@ fn determinant3(input: &Matrix3) -> f64 {
 }
 
 fn cofactor4(input: &Matrix4, row_to_exclude: u64, col_to_exclude: u64) -> f64 {
-    // TODO write test
     let minor = minor4(&input, row_to_exclude, col_to_exclude);
     if (row_to_exclude + col_to_exclude) % 2 == 0 {
         minor
@@ -194,6 +192,10 @@ fn determinant4(input: &Matrix4) -> f64 {
         determinant = determinant + input.m[0][x] * cofactor4(&input, 0 as u64, x as u64);
     }
     determinant
+}
+
+fn is_invertible4(input: &Matrix4) -> bool {
+    determinant4(&input) != 0.0
 }
 
 #[derive(Debug, PartialEq)]
@@ -556,5 +558,29 @@ mod matrix_tests {
         ));
 
         assert_eq!(-4071.0, matrix::determinant4(&matrix1));
+    }
+
+    fn test_is_invertible_of_invertible_4_by_b4() {
+        let matrix1 = matrix::matrix4((
+            (0.0, 0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0, 0.0),
+        ));
+
+        assert_eq!(-2120.0, matrix::determinant4(&matrix1));
+        assert_eq!(true, matrix::is_invertible4(&matrix1));
+    }
+
+    fn test_is_invertible_of_non_invertible_4_by_b4() {
+        let matrix1 = matrix::matrix4((
+            (0.0, 0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0, 0.0),
+        ));
+
+        assert_eq!(0.0, matrix::determinant4(&matrix1));
+        assert_eq!(false, matrix::is_invertible4(&matrix1));
     }
 }
