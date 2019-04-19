@@ -1,5 +1,7 @@
 use std::ops::{Index, Mul};
 
+use crate::tuple;
+
 #[derive(Debug, PartialEq)]
 pub struct Matrix4 {
     m: [[f64; 4]; 4],
@@ -55,6 +57,37 @@ impl Mul for Matrix4 {
     }
 }
 
+impl Mul<tuple::Tuple> for Matrix4 {
+    type Output = tuple::Tuple;
+
+    fn mul(self, other: tuple::Tuple) -> tuple::Tuple {
+        let mut result = tuple::Tuple {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            w: 0.0,
+        };
+
+        result.x = self.m[0][0] * other.x
+            + self.m[0][1] * other.y
+            + self.m[0][2] * other.z
+            + self.m[0][3] * other.w;
+        result.y = self.m[1][0] * other.x
+            + self.m[1][1] * other.y
+            + self.m[1][2] * other.z
+            + self.m[1][3] * other.w;
+        result.z = self.m[2][0] * other.x
+            + self.m[2][1] * other.y
+            + self.m[2][2] * other.z
+            + self.m[2][3] * other.w;
+        result.w = self.m[3][0] * other.x
+            + self.m[3][1] * other.y
+            + self.m[3][2] * other.z
+            + self.m[3][3] * other.w;
+        result
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Matrix3 {
     m: [[f64; 3]; 3],
@@ -100,6 +133,7 @@ impl Index<(u64, u64)> for Matrix2 {
 #[cfg(test)]
 mod tuple_tests {
     use crate::matrix;
+    use crate::tuple;
 
     #[test]
     fn test_constructor_4_by_4() {
@@ -225,7 +259,7 @@ mod tuple_tests {
     }
 
     #[test]
-    fn test_mutiplication() {
+    fn test_matrix_multiplication() {
         let matrix1 = matrix::matrix4((
             (1.0, 2.0, 3.0, 4.0),
             (5.0, 6.0, 7.0, 8.0),
@@ -249,6 +283,34 @@ mod tuple_tests {
                 (40.0, 58.0, 110.0, 102.0),
                 (16.0, 26.0, 46.0, 42.0),
             ))
+        );
+    }
+
+    #[test]
+    fn test_tuple_multiplication() {
+        let matrix1 = matrix::matrix4((
+            (1.0, 2.0, 3.0, 4.0),
+            (2.0, 4.0, 4.0, 2.0),
+            (8.0, 6.0, 4.0, 1.0),
+            (0.0, 0.0, 0.0, 1.0),
+        ));
+        let tuple1 = tuple::Tuple {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+            w: 1.0,
+        };
+
+        let result: tuple::Tuple = matrix1 * tuple1;
+
+        assert_eq!(
+            result,
+            tuple::Tuple {
+                x: 18.0,
+                y: 24.0,
+                z: 33.0,
+                w: 1.0,
+            }
         );
     }
 }

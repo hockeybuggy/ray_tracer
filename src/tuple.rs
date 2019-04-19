@@ -1,4 +1,5 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
+
 #[derive(Debug, PartialEq)]
 pub struct Tuple {
     pub x: f64,
