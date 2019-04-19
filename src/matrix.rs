@@ -106,6 +106,52 @@ fn transpose(input: Matrix4) -> Matrix4 {
     ))
 }
 
+fn determinant(input: Matrix2) -> f64 {
+    input.m[0][0] * input.m[1][1] - input.m[0][1] * input.m[1][0]
+}
+
+fn submatrix3(input: Matrix3, row_to_exclude: u64, col_to_exclude: u64) -> Matrix2 {
+    let mut result = matrix2(((0.0, 0.0), (0.0, 0.0)));
+    let mut curr_row = 0;
+    let mut curr_col = 0;
+    for x in 0..3 {
+        if x == row_to_exclude {
+            continue;
+        }
+        for y in 0..3 {
+            if y == col_to_exclude {
+                continue;
+            }
+            result.m[curr_row][curr_col] = input.m[x as usize][y as usize];
+            curr_col = curr_col + 1;
+        }
+        curr_col = 0;
+        curr_row = curr_row + 1;
+    }
+    result
+}
+
+fn submatrix4(input: Matrix4, row_to_exclude: u64, col_to_exclude: u64) -> Matrix3 {
+    let mut result = matrix3(((0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)));
+    let mut curr_row = 0;
+    let mut curr_col = 0;
+    for x in 0..4 {
+        if x == row_to_exclude {
+            continue;
+        }
+        for y in 0..4 {
+            if y == col_to_exclude {
+                continue;
+            }
+            result.m[curr_row][curr_col] = input.m[x as usize][y as usize];
+            curr_col = curr_col + 1;
+        }
+        curr_col = 0;
+        curr_row = curr_row + 1;
+    }
+    result
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Matrix3 {
     m: [[f64; 3]; 3],
@@ -382,5 +428,33 @@ mod matrix_tests {
             matrix::transpose(matrix::IDENTITY_MATRIX),
             matrix::IDENTITY_MATRIX,
         )
+    }
+
+    #[test]
+    fn test_determinant_of_2_by_2() {
+        let matrix1 = matrix::matrix2(((1.0, 5.0), (-3.0, 2.0)));
+
+        assert_eq!(17.0, matrix::determinant(matrix1));
+    }
+
+    #[test]
+    fn test_submatrix_of_3_by_3() {
+        let matrix1 = matrix::matrix3(((1.0, 5.0, 0.0), (-3.0, 2.0, 7.0), (0.0, 6.0, -3.0)));
+        let expected = matrix::matrix2(((-3.0, 2.0), (0.0, 6.0)));
+
+        assert_eq!(expected, matrix::submatrix3(matrix1, 0, 2));
+    }
+
+    #[test]
+    fn test_submatrix_of_4_by_4() {
+        let matrix1 = matrix::matrix4((
+            (-6.0, 1.0, 1.0, 6.0),
+            (-8.0, 5.0, 8.0, 6.0),
+            (-1.0, 0.0, 8.0, 2.0),
+            (-7.0, 1.0, -1.0, 1.0),
+        ));
+        let expected = matrix::matrix3(((-6.0, 1.0, 6.0), (-8.0, 8.0, 6.0), (-7.0, -1.0, 1.0)));
+
+        assert_eq!(expected, matrix::submatrix4(matrix1, 2, 1));
     }
 }
