@@ -25,6 +25,15 @@ pub fn matrix4(
     }
 }
 
+const IDENTITY_MATRIX: Matrix4 = Matrix4 {
+    m: [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ],
+};
+
 impl Index<(u64, u64)> for Matrix4 {
     type Output = f64;
 
@@ -88,6 +97,15 @@ impl Mul<tuple::Tuple> for Matrix4 {
     }
 }
 
+fn transpose(input: Matrix4) -> Matrix4 {
+    matrix4((
+        (input.m[0][0], input.m[1][0], input.m[2][0], input.m[3][0]),
+        (input.m[0][1], input.m[1][1], input.m[2][1], input.m[3][1]),
+        (input.m[0][2], input.m[1][2], input.m[2][2], input.m[3][2]),
+        (input.m[0][3], input.m[1][3], input.m[2][3], input.m[3][3]),
+    ))
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Matrix3 {
     m: [[f64; 3]; 3],
@@ -131,7 +149,7 @@ impl Index<(u64, u64)> for Matrix2 {
 }
 
 #[cfg(test)]
-mod tuple_tests {
+mod matrix_tests {
     use crate::matrix;
     use crate::tuple;
 
@@ -312,5 +330,57 @@ mod tuple_tests {
                 w: 1.0,
             }
         );
+    }
+
+    #[test]
+    fn test_identity_matrix() {
+        let matrix1 = matrix::matrix4((
+            (0.0, 1.0, 2.0, 3.0),
+            (1.0, 2.0, 4.0, 8.0),
+            (2.0, 4.0, 8.0, 16.0),
+            (4.0, 8.0, 16.0, 32.0),
+        ));
+
+        let result = matrix1 * matrix::IDENTITY_MATRIX;
+
+        assert_eq!(
+            result,
+            matrix::matrix4((
+                (0.0, 1.0, 2.0, 3.0),
+                (1.0, 2.0, 4.0, 8.0),
+                (2.0, 4.0, 8.0, 16.0),
+                (4.0, 8.0, 16.0, 32.0),
+            ))
+        );
+    }
+
+    #[test]
+    fn test_transpose_matrix() {
+        let matrix1 = matrix::matrix4((
+            (0.0, 9.0, 3.0, 0.0),
+            (9.0, 8.0, 0.0, 8.0),
+            (1.0, 8.0, 5.0, 3.0),
+            (0.0, 0.0, 5.0, 8.0),
+        ));
+
+        let result = matrix::transpose(matrix1);
+
+        assert_eq!(
+            result,
+            matrix::matrix4((
+                (0.0, 9.0, 1.0, 0.0),
+                (9.0, 8.0, 8.0, 0.0),
+                (3.0, 0.0, 5.0, 5.0),
+                (0.0, 8.0, 3.0, 8.0),
+            ))
+        );
+    }
+
+    #[test]
+    fn test_transpose_identity_matrix() {
+        assert_eq!(
+            matrix::transpose(matrix::IDENTITY_MATRIX),
+            matrix::IDENTITY_MATRIX,
+        )
     }
 }
