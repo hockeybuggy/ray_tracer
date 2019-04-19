@@ -110,7 +110,7 @@ fn determinant(input: Matrix2) -> f64 {
     input.m[0][0] * input.m[1][1] - input.m[0][1] * input.m[1][0]
 }
 
-fn submatrix3(input: Matrix3, row_to_exclude: u64, col_to_exclude: u64) -> Matrix2 {
+fn submatrix3(input: &Matrix3, row_to_exclude: u64, col_to_exclude: u64) -> Matrix2 {
     let mut result = matrix2(((0.0, 0.0), (0.0, 0.0)));
     let mut curr_row = 0;
     let mut curr_col = 0;
@@ -131,7 +131,7 @@ fn submatrix3(input: Matrix3, row_to_exclude: u64, col_to_exclude: u64) -> Matri
     result
 }
 
-fn submatrix4(input: Matrix4, row_to_exclude: u64, col_to_exclude: u64) -> Matrix3 {
+fn submatrix4(input: &Matrix4, row_to_exclude: u64, col_to_exclude: u64) -> Matrix3 {
     let mut result = matrix3(((0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)));
     let mut curr_row = 0;
     let mut curr_col = 0;
@@ -152,6 +152,18 @@ fn submatrix4(input: Matrix4, row_to_exclude: u64, col_to_exclude: u64) -> Matri
     result
 }
 
+fn minor3(input: &Matrix3, row_to_exclude: u64, col_to_exclude: u64) -> f64 {
+    determinant(submatrix3(input, row_to_exclude, col_to_exclude))
+}
+
+fn cofactor3(input: &Matrix3, row_to_exclude: u64, col_to_exclude: u64) -> f64 {
+    let minor = minor3(input, row_to_exclude, col_to_exclude);
+    if (row_to_exclude + col_to_exclude) % 2 == 0 {
+        minor
+    } else {
+        -minor
+    }
+}
 #[derive(Debug, PartialEq)]
 pub struct Matrix3 {
     m: [[f64; 3]; 3],
@@ -442,7 +454,7 @@ mod matrix_tests {
         let matrix1 = matrix::matrix3(((1.0, 5.0, 0.0), (-3.0, 2.0, 7.0), (0.0, 6.0, -3.0)));
         let expected = matrix::matrix2(((-3.0, 2.0), (0.0, 6.0)));
 
-        assert_eq!(expected, matrix::submatrix3(matrix1, 0, 2));
+        assert_eq!(expected, matrix::submatrix3(&matrix1, 0, 2));
     }
 
     #[test]
@@ -455,6 +467,25 @@ mod matrix_tests {
         ));
         let expected = matrix::matrix3(((-6.0, 1.0, 6.0), (-8.0, 8.0, 6.0), (-7.0, -1.0, 1.0)));
 
-        assert_eq!(expected, matrix::submatrix4(matrix1, 2, 1));
+        assert_eq!(expected, matrix::submatrix4(&matrix1, 2, 1));
+    }
+
+    #[test]
+    fn test_minor_of_3_by_3() {
+        let matrix1 = matrix::matrix3(((3.0, 5.0, 0.0), (2.0, -1.0, -7.0), (6.0, -1.0, 5.0)));
+        let matrix2 = matrix::submatrix3(&matrix1, 1, 0);
+
+        assert_eq!(25.0, matrix::determinant(matrix2));
+        assert_eq!(25.0, matrix::minor3(&matrix1, 1, 0));
+    }
+
+    #[test]
+    fn test_confactor_of_a_3_by_3() {
+        let matrix1 = matrix::matrix3(((3.0, 5.0, 0.0), (2.0, -1.0, -7.0), (6.0, -1.0, 5.0)));
+
+        assert_eq!(-12.0, matrix::minor3(&matrix1, 0, 0));
+        assert_eq!(-12.0, matrix::cofactor3(&matrix1, 0, 0));
+        assert_eq!(25.0, matrix::minor3(&matrix1, 1, 0));
+        assert_eq!(-25.0, matrix::cofactor3(&matrix1, 1, 0));
     }
 }
