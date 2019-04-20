@@ -19,6 +19,10 @@ trait Minorable {
     fn minor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64;
 }
 
+trait Cofactorable {
+    fn cofactor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64;
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Matrix4 {
     m: [[f64; 4]; 4],
@@ -201,12 +205,14 @@ impl Minorable for Matrix4 {
     }
 }
 
-fn cofactor3(input: &Matrix3, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
-    let minor = input.minor(row_to_exclude, col_to_exclude);
-    if (row_to_exclude + col_to_exclude) % 2 == 0 {
-        minor
-    } else {
-        -minor
+impl Cofactorable for Matrix3 {
+    fn cofactor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
+        let minor = self.minor(row_to_exclude, col_to_exclude);
+        if (row_to_exclude + col_to_exclude) % 2 == 0 {
+            minor
+        } else {
+            -minor
+        }
     }
 }
 
@@ -214,18 +220,20 @@ impl Determinable for Matrix3 {
     fn determinant(&self) -> f64 {
         let mut determinant = 0.0;
         for x in 0..3 {
-            determinant = determinant + self.m[0][x] * cofactor3(&self, 0, x);
+            determinant = determinant + self.m[0][x] * self.cofactor(0, x);
         }
         determinant
     }
 }
 
-fn cofactor4(input: &Matrix4, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
-    let minor = input.minor(row_to_exclude, col_to_exclude);
-    if (row_to_exclude + col_to_exclude) % 2 == 0 {
-        minor
-    } else {
-        -minor
+impl Cofactorable for Matrix4 {
+    fn cofactor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
+        let minor = self.minor(row_to_exclude, col_to_exclude);
+        if (row_to_exclude + col_to_exclude) % 2 == 0 {
+            minor
+        } else {
+            -minor
+        }
     }
 }
 
@@ -233,7 +241,7 @@ impl Determinable for Matrix4 {
     fn determinant(&self) -> f64 {
         let mut determinant = 0.0;
         for x in 0..4 {
-            determinant = determinant + self.m[0][x] * cofactor4(&self, 0, x);
+            determinant = determinant + self.m[0][x] * self.cofactor(0, x);
         }
         determinant
     }
@@ -253,7 +261,7 @@ fn inverse4(input: &Matrix4) -> Result<Matrix4, &'static str> {
     let determinant = input.determinant();
     for x in 0..4 {
         for y in 0..4 {
-            let c = cofactor4(&input, y, x);
+            let c = input.cofactor(y, x);
             inverse.m[x as usize][y as usize] = c / determinant;
         }
     }
@@ -326,7 +334,7 @@ mod matrix_tests {
     use assert_approx_eq::assert_approx_eq;
 
     use crate::matrix;
-    use crate::matrix::{Determinable, Minorable, Submatrixable, Transposeable};
+    use crate::matrix::{Cofactorable, Determinable, Minorable, Submatrixable, Transposeable};
     use crate::tuple;
 
     #[test]
@@ -600,9 +608,9 @@ mod matrix_tests {
         let matrix1 = matrix::Matrix3::new(((3.0, 5.0, 0.0), (2.0, -1.0, -7.0), (6.0, -1.0, 5.0)));
 
         assert_eq!(-12.0, matrix1.minor(0, 0));
-        assert_eq!(-12.0, matrix::cofactor3(&matrix1, 0, 0));
+        assert_eq!(-12.0, matrix1.cofactor(0, 0));
         assert_eq!(25.0, matrix1.minor(1, 0));
-        assert_eq!(-25.0, matrix::cofactor3(&matrix1, 1, 0));
+        assert_eq!(-25.0, matrix1.cofactor(1, 0));
     }
 
     #[test]
@@ -614,19 +622,19 @@ mod matrix_tests {
             (-6.0, 7.0, 7.0, -9.0),
         ));
 
-        assert_eq!(690.0, matrix::cofactor4(&matrix1, 0, 0));
-        assert_eq!(447.0, matrix::cofactor4(&matrix1, 0, 1));
-        assert_eq!(210.0, matrix::cofactor4(&matrix1, 0, 2));
-        assert_eq!(51.0, matrix::cofactor4(&matrix1, 0, 3));
+        assert_eq!(690.0, matrix1.cofactor(0, 0));
+        assert_eq!(447.0, matrix1.cofactor(0, 1));
+        assert_eq!(210.0, matrix1.cofactor(0, 2));
+        assert_eq!(51.0, matrix1.cofactor(0, 3));
     }
 
     #[test]
     fn test_determinant_of_a_3_by_3() {
         let matrix1 = matrix::Matrix3::new(((1.0, 2.0, 6.0), (-5.0, 8.0, -4.0), (2.0, 6.0, 4.0)));
 
-        assert_eq!(56.0, matrix::cofactor3(&matrix1, 0, 0));
-        assert_eq!(12.0, matrix::cofactor3(&matrix1, 0, 1));
-        assert_eq!(-46.0, matrix::cofactor3(&matrix1, 0, 2));
+        assert_eq!(56.0, matrix1.cofactor(0, 0));
+        assert_eq!(12.0, matrix1.cofactor(0, 1));
+        assert_eq!(-46.0, matrix1.cofactor(0, 2));
         assert_eq!(-196.0, matrix1.determinant());
     }
 
@@ -680,10 +688,10 @@ mod matrix_tests {
         let inverse = matrix::inverse4(&matrix1)?;
 
         assert_eq!(532.0, matrix1.determinant());
-        assert_eq!(-160.0, matrix::cofactor4(&matrix1, 2, 3));
+        assert_eq!(-160.0, matrix1.cofactor(2, 3));
         assert_eq!(-160.0 / 532.0, inverse.m[3][2]);
 
-        assert_eq!(105.0, matrix::cofactor4(&matrix1, 3, 2));
+        assert_eq!(105.0, matrix1.cofactor(3, 2));
         assert_eq!(105.0 / 532.0, inverse.m[2][3]);
         let expected = matrix::Matrix4::new((
             (
