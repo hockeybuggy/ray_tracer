@@ -25,7 +25,7 @@ trait Cofactorable {
 
 trait Invertable: Sized {
     fn is_invertible(&self) -> bool;
-    fn inverse(&self) -> Result<Self, &'static str>;
+    fn inverse(&self) -> Option<Self>;
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -167,9 +167,9 @@ impl Invertable for Matrix4 {
         self.determinant() != 0.0
     }
 
-    fn inverse(&self) -> Result<Matrix4, &'static str> {
+    fn inverse(&self) -> Option<Matrix4> {
         if !self.is_invertible() {
-            return Err("uninvertable_error");
+            return None;
         }
 
         let mut inverse = Matrix4::empty();
@@ -182,7 +182,7 @@ impl Invertable for Matrix4 {
             }
         }
 
-        Ok(inverse)
+        Some(inverse)
     }
 }
 
@@ -335,7 +335,6 @@ impl Determinable for Matrix2 {
 
 #[cfg(test)]
 mod matrix_tests {
-    use std::error::Error;
 
     use assert_approx_eq::assert_approx_eq;
 
@@ -688,7 +687,7 @@ mod matrix_tests {
     }
 
     #[test]
-    fn test_inverse_of_4_by_4() -> Result<(), Box<Error>> {
+    fn test_inverse_of_4_by_4() {
         let matrix1 = matrix::Matrix4::new((
             (-5.0, 2.0, 6.0, -8.0),
             (1.0, -5.0, 1.0, 8.0),
@@ -696,7 +695,7 @@ mod matrix_tests {
             (1.0, -3.0, 7.0, 4.0),
         ));
 
-        let inverse = matrix1.inverse()?;
+        let inverse = matrix1.inverse().unwrap();
 
         assert_eq!(532.0, matrix1.determinant());
         assert_eq!(-160.0, matrix1.cofactor(2, 3));
@@ -731,11 +730,10 @@ mod matrix_tests {
             ),
         ));
         assert_eq!(expected, inverse);
-        Ok(())
     }
 
     #[test]
-    fn test_inverse_of_another_4_by_4() -> Result<(), Box<Error>> {
+    fn test_inverse_of_another_4_by_4() {
         let matrix1 = matrix::Matrix4::new((
             (8.0, -5.0, 9.0, 2.0),
             (7.0, 5.0, 6.0, 1.0),
@@ -743,7 +741,7 @@ mod matrix_tests {
             (-3.0, 0.0, -9.0, -4.0),
         ));
 
-        let inverse = matrix1.inverse()?;
+        let inverse = matrix1.inverse().unwrap();
 
         let expected = matrix::Matrix4::new((
             (
@@ -772,11 +770,10 @@ mod matrix_tests {
             ),
         ));
         assert_eq!(expected, inverse);
-        Ok(())
     }
 
     #[test]
-    fn test_inverse_of_a_third_4_by_4() -> Result<(), Box<Error>> {
+    fn test_inverse_of_a_third_4_by_4() {
         let matrix1 = matrix::Matrix4::new((
             (9.0, 3.0, 0.0, 9.0),
             (-5.0, -2.0, -6.0, -3.0),
@@ -784,7 +781,7 @@ mod matrix_tests {
             (-7.0, 6.0, 6.0, 2.0),
         ));
 
-        let inverse = matrix1.inverse()?;
+        let inverse = matrix1.inverse().unwrap();
 
         let expected = matrix::Matrix4::new((
             (
@@ -813,7 +810,6 @@ mod matrix_tests {
             ),
         ));
         assert_eq!(expected, inverse);
-        Ok(())
     }
 
     #[test]
@@ -826,11 +822,11 @@ mod matrix_tests {
         ));
         let uninvertable_error = matrix1.inverse();
 
-        assert_eq!(uninvertable_error, Err("uninvertable_error"));
+        assert_eq!(uninvertable_error, None);
     }
 
     #[test]
-    fn test_multiply_a_product_by_its_inverse() -> Result<(), Box<Error>> {
+    fn test_multiply_a_product_by_its_inverse() {
         let matrix1 = matrix::Matrix4::new((
             (3.0, -9.0, 7.0, 3.0),
             (3.0, -8.0, 2.0, -9.0),
@@ -845,12 +841,11 @@ mod matrix_tests {
         ));
 
         let product = matrix1 * matrix2;
-        let product_times_inverse = product * matrix2.inverse()?;
+        let product_times_inverse = product * matrix2.inverse().unwrap();
         for x in 0..4 {
             for y in 0..4 {
                 assert_approx_eq!(product_times_inverse[(x, y)], matrix1[(x, y)]);
             }
         }
-        Ok(())
     }
 }
