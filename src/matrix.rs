@@ -88,10 +88,10 @@ impl Mul for Matrix4 {
 
         for x in 0..4 {
             for y in 0..4 {
-                result.m[x][y] = self.m[x][0] * other.m[0][y]
-                    + self.m[x][1] * other.m[1][y]
-                    + self.m[x][2] * other.m[2][y]
-                    + self.m[x][3] * other.m[3][y];
+                result.m[x][y] = self[(x, 0)] * other[(0, y)]
+                    + self[(x, 1)] * other[(1, y)]
+                    + self[(x, 2)] * other[(2, y)]
+                    + self[(x, 3)] * other[(3, y)];
                 ;
             }
         }
@@ -110,22 +110,22 @@ impl Mul<tuple::Tuple> for Matrix4 {
             w: 0.0,
         };
 
-        result.x = self.m[0][0] * other.x
-            + self.m[0][1] * other.y
-            + self.m[0][2] * other.z
-            + self.m[0][3] * other.w;
-        result.y = self.m[1][0] * other.x
-            + self.m[1][1] * other.y
-            + self.m[1][2] * other.z
-            + self.m[1][3] * other.w;
-        result.z = self.m[2][0] * other.x
-            + self.m[2][1] * other.y
-            + self.m[2][2] * other.z
-            + self.m[2][3] * other.w;
-        result.w = self.m[3][0] * other.x
-            + self.m[3][1] * other.y
-            + self.m[3][2] * other.z
-            + self.m[3][3] * other.w;
+        result.x = self[(0, 0)] * other.x
+            + self[(0, 1)] * other.y
+            + self[(0, 2)] * other.z
+            + self[(0, 3)] * other.w;
+        result.y = self[(1, 0)] * other.x
+            + self[(1, 1)] * other.y
+            + self[(1, 2)] * other.z
+            + self[(1, 3)] * other.w;
+        result.z = self[(2, 0)] * other.x
+            + self[(2, 1)] * other.y
+            + self[(2, 2)] * other.z
+            + self[(2, 3)] * other.w;
+        result.w = self[(3, 0)] * other.x
+            + self[(3, 1)] * other.y
+            + self[(3, 2)] * other.z
+            + self[(3, 3)] * other.w;
         result
     }
 }
@@ -133,10 +133,10 @@ impl Mul<tuple::Tuple> for Matrix4 {
 impl Transpose for Matrix4 {
     fn transpose(&self) -> Self {
         Self::new((
-            (self.m[0][0], self.m[1][0], self.m[2][0], self.m[3][0]),
-            (self.m[0][1], self.m[1][1], self.m[2][1], self.m[3][1]),
-            (self.m[0][2], self.m[1][2], self.m[2][2], self.m[3][2]),
-            (self.m[0][3], self.m[1][3], self.m[2][3], self.m[3][3]),
+            (self[(0, 0)], self[(1, 0)], self[(2, 0)], self[(3, 0)]),
+            (self[(0, 1)], self[(1, 1)], self[(2, 1)], self[(3, 1)]),
+            (self[(0, 2)], self[(1, 2)], self[(2, 2)], self[(3, 2)]),
+            (self[(0, 3)], self[(1, 3)], self[(2, 3)], self[(3, 3)]),
         ))
     }
 }
@@ -156,7 +156,7 @@ impl Determinant for Matrix4 {
     fn determinant(&self) -> f64 {
         let mut determinant = 0.0;
         for x in 0..4 {
-            determinant = determinant + self.m[0][x] * self.cofactor(0, x);
+            determinant = determinant + self[(0, x)] * self.cofactor(0, x);
         }
         determinant
     }
@@ -263,7 +263,7 @@ impl Submatrix for Matrix3 {
                 if y == col_to_exclude {
                     continue;
                 }
-                result.m[curr_row][curr_col] = self.m[x as usize][y as usize];
+                result.m[curr_row][curr_col] = self[(x, y)];
                 curr_col = curr_col + 1;
             }
             curr_col = 0;
@@ -294,7 +294,7 @@ impl Determinant for Matrix3 {
     fn determinant(&self) -> f64 {
         let mut determinant = 0.0;
         for x in 0..3 {
-            determinant = determinant + self.m[0][x] * self.cofactor(0, x);
+            determinant = determinant + self[(0, x)] * self.cofactor(0, x);
         }
         determinant
     }
@@ -329,7 +329,7 @@ impl Index<(u64, u64)> for Matrix2 {
 
 impl Determinant for Matrix2 {
     fn determinant(&self) -> f64 {
-        self.m[0][0] * self.m[1][1] - self.m[0][1] * self.m[1][0]
+        self[(0, 0)] * self[(1, 1)] - self[(0, 1)] * self[(1, 0)]
     }
 }
 
