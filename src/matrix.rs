@@ -11,21 +11,32 @@ pub struct Matrix4 {
     m: [[f64; 4]; 4],
 }
 
-pub fn matrix4(
-    m: (
-        (f64, f64, f64, f64),
-        (f64, f64, f64, f64),
-        (f64, f64, f64, f64),
-        (f64, f64, f64, f64),
-    ),
-) -> Matrix4 {
-    Matrix4 {
-        m: [
-            [(m.0).0, (m.0).1, (m.0).2, (m.0).3],
-            [(m.1).0, (m.1).1, (m.1).2, (m.1).3],
-            [(m.2).0, (m.2).1, (m.2).2, (m.2).3],
-            [(m.3).0, (m.3).1, (m.3).2, (m.3).3],
-        ],
+impl Matrix4 {
+    fn new(
+        m: (
+            (f64, f64, f64, f64),
+            (f64, f64, f64, f64),
+            (f64, f64, f64, f64),
+            (f64, f64, f64, f64),
+        ),
+    ) -> Self {
+        Self {
+            m: [
+                [(m.0).0, (m.0).1, (m.0).2, (m.0).3],
+                [(m.1).0, (m.1).1, (m.1).2, (m.1).3],
+                [(m.2).0, (m.2).1, (m.2).2, (m.2).3],
+                [(m.3).0, (m.3).1, (m.3).2, (m.3).3],
+            ],
+        }
+    }
+
+    fn empty() -> Self {
+        Self::new((
+            (0.0, 0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0, 0.0),
+        ))
     }
 }
 
@@ -37,15 +48,6 @@ const IDENTITY_MATRIX: Matrix4 = Matrix4 {
         [0.0, 0.0, 0.0, 1.0],
     ],
 };
-
-fn empty4() -> Matrix4 {
-    matrix4((
-        (0.0, 0.0, 0.0, 0.0),
-        (0.0, 0.0, 0.0, 0.0),
-        (0.0, 0.0, 0.0, 0.0),
-        (0.0, 0.0, 0.0, 0.0),
-    ))
-}
 
 impl Index<(usize, usize)> for Matrix4 {
     type Output = f64;
@@ -59,7 +61,7 @@ impl Mul for Matrix4 {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self {
-        let mut result = empty4();
+        let mut result = Self::empty();
 
         for x in 0..4 {
             for y in 0..4 {
@@ -107,7 +109,7 @@ impl Mul<tuple::Tuple> for Matrix4 {
 
 impl Transposeable for Matrix4 {
     fn transpose(&self) -> Self {
-        matrix4((
+        Self::new((
             (self.m[0][0], self.m[1][0], self.m[2][0], self.m[3][0]),
             (self.m[0][1], self.m[1][1], self.m[2][1], self.m[3][1]),
             (self.m[0][2], self.m[1][2], self.m[2][2], self.m[3][2]),
@@ -121,7 +123,7 @@ fn determinant2(input: &Matrix2) -> f64 {
 }
 
 fn submatrix3(input: &Matrix3, row_to_exclude: usize, col_to_exclude: usize) -> Matrix2 {
-    let mut result = empty2();
+    let mut result = Matrix2::empty();
     let mut curr_row = 0;
     let mut curr_col = 0;
     for x in 0..3 {
@@ -142,7 +144,7 @@ fn submatrix3(input: &Matrix3, row_to_exclude: usize, col_to_exclude: usize) -> 
 }
 
 fn submatrix4(input: &Matrix4, row_to_exclude: usize, col_to_exclude: usize) -> Matrix3 {
-    let mut result = empty3();
+    let mut result = Matrix3::empty();
     let mut curr_row = 0;
     let mut curr_col = 0;
     for x in 0..4 {
@@ -213,7 +215,7 @@ fn inverse4(input: &Matrix4) -> Result<Matrix4, &'static str> {
         return Err("uninvertable_error");
     }
 
-    let mut inverse = empty4();
+    let mut inverse = Matrix4::empty();
 
     let determinant = determinant4(&input);
     for x in 0..4 {
@@ -231,18 +233,20 @@ pub struct Matrix3 {
     m: [[f64; 3]; 3],
 }
 
-pub fn matrix3(m: ((f64, f64, f64), (f64, f64, f64), (f64, f64, f64))) -> Matrix3 {
-    Matrix3 {
-        m: [
-            [(m.0).0, (m.0).1, (m.0).2],
-            [(m.1).0, (m.1).1, (m.1).2],
-            [(m.2).0, (m.2).1, (m.2).2],
-        ],
+impl Matrix3 {
+    pub fn new(m: ((f64, f64, f64), (f64, f64, f64), (f64, f64, f64))) -> Self {
+        Self {
+            m: [
+                [(m.0).0, (m.0).1, (m.0).2],
+                [(m.1).0, (m.1).1, (m.1).2],
+                [(m.2).0, (m.2).1, (m.2).2],
+            ],
+        }
     }
-}
 
-fn empty3() -> Matrix3 {
-    matrix3(((0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+    fn empty() -> Self {
+        Self::new(((0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+    }
 }
 
 impl Index<(usize, usize)> for Matrix3 {
@@ -258,14 +262,16 @@ pub struct Matrix2 {
     m: [[f64; 2]; 2],
 }
 
-pub fn matrix2(m: ((f64, f64), (f64, f64))) -> Matrix2 {
-    Matrix2 {
-        m: [[(m.0).0, (m.0).1], [(m.1).0, (m.1).1]],
+impl Matrix2 {
+    pub fn new(m: ((f64, f64), (f64, f64))) -> Self {
+        Self {
+            m: [[(m.0).0, (m.0).1], [(m.1).0, (m.1).1]],
+        }
     }
-}
 
-fn empty2() -> Matrix2 {
-    matrix2(((0.0, 0.0), (0.0, 0.0)))
+    fn empty() -> Self {
+        Self::new(((0.0, 0.0), (0.0, 0.0)))
+    }
 }
 
 impl Index<(u64, u64)> for Matrix2 {
@@ -288,7 +294,7 @@ mod matrix_tests {
 
     #[test]
     fn test_constructor_4_by_4() {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (1.0, 2.0, 3.0, 4.0),
             (5.5, 6.5, 7.5, 8.5),
             (9.0, 10.0, 11.0, 12.0),
@@ -317,7 +323,7 @@ mod matrix_tests {
 
     #[test]
     fn test_constructor_3_by_3() {
-        let matrix1 = matrix::matrix3(((1.0, 2.0, 3.0), (5.5, 6.5, 7.5), (9.0, 10.0, 11.0)));
+        let matrix1 = matrix::Matrix3::new(((1.0, 2.0, 3.0), (5.5, 6.5, 7.5), (9.0, 10.0, 11.0)));
         assert_eq!(matrix1[(0, 0)], 1.0);
         assert_eq!(matrix1[(0, 1)], 2.0);
         assert_eq!(matrix1[(0, 2)], 3.0);
@@ -333,7 +339,7 @@ mod matrix_tests {
 
     #[test]
     fn test_constructor_2_by_2() {
-        let matrix1 = matrix::matrix2(((1.0, 2.0), (5.5, 6.5)));
+        let matrix1 = matrix::Matrix2::new(((1.0, 2.0), (5.5, 6.5)));
         assert_eq!(matrix1[(0, 0)], 1.0);
         assert_eq!(matrix1[(0, 1)], 2.0);
 
@@ -343,13 +349,13 @@ mod matrix_tests {
 
     #[test]
     fn test_4_by_4_eq() {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (1.0, 2.0, 3.0, 4.0),
             (5.0, 6.0, 7.0, 8.0),
             (9.0, 8.0, 7.0, 6.0),
             (5.0, 4.0, 3.0, 2.0),
         ));
-        let matrix2 = matrix::matrix4((
+        let matrix2 = matrix::Matrix4::new((
             (1.0, 2.0, 3.0, 4.0),
             (5.0, 6.0, 7.0, 8.0),
             (9.0, 8.0, 7.0, 6.0),
@@ -361,13 +367,13 @@ mod matrix_tests {
 
     #[test]
     fn test_4_by_4_ne() {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (1.0, 2.0, 3.0, 4.0),
             (5.0, 6.0, 7.0, 8.0),
             (9.0, 8.0, 7.0, 6.0),
             (5.0, 4.0, 3.0, 2.0),
         ));
-        let matrix2 = matrix::matrix4((
+        let matrix2 = matrix::Matrix4::new((
             (2.0, 3.0, 4.0, 5.0),
             (6.0, 7.0, 8.0, 9.0),
             (8.0, 7.0, 6.0, 5.0),
@@ -379,45 +385,45 @@ mod matrix_tests {
 
     #[test]
     fn test_3_by_3_eq() {
-        let matrix1 = matrix::matrix3(((1.0, 2.0, 3.0), (5.0, 6.0, 7.0), (9.0, 8.0, 7.0)));
-        let matrix2 = matrix::matrix3(((1.0, 2.0, 3.0), (5.0, 6.0, 7.0), (9.0, 8.0, 7.0)));
+        let matrix1 = matrix::Matrix3::new(((1.0, 2.0, 3.0), (5.0, 6.0, 7.0), (9.0, 8.0, 7.0)));
+        let matrix2 = matrix::Matrix3::new(((1.0, 2.0, 3.0), (5.0, 6.0, 7.0), (9.0, 8.0, 7.0)));
 
         assert_eq!(matrix1, matrix2);
     }
 
     #[test]
     fn test_3_by_3_ne() {
-        let matrix1 = matrix::matrix3(((1.0, 2.0, 3.0), (5.0, 6.0, 7.0), (9.0, 8.0, 7.0)));
-        let matrix2 = matrix::matrix3(((2.0, 3.0, 4.0), (6.0, 7.0, 8.0), (8.0, 7.0, 6.0)));
+        let matrix1 = matrix::Matrix3::new(((1.0, 2.0, 3.0), (5.0, 6.0, 7.0), (9.0, 8.0, 7.0)));
+        let matrix2 = matrix::Matrix3::new(((2.0, 3.0, 4.0), (6.0, 7.0, 8.0), (8.0, 7.0, 6.0)));
 
         assert_ne!(matrix1, matrix2);
     }
 
     #[test]
     fn test_2_by_2_eq() {
-        let matrix1 = matrix::matrix2(((1.0, 2.0), (5.0, 6.0)));
-        let matrix2 = matrix::matrix2(((1.0, 2.0), (5.0, 6.0)));
+        let matrix1 = matrix::Matrix2::new(((1.0, 2.0), (5.0, 6.0)));
+        let matrix2 = matrix::Matrix2::new(((1.0, 2.0), (5.0, 6.0)));
 
         assert_eq!(matrix1, matrix2);
     }
 
     #[test]
     fn test_2_by_2_ne() {
-        let matrix1 = matrix::matrix2(((1.0, 2.0), (5.0, 6.0)));
-        let matrix2 = matrix::matrix2(((2.0, 3.0), (6.0, 7.0)));
+        let matrix1 = matrix::Matrix2::new(((1.0, 2.0), (5.0, 6.0)));
+        let matrix2 = matrix::Matrix2::new(((2.0, 3.0), (6.0, 7.0)));
 
         assert_ne!(matrix1, matrix2);
     }
 
     #[test]
     fn test_matrix_multiplication() {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (1.0, 2.0, 3.0, 4.0),
             (5.0, 6.0, 7.0, 8.0),
             (9.0, 8.0, 7.0, 6.0),
             (5.0, 4.0, 3.0, 2.0),
         ));
-        let matrix2 = matrix::matrix4((
+        let matrix2 = matrix::Matrix4::new((
             (-2.0, 1.0, 2.0, 3.0),
             (3.0, 2.0, 1.0, -1.0),
             (4.0, 3.0, 6.0, 5.0),
@@ -428,7 +434,7 @@ mod matrix_tests {
 
         assert_eq!(
             matrix3,
-            matrix::matrix4((
+            matrix::Matrix4::new((
                 (20.0, 22.0, 50.0, 48.0),
                 (44.0, 54.0, 114.0, 108.0),
                 (40.0, 58.0, 110.0, 102.0),
@@ -439,7 +445,7 @@ mod matrix_tests {
 
     #[test]
     fn test_tuple_multiplication() {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (1.0, 2.0, 3.0, 4.0),
             (2.0, 4.0, 4.0, 2.0),
             (8.0, 6.0, 4.0, 1.0),
@@ -467,7 +473,7 @@ mod matrix_tests {
 
     #[test]
     fn test_identity_matrix() {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (0.0, 1.0, 2.0, 3.0),
             (1.0, 2.0, 4.0, 8.0),
             (2.0, 4.0, 8.0, 16.0),
@@ -478,7 +484,7 @@ mod matrix_tests {
 
         assert_eq!(
             result,
-            matrix::matrix4((
+            matrix::Matrix4::new((
                 (0.0, 1.0, 2.0, 3.0),
                 (1.0, 2.0, 4.0, 8.0),
                 (2.0, 4.0, 8.0, 16.0),
@@ -489,7 +495,7 @@ mod matrix_tests {
 
     #[test]
     fn test_transpose_4_by_4() {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (0.0, 9.0, 3.0, 0.0),
             (9.0, 8.0, 0.0, 8.0),
             (1.0, 8.0, 5.0, 3.0),
@@ -500,7 +506,7 @@ mod matrix_tests {
 
         assert_eq!(
             result,
-            matrix::matrix4((
+            matrix::Matrix4::new((
                 (0.0, 9.0, 1.0, 0.0),
                 (9.0, 8.0, 8.0, 0.0),
                 (3.0, 0.0, 5.0, 5.0),
@@ -516,35 +522,36 @@ mod matrix_tests {
 
     #[test]
     fn test_determinant_of_2_by_2() {
-        let matrix1 = matrix::matrix2(((1.0, 5.0), (-3.0, 2.0)));
+        let matrix1 = matrix::Matrix2::new(((1.0, 5.0), (-3.0, 2.0)));
 
         assert_eq!(17.0, matrix::determinant2(&matrix1));
     }
 
     #[test]
     fn test_submatrix_of_3_by_3() {
-        let matrix1 = matrix::matrix3(((1.0, 5.0, 0.0), (-3.0, 2.0, 7.0), (0.0, 6.0, -3.0)));
-        let expected = matrix::matrix2(((-3.0, 2.0), (0.0, 6.0)));
+        let matrix1 = matrix::Matrix3::new(((1.0, 5.0, 0.0), (-3.0, 2.0, 7.0), (0.0, 6.0, -3.0)));
+        let expected = matrix::Matrix2::new(((-3.0, 2.0), (0.0, 6.0)));
 
         assert_eq!(expected, matrix::submatrix3(&matrix1, 0, 2));
     }
 
     #[test]
     fn test_submatrix_of_4_by_4() {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (-6.0, 1.0, 1.0, 6.0),
             (-8.0, 5.0, 8.0, 6.0),
             (-1.0, 0.0, 8.0, 2.0),
             (-7.0, 1.0, -1.0, 1.0),
         ));
-        let expected = matrix::matrix3(((-6.0, 1.0, 6.0), (-8.0, 8.0, 6.0), (-7.0, -1.0, 1.0)));
+        let expected =
+            matrix::Matrix3::new(((-6.0, 1.0, 6.0), (-8.0, 8.0, 6.0), (-7.0, -1.0, 1.0)));
 
         assert_eq!(expected, matrix::submatrix4(&matrix1, 2, 1));
     }
 
     #[test]
     fn test_minor_of_3_by_3() {
-        let matrix1 = matrix::matrix3(((3.0, 5.0, 0.0), (2.0, -1.0, -7.0), (6.0, -1.0, 5.0)));
+        let matrix1 = matrix::Matrix3::new(((3.0, 5.0, 0.0), (2.0, -1.0, -7.0), (6.0, -1.0, 5.0)));
         let matrix2 = matrix::submatrix3(&matrix1, 1, 0);
 
         assert_eq!(25.0, matrix::determinant2(&matrix2));
@@ -553,7 +560,7 @@ mod matrix_tests {
 
     #[test]
     fn test_confactor_of_a_3_by_3() {
-        let matrix1 = matrix::matrix3(((3.0, 5.0, 0.0), (2.0, -1.0, -7.0), (6.0, -1.0, 5.0)));
+        let matrix1 = matrix::Matrix3::new(((3.0, 5.0, 0.0), (2.0, -1.0, -7.0), (6.0, -1.0, 5.0)));
 
         assert_eq!(-12.0, matrix::minor3(&matrix1, 0, 0));
         assert_eq!(-12.0, matrix::cofactor3(&matrix1, 0, 0));
@@ -563,7 +570,7 @@ mod matrix_tests {
 
     #[test]
     fn test_cofactor_of_a_4_by_4() {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (-2.0, -8.0, 3.0, 5.0),
             (-3.0, 1.0, 7.0, 3.0),
             (1.0, 2.0, -9.0, 6.0),
@@ -578,7 +585,7 @@ mod matrix_tests {
 
     #[test]
     fn test_determinant_of_a_3_by_3() {
-        let matrix1 = matrix::matrix3(((1.0, 2.0, 6.0), (-5.0, 8.0, -4.0), (2.0, 6.0, 4.0)));
+        let matrix1 = matrix::Matrix3::new(((1.0, 2.0, 6.0), (-5.0, 8.0, -4.0), (2.0, 6.0, 4.0)));
 
         assert_eq!(56.0, matrix::cofactor3(&matrix1, 0, 0));
         assert_eq!(12.0, matrix::cofactor3(&matrix1, 0, 1));
@@ -588,7 +595,7 @@ mod matrix_tests {
 
     #[test]
     fn test_determinant_of_a_4_by_4() {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (-2.0, -8.0, 3.0, 5.0),
             (-3.0, 1.0, 7.0, 3.0),
             (1.0, 2.0, -9.0, 6.0),
@@ -600,7 +607,7 @@ mod matrix_tests {
 
     #[test]
     fn test_is_invertible_of_invertible_4_by_4() {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (6.0, 4.0, 4.0, 4.0),
             (5.0, 5.0, 7.0, 6.0),
             (4.0, -9.0, 3.0, -7.0),
@@ -613,7 +620,7 @@ mod matrix_tests {
 
     #[test]
     fn test_is_invertible_of_non_invertible_4_by_4() {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (-4.0, 2.0, -2.0, -3.0),
             (9.0, 6.0, 2.0, 6.0),
             (0.0, -5.0, 1.0, -5.0),
@@ -626,7 +633,7 @@ mod matrix_tests {
 
     #[test]
     fn test_inverse_of_4_by_4() -> Result<(), Box<Error>> {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (-5.0, 2.0, 6.0, -8.0),
             (1.0, -5.0, 1.0, 8.0),
             (7.0, 7.0, -6.0, -7.0),
@@ -641,7 +648,7 @@ mod matrix_tests {
 
         assert_eq!(105.0, matrix::cofactor4(&matrix1, 3, 2));
         assert_eq!(105.0 / 532.0, inverse.m[2][3]);
-        let expected = matrix::matrix4((
+        let expected = matrix::Matrix4::new((
             (
                 0.21804511278195488,
                 0.45112781954887216,
@@ -673,7 +680,7 @@ mod matrix_tests {
 
     #[test]
     fn test_inverse_of_another_4_by_4() -> Result<(), Box<Error>> {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (8.0, -5.0, 9.0, 2.0),
             (7.0, 5.0, 6.0, 1.0),
             (-6.0, 0.0, 9.0, 6.0),
@@ -682,7 +689,7 @@ mod matrix_tests {
 
         let inverse = matrix::inverse4(&matrix1)?;
 
-        let expected = matrix::matrix4((
+        let expected = matrix::Matrix4::new((
             (
                 -0.15384615384615385,
                 -0.15384615384615385,
@@ -714,7 +721,7 @@ mod matrix_tests {
 
     #[test]
     fn test_inverse_of_a_third_4_by_4() -> Result<(), Box<Error>> {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (9.0, 3.0, 0.0, 9.0),
             (-5.0, -2.0, -6.0, -3.0),
             (-4.0, 9.0, 6.0, 4.0),
@@ -723,7 +730,7 @@ mod matrix_tests {
 
         let inverse = matrix::inverse4(&matrix1)?;
 
-        let expected = matrix::matrix4((
+        let expected = matrix::Matrix4::new((
             (
                 -0.040740740740740744,
                 -0.07777777777777778,
@@ -755,7 +762,7 @@ mod matrix_tests {
 
     #[test]
     fn test_non_invertable_returns_error() {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (-4.0, 2.0, -2.0, -3.0),
             (9.0, 6.0, 2.0, 6.0),
             (0.0, -5.0, 1.0, -5.0),
@@ -768,13 +775,13 @@ mod matrix_tests {
 
     #[test]
     fn test_multiply_a_product_by_its_inverse() -> Result<(), Box<Error>> {
-        let matrix1 = matrix::matrix4((
+        let matrix1 = matrix::Matrix4::new((
             (3.0, -9.0, 7.0, 3.0),
             (3.0, -8.0, 2.0, -9.0),
             (-4.0, 4.0, 4.0, 1.0),
             (-6.0, 5.0, -1.0, 1.0),
         ));
-        let matrix2 = matrix::matrix4((
+        let matrix2 = matrix::Matrix4::new((
             (8.0, 2.0, 2.0, 2.0),
             (3.0, -1.0, 7.0, 0.0),
             (7.0, 0.0, 5.0, 4.0),
