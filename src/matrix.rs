@@ -2,6 +2,10 @@ use std::ops::{Index, Mul};
 
 use crate::tuple;
 
+trait Transposeable {
+    fn transpose(&self) -> Self;
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Matrix4 {
     m: [[f64; 4]; 4],
@@ -101,13 +105,15 @@ impl Mul<tuple::Tuple> for Matrix4 {
     }
 }
 
-fn transpose4(input: &Matrix4) -> Matrix4 {
-    matrix4((
-        (input.m[0][0], input.m[1][0], input.m[2][0], input.m[3][0]),
-        (input.m[0][1], input.m[1][1], input.m[2][1], input.m[3][1]),
-        (input.m[0][2], input.m[1][2], input.m[2][2], input.m[3][2]),
-        (input.m[0][3], input.m[1][3], input.m[2][3], input.m[3][3]),
-    ))
+impl Transposeable for Matrix4 {
+    fn transpose(&self) -> Self {
+        matrix4((
+            (self.m[0][0], self.m[1][0], self.m[2][0], self.m[3][0]),
+            (self.m[0][1], self.m[1][1], self.m[2][1], self.m[3][1]),
+            (self.m[0][2], self.m[1][2], self.m[2][2], self.m[3][2]),
+            (self.m[0][3], self.m[1][3], self.m[2][3], self.m[3][3]),
+        ))
+    }
 }
 
 fn determinant2(input: &Matrix2) -> f64 {
@@ -277,6 +283,7 @@ mod matrix_tests {
     use assert_approx_eq::assert_approx_eq;
 
     use crate::matrix;
+    use crate::matrix::Transposeable;
     use crate::tuple;
 
     #[test]
@@ -481,7 +488,7 @@ mod matrix_tests {
     }
 
     #[test]
-    fn test_transpose_matrix() {
+    fn test_transpose_4_by_4() {
         let matrix1 = matrix::matrix4((
             (0.0, 9.0, 3.0, 0.0),
             (9.0, 8.0, 0.0, 8.0),
@@ -489,7 +496,7 @@ mod matrix_tests {
             (0.0, 0.0, 5.0, 8.0),
         ));
 
-        let result = matrix::transpose4(&matrix1);
+        let result = matrix1.transpose();
 
         assert_eq!(
             result,
@@ -504,10 +511,7 @@ mod matrix_tests {
 
     #[test]
     fn test_transpose_identity_matrix() {
-        assert_eq!(
-            matrix::transpose4(&matrix::IDENTITY_MATRIX),
-            matrix::IDENTITY_MATRIX,
-        )
+        assert_eq!(matrix::IDENTITY_MATRIX.transpose(), matrix::IDENTITY_MATRIX,)
     }
 
     #[test]
