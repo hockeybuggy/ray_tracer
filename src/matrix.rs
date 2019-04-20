@@ -11,6 +11,14 @@ trait Submatrixable {
     fn submatrix(&self, row_to_exclude: usize, col_to_exclude: usize) -> Self::Submatrix;
 }
 
+trait Determinable {
+    fn determinant(&self) -> f64;
+}
+
+trait Minorable {
+    fn minor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64;
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Matrix4 {
     m: [[f64; 4]; 4],
@@ -125,8 +133,10 @@ impl Transposeable for Matrix4 {
     }
 }
 
-fn determinant2(input: &Matrix2) -> f64 {
-    input.m[0][0] * input.m[1][1] - input.m[0][1] * input.m[1][0]
+impl Determinable for Matrix2 {
+    fn determinant(&self) -> f64 {
+        self.m[0][0] * self.m[1][1] - self.m[0][1] * self.m[1][0]
+    }
 }
 
 impl Submatrixable for Matrix3 {
@@ -179,16 +189,20 @@ impl Submatrixable for Matrix4 {
     }
 }
 
-fn minor3(input: &Matrix3, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
-    determinant2(&input.submatrix(row_to_exclude, col_to_exclude))
+impl Minorable for Matrix3 {
+    fn minor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
+        self.submatrix(row_to_exclude, col_to_exclude).determinant()
+    }
 }
 
-fn minor4(input: &Matrix4, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
-    determinant3(&input.submatrix(row_to_exclude, col_to_exclude))
+impl Minorable for Matrix4 {
+    fn minor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
+        self.submatrix(row_to_exclude, col_to_exclude).determinant()
+    }
 }
 
 fn cofactor3(input: &Matrix3, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
-    let minor = minor3(&input, row_to_exclude, col_to_exclude);
+    let minor = input.minor(row_to_exclude, col_to_exclude);
     if (row_to_exclude + col_to_exclude) % 2 == 0 {
         minor
     } else {
@@ -196,16 +210,18 @@ fn cofactor3(input: &Matrix3, row_to_exclude: usize, col_to_exclude: usize) -> f
     }
 }
 
-fn determinant3(input: &Matrix3) -> f64 {
-    let mut determinant = 0.0;
-    for x in 0..3 {
-        determinant = determinant + input.m[0][x] * cofactor3(&input, 0, x);
+impl Determinable for Matrix3 {
+    fn determinant(&self) -> f64 {
+        let mut determinant = 0.0;
+        for x in 0..3 {
+            determinant = determinant + self.m[0][x] * cofactor3(&self, 0, x);
+        }
+        determinant
     }
-    determinant
 }
 
 fn cofactor4(input: &Matrix4, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
-    let minor = minor4(&input, row_to_exclude, col_to_exclude);
+    let minor = input.minor(row_to_exclude, col_to_exclude);
     if (row_to_exclude + col_to_exclude) % 2 == 0 {
         minor
     } else {
@@ -213,16 +229,18 @@ fn cofactor4(input: &Matrix4, row_to_exclude: usize, col_to_exclude: usize) -> f
     }
 }
 
-fn determinant4(input: &Matrix4) -> f64 {
-    let mut determinant = 0.0;
-    for x in 0..4 {
-        determinant = determinant + input.m[0][x] * cofactor4(&input, 0, x);
+impl Determinable for Matrix4 {
+    fn determinant(&self) -> f64 {
+        let mut determinant = 0.0;
+        for x in 0..4 {
+            determinant = determinant + self.m[0][x] * cofactor4(&self, 0, x);
+        }
+        determinant
     }
-    determinant
 }
 
 fn is_invertible4(input: &Matrix4) -> bool {
-    determinant4(&input) != 0.0
+    input.determinant() != 0.0
 }
 
 fn inverse4(input: &Matrix4) -> Result<Matrix4, &'static str> {
@@ -232,7 +250,7 @@ fn inverse4(input: &Matrix4) -> Result<Matrix4, &'static str> {
 
     let mut inverse = Matrix4::empty();
 
-    let determinant = determinant4(&input);
+    let determinant = input.determinant();
     for x in 0..4 {
         for y in 0..4 {
             let c = cofactor4(&input, y, x);
@@ -308,7 +326,7 @@ mod matrix_tests {
     use assert_approx_eq::assert_approx_eq;
 
     use crate::matrix;
-    use crate::matrix::{Submatrixable, Transposeable};
+    use crate::matrix::{Determinable, Minorable, Submatrixable, Transposeable};
     use crate::tuple;
 
     #[test]
@@ -543,7 +561,7 @@ mod matrix_tests {
     fn test_determinant_of_2_by_2() {
         let matrix1 = matrix::Matrix2::new(((1.0, 5.0), (-3.0, 2.0)));
 
-        assert_eq!(17.0, matrix::determinant2(&matrix1));
+        assert_eq!(17.0, matrix1.determinant());
     }
 
     #[test]
@@ -573,17 +591,17 @@ mod matrix_tests {
         let matrix1 = matrix::Matrix3::new(((3.0, 5.0, 0.0), (2.0, -1.0, -7.0), (6.0, -1.0, 5.0)));
         let matrix2 = matrix1.submatrix(1, 0);
 
-        assert_eq!(25.0, matrix::determinant2(&matrix2));
-        assert_eq!(25.0, matrix::minor3(&matrix1, 1, 0));
+        assert_eq!(25.0, matrix2.determinant());
+        assert_eq!(25.0, matrix1.minor(1, 0));
     }
 
     #[test]
     fn test_confactor_of_a_3_by_3() {
         let matrix1 = matrix::Matrix3::new(((3.0, 5.0, 0.0), (2.0, -1.0, -7.0), (6.0, -1.0, 5.0)));
 
-        assert_eq!(-12.0, matrix::minor3(&matrix1, 0, 0));
+        assert_eq!(-12.0, matrix1.minor(0, 0));
         assert_eq!(-12.0, matrix::cofactor3(&matrix1, 0, 0));
-        assert_eq!(25.0, matrix::minor3(&matrix1, 1, 0));
+        assert_eq!(25.0, matrix1.minor(1, 0));
         assert_eq!(-25.0, matrix::cofactor3(&matrix1, 1, 0));
     }
 
@@ -609,7 +627,7 @@ mod matrix_tests {
         assert_eq!(56.0, matrix::cofactor3(&matrix1, 0, 0));
         assert_eq!(12.0, matrix::cofactor3(&matrix1, 0, 1));
         assert_eq!(-46.0, matrix::cofactor3(&matrix1, 0, 2));
-        assert_eq!(-196.0, matrix::determinant3(&matrix1));
+        assert_eq!(-196.0, matrix1.determinant());
     }
 
     #[test]
@@ -621,7 +639,7 @@ mod matrix_tests {
             (-6.0, 7.0, 7.0, -9.0),
         ));
 
-        assert_eq!(-4071.0, matrix::determinant4(&matrix1));
+        assert_eq!(-4071.0, matrix1.determinant());
     }
 
     #[test]
@@ -633,7 +651,7 @@ mod matrix_tests {
             (9.0, 1.0, 7.0, -6.0),
         ));
 
-        assert_eq!(-2120.0, matrix::determinant4(&matrix1));
+        assert_eq!(-2120.0, matrix1.determinant());
         assert_eq!(true, matrix::is_invertible4(&matrix1));
     }
 
@@ -646,7 +664,7 @@ mod matrix_tests {
             (0.0, 0.0, 0.0, 0.0),
         ));
 
-        assert_eq!(0.0, matrix::determinant4(&matrix1));
+        assert_eq!(0.0, matrix1.determinant());
         assert_eq!(false, matrix::is_invertible4(&matrix1));
     }
 
@@ -661,7 +679,7 @@ mod matrix_tests {
 
         let inverse = matrix::inverse4(&matrix1)?;
 
-        assert_eq!(532.0, matrix::determinant4(&matrix1));
+        assert_eq!(532.0, matrix1.determinant());
         assert_eq!(-160.0, matrix::cofactor4(&matrix1, 2, 3));
         assert_eq!(-160.0 / 532.0, inverse.m[3][2]);
 
