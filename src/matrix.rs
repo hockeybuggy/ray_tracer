@@ -2,7 +2,7 @@ use std::ops::{Index, Mul};
 
 use crate::tuple;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Matrix4 {
     m: [[f64; 4]; 4],
 }
@@ -97,7 +97,7 @@ impl Mul<tuple::Tuple> for Matrix4 {
     }
 }
 
-fn transpose(input: Matrix4) -> Matrix4 {
+fn transpose4(input: &Matrix4) -> Matrix4 {
     matrix4((
         (input.m[0][0], input.m[1][0], input.m[2][0], input.m[3][0]),
         (input.m[0][1], input.m[1][1], input.m[2][1], input.m[3][1]),
@@ -198,6 +198,29 @@ fn is_invertible4(input: &Matrix4) -> bool {
     determinant4(&input) != 0.0
 }
 
+fn inverse4(input: &Matrix4) -> Result<Matrix4, &'static str> {
+    if !is_invertible4(&input) {
+        return Err("uninvertable_error");
+    }
+
+    let mut inverse = matrix4((
+        (0.0, 0.0, 0.0, 0.0),
+        (0.0, 0.0, 0.0, 0.0),
+        (0.0, 0.0, 0.0, 0.0),
+        (0.0, 0.0, 0.0, 0.0),
+    ));
+
+    let determinant = determinant4(&input);
+    for x in 0..4 {
+        for y in 0..4 {
+            let c = cofactor4(&input, y, x);
+            inverse.m[x as usize][y as usize] = c / determinant;
+        }
+    }
+
+    Ok(inverse)
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Matrix3 {
     m: [[f64; 3]; 3],
@@ -242,6 +265,10 @@ impl Index<(u64, u64)> for Matrix2 {
 
 #[cfg(test)]
 mod matrix_tests {
+    use std::error::Error;
+
+    use assert_approx_eq::assert_approx_eq;
+
     use crate::matrix;
     use crate::tuple;
 
@@ -455,7 +482,7 @@ mod matrix_tests {
             (0.0, 0.0, 5.0, 8.0),
         ));
 
-        let result = matrix::transpose(matrix1);
+        let result = matrix::transpose4(&matrix1);
 
         assert_eq!(
             result,
@@ -471,7 +498,7 @@ mod matrix_tests {
     #[test]
     fn test_transpose_identity_matrix() {
         assert_eq!(
-            matrix::transpose(matrix::IDENTITY_MATRIX),
+            matrix::transpose4(&matrix::IDENTITY_MATRIX),
             matrix::IDENTITY_MATRIX,
         )
     }
@@ -560,27 +587,199 @@ mod matrix_tests {
         assert_eq!(-4071.0, matrix::determinant4(&matrix1));
     }
 
-    fn test_is_invertible_of_invertible_4_by_b4() {
+    #[test]
+    fn test_is_invertible_of_invertible_4_by_4() {
         let matrix1 = matrix::matrix4((
-            (0.0, 0.0, 0.0, 0.0),
-            (0.0, 0.0, 0.0, 0.0),
-            (0.0, 0.0, 0.0, 0.0),
-            (0.0, 0.0, 0.0, 0.0),
+            (6.0, 4.0, 4.0, 4.0),
+            (5.0, 5.0, 7.0, 6.0),
+            (4.0, -9.0, 3.0, -7.0),
+            (9.0, 1.0, 7.0, -6.0),
         ));
 
         assert_eq!(-2120.0, matrix::determinant4(&matrix1));
         assert_eq!(true, matrix::is_invertible4(&matrix1));
     }
 
-    fn test_is_invertible_of_non_invertible_4_by_b4() {
+    #[test]
+    fn test_is_invertible_of_non_invertible_4_by_4() {
         let matrix1 = matrix::matrix4((
-            (0.0, 0.0, 0.0, 0.0),
-            (0.0, 0.0, 0.0, 0.0),
-            (0.0, 0.0, 0.0, 0.0),
+            (-4.0, 2.0, -2.0, -3.0),
+            (9.0, 6.0, 2.0, 6.0),
+            (0.0, -5.0, 1.0, -5.0),
             (0.0, 0.0, 0.0, 0.0),
         ));
 
         assert_eq!(0.0, matrix::determinant4(&matrix1));
         assert_eq!(false, matrix::is_invertible4(&matrix1));
+    }
+
+    #[test]
+    fn test_inverse_of_4_by_4() -> Result<(), Box<Error>> {
+        let matrix1 = matrix::matrix4((
+            (-5.0, 2.0, 6.0, -8.0),
+            (1.0, -5.0, 1.0, 8.0),
+            (7.0, 7.0, -6.0, -7.0),
+            (1.0, -3.0, 7.0, 4.0),
+        ));
+
+        let inverse = matrix::inverse4(&matrix1)?;
+
+        assert_eq!(532.0, matrix::determinant4(&matrix1));
+        assert_eq!(-160.0, matrix::cofactor4(&matrix1, 2, 3));
+        assert_eq!(-160.0 / 532.0, inverse.m[3][2]);
+
+        assert_eq!(105.0, matrix::cofactor4(&matrix1, 3, 2));
+        assert_eq!(105.0 / 532.0, inverse.m[2][3]);
+        let expected = matrix::matrix4((
+            (
+                0.21804511278195488,
+                0.45112781954887216,
+                0.24060150375939848,
+                -0.045112781954887216,
+            ),
+            (
+                -0.8082706766917294,
+                -1.4567669172932332,
+                -0.44360902255639095,
+                0.5206766917293233,
+            ),
+            (
+                -0.07894736842105263,
+                -0.2236842105263158,
+                -0.05263157894736842,
+                0.19736842105263158,
+            ),
+            (
+                -0.5225563909774437,
+                -0.8139097744360902,
+                -0.3007518796992481,
+                0.30639097744360905,
+            ),
+        ));
+        assert_eq!(expected, inverse);
+        Ok(())
+    }
+
+    #[test]
+    fn test_inverse_of_another_4_by_4() -> Result<(), Box<Error>> {
+        let matrix1 = matrix::matrix4((
+            (8.0, -5.0, 9.0, 2.0),
+            (7.0, 5.0, 6.0, 1.0),
+            (-6.0, 0.0, 9.0, 6.0),
+            (-3.0, 0.0, -9.0, -4.0),
+        ));
+
+        let inverse = matrix::inverse4(&matrix1)?;
+
+        let expected = matrix::matrix4((
+            (
+                -0.15384615384615385,
+                -0.15384615384615385,
+                -0.28205128205128205,
+                -0.5384615384615384,
+            ),
+            (
+                -0.07692307692307693,
+                0.12307692307692308,
+                0.02564102564102564,
+                0.03076923076923077,
+            ),
+            (
+                0.358974358974359,
+                0.358974358974359,
+                0.4358974358974359,
+                0.9230769230769231,
+            ),
+            (
+                -0.6923076923076923,
+                -0.6923076923076923,
+                -0.7692307692307693,
+                -1.9230769230769231,
+            ),
+        ));
+        assert_eq!(expected, inverse);
+        Ok(())
+    }
+
+    #[test]
+    fn test_inverse_of_a_third_4_by_4() -> Result<(), Box<Error>> {
+        let matrix1 = matrix::matrix4((
+            (9.0, 3.0, 0.0, 9.0),
+            (-5.0, -2.0, -6.0, -3.0),
+            (-4.0, 9.0, 6.0, 4.0),
+            (-7.0, 6.0, 6.0, 2.0),
+        ));
+
+        let inverse = matrix::inverse4(&matrix1)?;
+
+        let expected = matrix::matrix4((
+            (
+                -0.040740740740740744,
+                -0.07777777777777778,
+                0.14444444444444443,
+                -0.2222222222222222,
+            ),
+            (
+                -0.07777777777777778,
+                0.03333333333333333,
+                0.36666666666666664,
+                -0.3333333333333333,
+            ),
+            (
+                -0.029012345679012345,
+                -0.14629629629629629,
+                -0.10925925925925926,
+                0.12962962962962962,
+            ),
+            (
+                0.17777777777777778,
+                0.06666666666666667,
+                -0.26666666666666666,
+                0.3333333333333333,
+            ),
+        ));
+        assert_eq!(expected, inverse);
+        Ok(())
+    }
+
+    #[test]
+    fn test_non_invertable_returns_error() {
+        let matrix1 = matrix::matrix4((
+            (-4.0, 2.0, -2.0, -3.0),
+            (9.0, 6.0, 2.0, 6.0),
+            (0.0, -5.0, 1.0, -5.0),
+            (0.0, 0.0, 0.0, 0.0),
+        ));
+        let uninvertable_error = matrix::inverse4(&matrix1);
+
+        assert_eq!(uninvertable_error, Err("uninvertable_error"));
+    }
+
+    #[test]
+    fn test_multiply_a_product_by_its_inverse() -> Result<(), Box<Error>> {
+        let matrix1 = matrix::matrix4((
+            (3.0, -9.0, 7.0, 3.0),
+            (3.0, -8.0, 2.0, -9.0),
+            (-4.0, 4.0, 4.0, 1.0),
+            (-6.0, 5.0, -1.0, 1.0),
+        ));
+        let matrix2 = matrix::matrix4((
+            (8.0, 2.0, 2.0, 2.0),
+            (3.0, -1.0, 7.0, 0.0),
+            (7.0, 0.0, 5.0, 4.0),
+            (6.0, -2.0, 0.0, 5.0),
+        ));
+
+        let product = matrix1 * matrix2;
+        let product_times_inverse = product * matrix::inverse4(&matrix2)?;
+        for x in 0..4 {
+            for y in 0..4 {
+                assert_approx_eq!(
+                    product_times_inverse[(x as u64, y as u64)],
+                    matrix1[(x as u64, y as u64)]
+                );
+            }
+        }
+        Ok(())
     }
 }
