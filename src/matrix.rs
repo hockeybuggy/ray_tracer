@@ -34,11 +34,11 @@ const IDENTITY_MATRIX: Matrix4 = Matrix4 {
     ],
 };
 
-impl Index<(u64, u64)> for Matrix4 {
+impl Index<(usize, usize)> for Matrix4 {
     type Output = f64;
 
-    fn index(&self, key: (u64, u64)) -> &Self::Output {
-        &self.m[key.0 as usize][key.1 as usize]
+    fn index(&self, key: (usize, usize)) -> &Self::Output {
+        &self.m[key.0][key.1]
     }
 }
 
@@ -110,7 +110,7 @@ fn determinant2(input: &Matrix2) -> f64 {
     input.m[0][0] * input.m[1][1] - input.m[0][1] * input.m[1][0]
 }
 
-fn submatrix3(input: &Matrix3, row_to_exclude: u64, col_to_exclude: u64) -> Matrix2 {
+fn submatrix3(input: &Matrix3, row_to_exclude: usize, col_to_exclude: usize) -> Matrix2 {
     let mut result = matrix2(((0.0, 0.0), (0.0, 0.0)));
     let mut curr_row = 0;
     let mut curr_col = 0;
@@ -131,7 +131,7 @@ fn submatrix3(input: &Matrix3, row_to_exclude: u64, col_to_exclude: u64) -> Matr
     result
 }
 
-fn submatrix4(input: &Matrix4, row_to_exclude: u64, col_to_exclude: u64) -> Matrix3 {
+fn submatrix4(input: &Matrix4, row_to_exclude: usize, col_to_exclude: usize) -> Matrix3 {
     let mut result = matrix3(((0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)));
     let mut curr_row = 0;
     let mut curr_col = 0;
@@ -152,15 +152,15 @@ fn submatrix4(input: &Matrix4, row_to_exclude: u64, col_to_exclude: u64) -> Matr
     result
 }
 
-fn minor3(input: &Matrix3, row_to_exclude: u64, col_to_exclude: u64) -> f64 {
+fn minor3(input: &Matrix3, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
     determinant2(&submatrix3(input, row_to_exclude, col_to_exclude))
 }
 
-fn minor4(input: &Matrix4, row_to_exclude: u64, col_to_exclude: u64) -> f64 {
+fn minor4(input: &Matrix4, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
     determinant3(&submatrix4(&input, row_to_exclude, col_to_exclude))
 }
 
-fn cofactor3(input: &Matrix3, row_to_exclude: u64, col_to_exclude: u64) -> f64 {
+fn cofactor3(input: &Matrix3, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
     let minor = minor3(&input, row_to_exclude, col_to_exclude);
     if (row_to_exclude + col_to_exclude) % 2 == 0 {
         minor
@@ -172,12 +172,12 @@ fn cofactor3(input: &Matrix3, row_to_exclude: u64, col_to_exclude: u64) -> f64 {
 fn determinant3(input: &Matrix3) -> f64 {
     let mut determinant = 0.0;
     for x in 0..3 {
-        determinant = determinant + input.m[0][x] * cofactor3(&input, 0 as u64, x as u64);
+        determinant = determinant + input.m[0][x] * cofactor3(&input, 0, x);
     }
     determinant
 }
 
-fn cofactor4(input: &Matrix4, row_to_exclude: u64, col_to_exclude: u64) -> f64 {
+fn cofactor4(input: &Matrix4, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
     let minor = minor4(&input, row_to_exclude, col_to_exclude);
     if (row_to_exclude + col_to_exclude) % 2 == 0 {
         minor
@@ -189,7 +189,7 @@ fn cofactor4(input: &Matrix4, row_to_exclude: u64, col_to_exclude: u64) -> f64 {
 fn determinant4(input: &Matrix4) -> f64 {
     let mut determinant = 0.0;
     for x in 0..4 {
-        determinant = determinant + input.m[0][x] * cofactor4(&input, 0 as u64, x as u64);
+        determinant = determinant + input.m[0][x] * cofactor4(&input, 0, x);
     }
     determinant
 }
@@ -236,11 +236,11 @@ pub fn matrix3(m: ((f64, f64, f64), (f64, f64, f64), (f64, f64, f64))) -> Matrix
     }
 }
 
-impl Index<(u64, u64)> for Matrix3 {
+impl Index<(usize, usize)> for Matrix3 {
     type Output = f64;
 
-    fn index(&self, key: (u64, u64)) -> &Self::Output {
-        &self.m[key.0 as usize][key.1 as usize]
+    fn index(&self, key: (usize, usize)) -> &Self::Output {
+        &self.m[key.0][key.1]
     }
 }
 
@@ -774,10 +774,7 @@ mod matrix_tests {
         let product_times_inverse = product * matrix::inverse4(&matrix2)?;
         for x in 0..4 {
             for y in 0..4 {
-                assert_approx_eq!(
-                    product_times_inverse[(x as u64, y as u64)],
-                    matrix1[(x as u64, y as u64)]
-                );
+                assert_approx_eq!(product_times_inverse[(x, y)], matrix1[(x, y)]);
             }
         }
         Ok(())
