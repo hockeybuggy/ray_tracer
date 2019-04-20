@@ -335,12 +335,22 @@ impl Determinant for Matrix2 {
 
 #[cfg(test)]
 mod matrix_tests {
-
     use assert_approx_eq::assert_approx_eq;
 
     use crate::matrix;
     use crate::matrix::{Cofactor, Determinant, Inverse, Minor, Submatrix, Transpose};
     use crate::tuple;
+
+    macro_rules! assert_matrix_approx_eq {
+        ( $a:expr, $b:expr) => {{
+            // use assert_approx_eq::assert_approx_eq;
+            for x in 0..4 {
+                for y in 0..4 {
+                    assert_approx_eq!($a[(x, y)], $b[(x, y)], 1e-5f64);
+                }
+            }
+        }};
+    }
 
     #[test]
     fn test_constructor_4_by_4() {
@@ -702,32 +712,12 @@ mod matrix_tests {
         assert_eq!(105.0, matrix1.cofactor(3, 2));
         assert_eq!(105.0 / 532.0, inverse.m[2][3]);
         let expected = matrix::Matrix4::new((
-            (
-                0.21804511278195488,
-                0.45112781954887216,
-                0.24060150375939848,
-                -0.045112781954887216,
-            ),
-            (
-                -0.8082706766917294,
-                -1.4567669172932332,
-                -0.44360902255639095,
-                0.5206766917293233,
-            ),
-            (
-                -0.07894736842105263,
-                -0.2236842105263158,
-                -0.05263157894736842,
-                0.19736842105263158,
-            ),
-            (
-                -0.5225563909774437,
-                -0.8139097744360902,
-                -0.3007518796992481,
-                0.30639097744360905,
-            ),
+            (0.21805, 0.45113, 0.24060, -0.04511),
+            (-0.80827, -1.45677, -0.44361, 0.52068),
+            (-0.0789475, -0.22368, -0.05263, 0.19737),
+            (-0.52256, -0.81391, -0.30075, 0.30639),
         ));
-        assert_eq!(expected, inverse);
+        assert_matrix_approx_eq!(expected, inverse);
     }
 
     #[test]
@@ -742,32 +732,12 @@ mod matrix_tests {
         let inverse = matrix1.inverse().unwrap();
 
         let expected = matrix::Matrix4::new((
-            (
-                -0.15384615384615385,
-                -0.15384615384615385,
-                -0.28205128205128205,
-                -0.5384615384615384,
-            ),
-            (
-                -0.07692307692307693,
-                0.12307692307692308,
-                0.02564102564102564,
-                0.03076923076923077,
-            ),
-            (
-                0.358974358974359,
-                0.358974358974359,
-                0.4358974358974359,
-                0.9230769230769231,
-            ),
-            (
-                -0.6923076923076923,
-                -0.6923076923076923,
-                -0.7692307692307693,
-                -1.9230769230769231,
-            ),
+            (-0.15385, -0.15385, -0.28205, -0.53846),
+            (-0.07692, 0.12308, 0.02564, 0.03077),
+            (0.35897, 0.35897, 0.43590, 0.92308),
+            (-0.6923, -0.6923, -0.76923, -1.92308),
         ));
-        assert_eq!(expected, inverse);
+        assert_matrix_approx_eq!(expected, inverse);
     }
 
     #[test]
@@ -782,32 +752,12 @@ mod matrix_tests {
         let inverse = matrix1.inverse().unwrap();
 
         let expected = matrix::Matrix4::new((
-            (
-                -0.040740740740740744,
-                -0.07777777777777778,
-                0.14444444444444443,
-                -0.2222222222222222,
-            ),
-            (
-                -0.07777777777777778,
-                0.03333333333333333,
-                0.36666666666666664,
-                -0.3333333333333333,
-            ),
-            (
-                -0.029012345679012345,
-                -0.14629629629629629,
-                -0.10925925925925926,
-                0.12962962962962962,
-            ),
-            (
-                0.17777777777777778,
-                0.06666666666666667,
-                -0.26666666666666666,
-                0.3333333333333333,
-            ),
+            (-0.04074, -0.07778, 0.14444, -0.22222),
+            (-0.07778, 0.03333, 0.36667, -0.33333),
+            (-0.02901, -0.14630, -0.10926, 0.12963),
+            (0.17778, 0.06667, -0.26667, 0.33333),
         ));
-        assert_eq!(expected, inverse);
+        assert_matrix_approx_eq!(expected, inverse);
     }
 
     #[test]
@@ -840,10 +790,6 @@ mod matrix_tests {
 
         let product = matrix1 * matrix2;
         let product_times_inverse = product * matrix2.inverse().unwrap();
-        for x in 0..4 {
-            for y in 0..4 {
-                assert_approx_eq!(product_times_inverse[(x, y)], matrix1[(x, y)]);
-            }
-        }
+        assert_matrix_approx_eq!(product_times_inverse, matrix1);
     }
 }
