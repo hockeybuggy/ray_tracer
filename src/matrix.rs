@@ -35,6 +35,14 @@ pub struct Matrix4 {
 
 impl Matrix4 {
     const SIZE: usize = 4;
+    const IDENTITY: Self = Self {
+        m: [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ],
+    };
 
     fn new(
         m: (
@@ -63,15 +71,6 @@ impl Matrix4 {
         ))
     }
 }
-
-const IDENTITY_MATRIX: Matrix4 = Matrix4 {
-    m: [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-    ],
-};
 
 impl Index<(usize, usize)> for Matrix4 {
     type Output = f64;
@@ -142,95 +141,6 @@ impl Transposeable for Matrix4 {
     }
 }
 
-impl Determinable for Matrix2 {
-    fn determinant(&self) -> f64 {
-        self.m[0][0] * self.m[1][1] - self.m[0][1] * self.m[1][0]
-    }
-}
-
-impl Submatrixable for Matrix3 {
-    type Submatrix = Matrix2;
-
-    fn submatrix(&self, row_to_exclude: usize, col_to_exclude: usize) -> Self::Submatrix {
-        let mut result = Self::Submatrix::empty();
-        let mut curr_row = 0;
-        let mut curr_col = 0;
-        for x in 0..Self::SIZE {
-            if x == row_to_exclude {
-                continue;
-            }
-            for y in 0..Self::SIZE {
-                if y == col_to_exclude {
-                    continue;
-                }
-                result.m[curr_row][curr_col] = self.m[x as usize][y as usize];
-                curr_col = curr_col + 1;
-            }
-            curr_col = 0;
-            curr_row = curr_row + 1;
-        }
-        result
-    }
-}
-
-impl Submatrixable for Matrix4 {
-    type Submatrix = Matrix3;
-
-    fn submatrix(&self, row_to_exclude: usize, col_to_exclude: usize) -> Self::Submatrix {
-        let mut result = Self::Submatrix::empty();
-        let mut curr_row = 0;
-        let mut curr_col = 0;
-        for x in 0..Self::SIZE {
-            if x == row_to_exclude {
-                continue;
-            }
-            for y in 0..Self::SIZE {
-                if y == col_to_exclude {
-                    continue;
-                }
-                result.m[curr_row][curr_col] = self.m[x as usize][y as usize];
-                curr_col = curr_col + 1;
-            }
-            curr_col = 0;
-            curr_row = curr_row + 1;
-        }
-        result
-    }
-}
-
-impl Minorable for Matrix3 {
-    fn minor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
-        self.submatrix(row_to_exclude, col_to_exclude).determinant()
-    }
-}
-
-impl Minorable for Matrix4 {
-    fn minor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
-        self.submatrix(row_to_exclude, col_to_exclude).determinant()
-    }
-}
-
-impl Cofactorable for Matrix3 {
-    fn cofactor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
-        let minor = self.minor(row_to_exclude, col_to_exclude);
-        if (row_to_exclude + col_to_exclude) % 2 == 0 {
-            minor
-        } else {
-            -minor
-        }
-    }
-}
-
-impl Determinable for Matrix3 {
-    fn determinant(&self) -> f64 {
-        let mut determinant = 0.0;
-        for x in 0..3 {
-            determinant = determinant + self.m[0][x] * self.cofactor(0, x);
-        }
-        determinant
-    }
-}
-
 impl Cofactorable for Matrix4 {
     fn cofactor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
         let minor = self.minor(row_to_exclude, col_to_exclude);
@@ -276,6 +186,37 @@ impl Invertable for Matrix4 {
     }
 }
 
+impl Submatrixable for Matrix4 {
+    type Submatrix = Matrix3;
+
+    fn submatrix(&self, row_to_exclude: usize, col_to_exclude: usize) -> Self::Submatrix {
+        let mut result = Self::Submatrix::empty();
+        let mut curr_row = 0;
+        let mut curr_col = 0;
+        for x in 0..Self::SIZE {
+            if x == row_to_exclude {
+                continue;
+            }
+            for y in 0..Self::SIZE {
+                if y == col_to_exclude {
+                    continue;
+                }
+                result.m[curr_row][curr_col] = self.m[x as usize][y as usize];
+                curr_col = curr_col + 1;
+            }
+            curr_col = 0;
+            curr_row = curr_row + 1;
+        }
+        result
+    }
+}
+
+impl Minorable for Matrix4 {
+    fn minor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
+        self.submatrix(row_to_exclude, col_to_exclude).determinant()
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Matrix3 {
     m: [[f64; 3]; 3],
@@ -307,6 +248,58 @@ impl Index<(usize, usize)> for Matrix3 {
     }
 }
 
+impl Submatrixable for Matrix3 {
+    type Submatrix = Matrix2;
+
+    fn submatrix(&self, row_to_exclude: usize, col_to_exclude: usize) -> Self::Submatrix {
+        let mut result = Self::Submatrix::empty();
+        let mut curr_row = 0;
+        let mut curr_col = 0;
+        for x in 0..Self::SIZE {
+            if x == row_to_exclude {
+                continue;
+            }
+            for y in 0..Self::SIZE {
+                if y == col_to_exclude {
+                    continue;
+                }
+                result.m[curr_row][curr_col] = self.m[x as usize][y as usize];
+                curr_col = curr_col + 1;
+            }
+            curr_col = 0;
+            curr_row = curr_row + 1;
+        }
+        result
+    }
+}
+
+impl Minorable for Matrix3 {
+    fn minor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
+        self.submatrix(row_to_exclude, col_to_exclude).determinant()
+    }
+}
+
+impl Cofactorable for Matrix3 {
+    fn cofactor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
+        let minor = self.minor(row_to_exclude, col_to_exclude);
+        if (row_to_exclude + col_to_exclude) % 2 == 0 {
+            minor
+        } else {
+            -minor
+        }
+    }
+}
+
+impl Determinable for Matrix3 {
+    fn determinant(&self) -> f64 {
+        let mut determinant = 0.0;
+        for x in 0..3 {
+            determinant = determinant + self.m[0][x] * self.cofactor(0, x);
+        }
+        determinant
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Matrix2 {
     m: [[f64; 2]; 2],
@@ -331,6 +324,12 @@ impl Index<(u64, u64)> for Matrix2 {
 
     fn index(&self, key: (u64, u64)) -> &Self::Output {
         &self.m[key.0 as usize][key.1 as usize]
+    }
+}
+
+impl Determinable for Matrix2 {
+    fn determinant(&self) -> f64 {
+        self.m[0][0] * self.m[1][1] - self.m[0][1] * self.m[1][0]
     }
 }
 
@@ -534,7 +533,7 @@ mod matrix_tests {
             (4.0, 8.0, 16.0, 32.0),
         ));
 
-        let result = matrix1 * matrix::IDENTITY_MATRIX;
+        let result = matrix1 * matrix::Matrix4::IDENTITY;
 
         assert_eq!(
             result,
@@ -571,7 +570,10 @@ mod matrix_tests {
 
     #[test]
     fn test_transpose_identity_matrix() {
-        assert_eq!(matrix::IDENTITY_MATRIX.transpose(), matrix::IDENTITY_MATRIX,)
+        assert_eq!(
+            matrix::Matrix4::IDENTITY.transpose(),
+            matrix::Matrix4::IDENTITY,
+        )
     }
 
     #[test]
