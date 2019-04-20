@@ -6,12 +6,19 @@ trait Transposeable {
     fn transpose(&self) -> Self;
 }
 
+trait Submatrixable {
+    type Submatrix;
+    fn submatrix(&self, row_to_exclude: usize, col_to_exclude: usize) -> Self::Submatrix;
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Matrix4 {
     m: [[f64; 4]; 4],
 }
 
 impl Matrix4 {
+    const SIZE: usize = 4;
+
     fn new(
         m: (
             (f64, f64, f64, f64),
@@ -122,54 +129,62 @@ fn determinant2(input: &Matrix2) -> f64 {
     input.m[0][0] * input.m[1][1] - input.m[0][1] * input.m[1][0]
 }
 
-fn submatrix3(input: &Matrix3, row_to_exclude: usize, col_to_exclude: usize) -> Matrix2 {
-    let mut result = Matrix2::empty();
-    let mut curr_row = 0;
-    let mut curr_col = 0;
-    for x in 0..3 {
-        if x == row_to_exclude {
-            continue;
-        }
-        for y in 0..3 {
-            if y == col_to_exclude {
+impl Submatrixable for Matrix3 {
+    type Submatrix = Matrix2;
+
+    fn submatrix(&self, row_to_exclude: usize, col_to_exclude: usize) -> Self::Submatrix {
+        let mut result = Self::Submatrix::empty();
+        let mut curr_row = 0;
+        let mut curr_col = 0;
+        for x in 0..Self::SIZE {
+            if x == row_to_exclude {
                 continue;
             }
-            result.m[curr_row][curr_col] = input.m[x as usize][y as usize];
-            curr_col = curr_col + 1;
+            for y in 0..Self::SIZE {
+                if y == col_to_exclude {
+                    continue;
+                }
+                result.m[curr_row][curr_col] = self.m[x as usize][y as usize];
+                curr_col = curr_col + 1;
+            }
+            curr_col = 0;
+            curr_row = curr_row + 1;
         }
-        curr_col = 0;
-        curr_row = curr_row + 1;
+        result
     }
-    result
 }
 
-fn submatrix4(input: &Matrix4, row_to_exclude: usize, col_to_exclude: usize) -> Matrix3 {
-    let mut result = Matrix3::empty();
-    let mut curr_row = 0;
-    let mut curr_col = 0;
-    for x in 0..4 {
-        if x == row_to_exclude {
-            continue;
-        }
-        for y in 0..4 {
-            if y == col_to_exclude {
+impl Submatrixable for Matrix4 {
+    type Submatrix = Matrix3;
+
+    fn submatrix(&self, row_to_exclude: usize, col_to_exclude: usize) -> Self::Submatrix {
+        let mut result = Self::Submatrix::empty();
+        let mut curr_row = 0;
+        let mut curr_col = 0;
+        for x in 0..Self::SIZE {
+            if x == row_to_exclude {
                 continue;
             }
-            result.m[curr_row][curr_col] = input.m[x as usize][y as usize];
-            curr_col = curr_col + 1;
+            for y in 0..Self::SIZE {
+                if y == col_to_exclude {
+                    continue;
+                }
+                result.m[curr_row][curr_col] = self.m[x as usize][y as usize];
+                curr_col = curr_col + 1;
+            }
+            curr_col = 0;
+            curr_row = curr_row + 1;
         }
-        curr_col = 0;
-        curr_row = curr_row + 1;
+        result
     }
-    result
 }
 
 fn minor3(input: &Matrix3, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
-    determinant2(&submatrix3(input, row_to_exclude, col_to_exclude))
+    determinant2(&input.submatrix(row_to_exclude, col_to_exclude))
 }
 
 fn minor4(input: &Matrix4, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
-    determinant3(&submatrix4(&input, row_to_exclude, col_to_exclude))
+    determinant3(&input.submatrix(row_to_exclude, col_to_exclude))
 }
 
 fn cofactor3(input: &Matrix3, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
@@ -234,6 +249,8 @@ pub struct Matrix3 {
 }
 
 impl Matrix3 {
+    const SIZE: usize = 3;
+
     pub fn new(m: ((f64, f64, f64), (f64, f64, f64), (f64, f64, f64))) -> Self {
         Self {
             m: [
@@ -263,6 +280,8 @@ pub struct Matrix2 {
 }
 
 impl Matrix2 {
+    const SIZE: usize = 2;
+
     pub fn new(m: ((f64, f64), (f64, f64))) -> Self {
         Self {
             m: [[(m.0).0, (m.0).1], [(m.1).0, (m.1).1]],
@@ -289,7 +308,7 @@ mod matrix_tests {
     use assert_approx_eq::assert_approx_eq;
 
     use crate::matrix;
-    use crate::matrix::Transposeable;
+    use crate::matrix::{Submatrixable, Transposeable};
     use crate::tuple;
 
     #[test]
@@ -532,7 +551,7 @@ mod matrix_tests {
         let matrix1 = matrix::Matrix3::new(((1.0, 5.0, 0.0), (-3.0, 2.0, 7.0), (0.0, 6.0, -3.0)));
         let expected = matrix::Matrix2::new(((-3.0, 2.0), (0.0, 6.0)));
 
-        assert_eq!(expected, matrix::submatrix3(&matrix1, 0, 2));
+        assert_eq!(expected, matrix1.submatrix(0, 2));
     }
 
     #[test]
@@ -546,13 +565,13 @@ mod matrix_tests {
         let expected =
             matrix::Matrix3::new(((-6.0, 1.0, 6.0), (-8.0, 8.0, 6.0), (-7.0, -1.0, 1.0)));
 
-        assert_eq!(expected, matrix::submatrix4(&matrix1, 2, 1));
+        assert_eq!(expected, matrix1.submatrix(2, 1));
     }
 
     #[test]
     fn test_minor_of_3_by_3() {
         let matrix1 = matrix::Matrix3::new(((3.0, 5.0, 0.0), (2.0, -1.0, -7.0), (6.0, -1.0, 5.0)));
-        let matrix2 = matrix::submatrix3(&matrix1, 1, 0);
+        let matrix2 = matrix1.submatrix(1, 0);
 
         assert_eq!(25.0, matrix::determinant2(&matrix2));
         assert_eq!(25.0, matrix::minor3(&matrix1, 1, 0));
