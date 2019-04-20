@@ -2,28 +2,28 @@ use std::ops::{Index, Mul};
 
 use crate::tuple;
 
-trait Transposeable {
+trait Transpose {
     fn transpose(&self) -> Self;
 }
 
-trait Submatrixable {
+trait Submatrix {
     type Submatrix;
     fn submatrix(&self, row_to_exclude: usize, col_to_exclude: usize) -> Self::Submatrix;
 }
 
-trait Determinable {
+trait Determinant {
     fn determinant(&self) -> f64;
 }
 
-trait Minorable {
+trait Minor {
     fn minor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64;
 }
 
-trait Cofactorable {
+trait Cofactor {
     fn cofactor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64;
 }
 
-trait Invertable: Sized {
+trait Inverse: Sized {
     fn is_invertible(&self) -> bool;
     fn inverse(&self) -> Option<Self>;
 }
@@ -130,7 +130,7 @@ impl Mul<tuple::Tuple> for Matrix4 {
     }
 }
 
-impl Transposeable for Matrix4 {
+impl Transpose for Matrix4 {
     fn transpose(&self) -> Self {
         Self::new((
             (self.m[0][0], self.m[1][0], self.m[2][0], self.m[3][0]),
@@ -141,7 +141,7 @@ impl Transposeable for Matrix4 {
     }
 }
 
-impl Cofactorable for Matrix4 {
+impl Cofactor for Matrix4 {
     fn cofactor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
         let minor = self.minor(row_to_exclude, col_to_exclude);
         if (row_to_exclude + col_to_exclude) % 2 == 0 {
@@ -152,7 +152,7 @@ impl Cofactorable for Matrix4 {
     }
 }
 
-impl Determinable for Matrix4 {
+impl Determinant for Matrix4 {
     fn determinant(&self) -> f64 {
         let mut determinant = 0.0;
         for x in 0..4 {
@@ -162,7 +162,7 @@ impl Determinable for Matrix4 {
     }
 }
 
-impl Invertable for Matrix4 {
+impl Inverse for Matrix4 {
     fn is_invertible(&self) -> bool {
         self.determinant() != 0.0
     }
@@ -186,7 +186,7 @@ impl Invertable for Matrix4 {
     }
 }
 
-impl Submatrixable for Matrix4 {
+impl Submatrix for Matrix4 {
     type Submatrix = Matrix3;
 
     fn submatrix(&self, row_to_exclude: usize, col_to_exclude: usize) -> Self::Submatrix {
@@ -211,7 +211,7 @@ impl Submatrixable for Matrix4 {
     }
 }
 
-impl Minorable for Matrix4 {
+impl Minor for Matrix4 {
     fn minor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
         self.submatrix(row_to_exclude, col_to_exclude).determinant()
     }
@@ -248,7 +248,7 @@ impl Index<(usize, usize)> for Matrix3 {
     }
 }
 
-impl Submatrixable for Matrix3 {
+impl Submatrix for Matrix3 {
     type Submatrix = Matrix2;
 
     fn submatrix(&self, row_to_exclude: usize, col_to_exclude: usize) -> Self::Submatrix {
@@ -273,13 +273,13 @@ impl Submatrixable for Matrix3 {
     }
 }
 
-impl Minorable for Matrix3 {
+impl Minor for Matrix3 {
     fn minor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
         self.submatrix(row_to_exclude, col_to_exclude).determinant()
     }
 }
 
-impl Cofactorable for Matrix3 {
+impl Cofactor for Matrix3 {
     fn cofactor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64 {
         let minor = self.minor(row_to_exclude, col_to_exclude);
         if (row_to_exclude + col_to_exclude) % 2 == 0 {
@@ -290,7 +290,7 @@ impl Cofactorable for Matrix3 {
     }
 }
 
-impl Determinable for Matrix3 {
+impl Determinant for Matrix3 {
     fn determinant(&self) -> f64 {
         let mut determinant = 0.0;
         for x in 0..3 {
@@ -327,7 +327,7 @@ impl Index<(u64, u64)> for Matrix2 {
     }
 }
 
-impl Determinable for Matrix2 {
+impl Determinant for Matrix2 {
     fn determinant(&self) -> f64 {
         self.m[0][0] * self.m[1][1] - self.m[0][1] * self.m[1][0]
     }
@@ -339,9 +339,7 @@ mod matrix_tests {
     use assert_approx_eq::assert_approx_eq;
 
     use crate::matrix;
-    use crate::matrix::{
-        Cofactorable, Determinable, Invertable, Minorable, Submatrixable, Transposeable,
-    };
+    use crate::matrix::{Cofactor, Determinant, Inverse, Minor, Submatrix, Transpose};
     use crate::tuple;
 
     #[test]
