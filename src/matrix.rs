@@ -34,6 +34,15 @@ const IDENTITY_MATRIX: Matrix4 = Matrix4 {
     ],
 };
 
+fn empty4() -> Matrix4 {
+    matrix4((
+        (0.0, 0.0, 0.0, 0.0),
+        (0.0, 0.0, 0.0, 0.0),
+        (0.0, 0.0, 0.0, 0.0),
+        (0.0, 0.0, 0.0, 0.0),
+    ))
+}
+
 impl Index<(usize, usize)> for Matrix4 {
     type Output = f64;
 
@@ -46,12 +55,7 @@ impl Mul for Matrix4 {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self {
-        let mut result = matrix4((
-            (0.0, 0.0, 0.0, 0.0),
-            (0.0, 0.0, 0.0, 0.0),
-            (0.0, 0.0, 0.0, 0.0),
-            (0.0, 0.0, 0.0, 0.0),
-        ));
+        let mut result = empty4();
 
         for x in 0..4 {
             for y in 0..4 {
@@ -111,7 +115,7 @@ fn determinant2(input: &Matrix2) -> f64 {
 }
 
 fn submatrix3(input: &Matrix3, row_to_exclude: usize, col_to_exclude: usize) -> Matrix2 {
-    let mut result = matrix2(((0.0, 0.0), (0.0, 0.0)));
+    let mut result = empty2();
     let mut curr_row = 0;
     let mut curr_col = 0;
     for x in 0..3 {
@@ -132,7 +136,7 @@ fn submatrix3(input: &Matrix3, row_to_exclude: usize, col_to_exclude: usize) -> 
 }
 
 fn submatrix4(input: &Matrix4, row_to_exclude: usize, col_to_exclude: usize) -> Matrix3 {
-    let mut result = matrix3(((0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)));
+    let mut result = empty3();
     let mut curr_row = 0;
     let mut curr_col = 0;
     for x in 0..4 {
@@ -203,12 +207,7 @@ fn inverse4(input: &Matrix4) -> Result<Matrix4, &'static str> {
         return Err("uninvertable_error");
     }
 
-    let mut inverse = matrix4((
-        (0.0, 0.0, 0.0, 0.0),
-        (0.0, 0.0, 0.0, 0.0),
-        (0.0, 0.0, 0.0, 0.0),
-        (0.0, 0.0, 0.0, 0.0),
-    ));
+    let mut inverse = empty4();
 
     let determinant = determinant4(&input);
     for x in 0..4 {
@@ -236,6 +235,10 @@ pub fn matrix3(m: ((f64, f64, f64), (f64, f64, f64), (f64, f64, f64))) -> Matrix
     }
 }
 
+fn empty3() -> Matrix3 {
+    matrix3(((0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+}
+
 impl Index<(usize, usize)> for Matrix3 {
     type Output = f64;
 
@@ -253,6 +256,10 @@ pub fn matrix2(m: ((f64, f64), (f64, f64))) -> Matrix2 {
     Matrix2 {
         m: [[(m.0).0, (m.0).1], [(m.1).0, (m.1).1]],
     }
+}
+
+fn empty2() -> Matrix2 {
+    matrix2(((0.0, 0.0), (0.0, 0.0)))
 }
 
 impl Index<(u64, u64)> for Matrix2 {
