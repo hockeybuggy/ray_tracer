@@ -18,10 +18,52 @@ fn scaling(x: f64, y: f64, z: f64) -> matrix::Matrix4 {
     ))
 }
 
+fn rotation_x(radians: f64) -> matrix::Matrix4 {
+    let r = radians;
+    matrix::Matrix4::new((
+        (1.0, 0.0, 0.0, 0.0),
+        (0.0, r.cos(), -r.sin(), 0.0),
+        (0.0, r.sin(), r.cos(), 0.0),
+        (0.0, 0.0, 0.0, 1.0),
+    ))
+}
+
+fn rotation_y(radians: f64) -> matrix::Matrix4 {
+    let r = radians;
+    matrix::Matrix4::new((
+        (r.cos(), 0.0, r.sin(), 0.0),
+        (0.0, 1.0, 0.0, 0.0),
+        (-r.sin(), 0.0, r.cos(), 0.0),
+        (0.0, 0.0, 0.0, 1.0),
+    ))
+}
+
+fn rotation_z(radians: f64) -> matrix::Matrix4 {
+    let r = radians;
+    matrix::Matrix4::new((
+        (r.cos(), -r.sin(), 0.0, 0.0),
+        (r.sin(), r.cos(), 0.0, 0.0),
+        (0.0, 0.0, 1.0, 0.0),
+        (0.0, 0.0, 0.0, 1.0),
+    ))
+}
+
 #[cfg(test)]
 mod transformation_tests {
+    use assert_approx_eq::assert_approx_eq;
+
+    use crate::matrix::Inverse;
     use crate::transformation;
     use crate::tuple;
+
+    macro_rules! assert_tuple_approx_eq {
+        ( $a:expr, $b:expr) => {{
+            assert_approx_eq!($a.x, $b.x, 1e-5f64);
+            assert_approx_eq!($a.y, $b.y, 1e-5f64);
+            assert_approx_eq!($a.z, $b.z, 1e-5f64);
+            assert_approx_eq!($a.w, $b.w, 1e-5f64);
+        }};
+    }
 
     #[test]
     fn test_simple_translation_matrix() {
@@ -34,7 +76,6 @@ mod transformation_tests {
 
     #[test]
     fn test_inverse_translation_matrix() {
-        use crate::matrix::Inverse;
         let translation_matrix = transformation::translation(5.0, -3.0, 2.0)
             .inverse()
             .unwrap();
@@ -70,7 +111,6 @@ mod transformation_tests {
 
     #[test]
     fn test_scaling_with_the_inverse() {
-        use crate::matrix::Inverse;
         let scaling_matrix = transformation::scaling(2.0, 3.0, 4.0);
         let vector = tuple::vector(-4.0, 6.0, 8.0);
 
@@ -86,5 +126,54 @@ mod transformation_tests {
         let point = tuple::point(2.0, 3.0, 4.0);
 
         assert_eq!(scaling_matrix * point, tuple::point(-2.0, 3.0, 4.0));
+    }
+
+    #[test]
+    fn test_rotation_x_quarter_turns() {
+        let point = tuple::point(0.0, 1.0, 0.0);
+        let half_quarter = transformation::rotation_x(std::f64::consts::PI / 4.0);
+        let full_quarter = transformation::rotation_x(std::f64::consts::PI / 2.0);
+
+        assert_tuple_approx_eq!(
+            half_quarter * point,
+            tuple::point(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0)
+        );
+        assert_tuple_approx_eq!(full_quarter * point, tuple::point(0.0, 0.0, 1.0));
+    }
+
+    #[test]
+    fn test_rotation_x_inverse_rotates_in_the_opposite_direction() {
+        let point = tuple::point(0.0, 1.0, 0.0);
+        let half_quarter = transformation::rotation_x(std::f64::consts::PI / 4.0);
+        assert_tuple_approx_eq!(
+            half_quarter.inverse().unwrap() * point,
+            tuple::point(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0)
+        );
+    }
+
+    #[test]
+    fn test_rotation_y_quarter_turns() {
+        let point = tuple::point(0.0, 0.0, 1.0);
+        let half_quarter = transformation::rotation_y(std::f64::consts::PI / 4.0);
+        let full_quarter = transformation::rotation_y(std::f64::consts::PI / 2.0);
+
+        assert_tuple_approx_eq!(
+            half_quarter * point,
+            tuple::point(2.0_f64.sqrt() / 2.0, 0.0, 2.0_f64.sqrt() / 2.0)
+        );
+        assert_tuple_approx_eq!(full_quarter * point, tuple::point(1.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn test_rotation_z_quarter_turns() {
+        let point = tuple::point(0.0, 1.0, 0.0);
+        let half_quarter = transformation::rotation_z(std::f64::consts::PI / 4.0);
+        let full_quarter = transformation::rotation_z(std::f64::consts::PI / 2.0);
+
+        assert_tuple_approx_eq!(
+            half_quarter * point,
+            tuple::point(-2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0)
+        );
+        assert_tuple_approx_eq!(full_quarter * point, tuple::point(-1.0, 0.0, 0.0));
     }
 }
