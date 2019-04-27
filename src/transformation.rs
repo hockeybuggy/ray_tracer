@@ -65,12 +65,65 @@ fn shearing(
     ))
 }
 
+trait Transform {
+    fn translation(self, x: f64, y: f64, z: f64) -> matrix::Matrix4;
+    fn scaling(self, x: f64, y: f64, z: f64) -> matrix::Matrix4;
+    fn rotation_x(self, radians: f64) -> matrix::Matrix4;
+    fn rotation_y(self, radians: f64) -> matrix::Matrix4;
+    fn rotation_z(self, radians: f64) -> matrix::Matrix4;
+    fn shearing(
+        self,
+        x_to_y: f64,
+        x_to_z: f64,
+        y_to_x: f64,
+        y_to_z: f64,
+        z_to_x: f64,
+        z_to_y: f64,
+    ) -> matrix::Matrix4;
+}
+
+impl Transform for matrix::Matrix4 {
+    fn translation(self, x: f64, y: f64, z: f64) -> matrix::Matrix4 {
+        translation(x, y, z) * self
+    }
+
+    fn scaling(self, x: f64, y: f64, z: f64) -> matrix::Matrix4 {
+        scaling(x, y, z) * self
+    }
+
+    fn rotation_x(self, radians: f64) -> matrix::Matrix4 {
+        rotation_x(radians) * self
+    }
+
+    fn rotation_y(self, radians: f64) -> matrix::Matrix4 {
+        rotation_y(radians) * self
+    }
+
+    fn rotation_z(self, radians: f64) -> matrix::Matrix4 {
+        rotation_z(radians) * self
+    }
+
+    fn shearing(
+        self,
+        x_to_y: f64,
+        x_to_z: f64,
+        y_to_x: f64,
+        y_to_z: f64,
+        z_to_x: f64,
+        z_to_y: f64,
+    ) -> matrix::Matrix4 {
+        shearing(x_to_y, x_to_z, y_to_x, y_to_z, z_to_x, z_to_y) * self
+    }
+}
+
 #[cfg(test)]
 mod transformation_tests {
     use assert_approx_eq::assert_approx_eq;
 
+    use crate::matrix;
     use crate::matrix::Inverse;
     use crate::transformation;
+    use crate::transformation::Transform;
     use crate::tuple;
 
     macro_rules! assert_tuple_approx_eq {
@@ -240,5 +293,47 @@ mod transformation_tests {
         let point = tuple::point(2.0, 3.0, 4.0);
 
         assert_tuple_approx_eq!(shear * point, tuple::point(2.0, 3.0, 7.0));
+    }
+
+    #[test]
+    fn test_transformations_are_applied_in_sequence() {
+        let point1 = tuple::point(1.0, 0.0, 1.0);
+        let a = transformation::rotation_x(std::f64::consts::PI / 2.0);
+        let b = transformation::scaling(5.0, 5.0, 5.0);
+        let c = transformation::translation(10.0, 5.0, 7.0);
+
+        let point2 = a * point1;
+        assert_tuple_approx_eq!(point2, tuple::point(1.0, -1.0, 0.0));
+
+        let point3 = b * point2;
+        assert_tuple_approx_eq!(point3, tuple::point(5.0, -5.0, 0.0));
+
+        let point4 = c * point3;
+        assert_tuple_approx_eq!(point4, tuple::point(15.0, 0.0, 7.0));
+    }
+
+    #[test]
+    fn test_transformations_chained_manually() {
+        let point1 = tuple::point(1.0, 0.0, 1.0);
+        let a = transformation::rotation_x(std::f64::consts::PI / 2.0);
+        let b = transformation::scaling(5.0, 5.0, 5.0);
+        let c = transformation::translation(10.0, 5.0, 7.0);
+
+        let t = c * b * a;
+
+        let point2 = t * point1;
+        assert_tuple_approx_eq!(point2, tuple::point(15.0, 0.0, 7.0));
+    }
+
+    #[test]
+    fn test_transformations_chained_fluent() {
+        let point1 = tuple::point(1.0, 0.0, 1.0);
+        let t = matrix::Matrix4::IDENTITY
+            .rotation_x(std::f64::consts::PI / 2.0)
+            .scaling(5.0, 5.0, 5.0)
+            .translation(10.0, 5.0, 7.0);
+
+        let point2 = t * point1;
+        assert_tuple_approx_eq!(point2, tuple::point(15.0, 0.0, 7.0));
     }
 }

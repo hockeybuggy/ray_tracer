@@ -35,7 +35,7 @@ pub struct Matrix4 {
 
 impl Matrix4 {
     const SIZE: usize = 4;
-    const IDENTITY: Self = Self {
+    pub const IDENTITY: Self = Self {
         m: [
             [1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
