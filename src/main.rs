@@ -4,6 +4,7 @@
 mod canvas;
 mod color;
 mod matrix;
+mod transformation;
 mod tuple;
 
 fn main() {

@@ -23,7 +23,7 @@ trait Cofactor {
     fn cofactor(&self, row_to_exclude: usize, col_to_exclude: usize) -> f64;
 }
 
-trait Inverse: Sized {
+pub trait Inverse: Sized {
     fn is_invertible(&self) -> bool;
     fn inverse(&self) -> Option<Self>;
 }
@@ -44,7 +44,7 @@ impl Matrix4 {
         ],
     };
 
-    fn new(
+    pub fn new(
         m: (
             (f64, f64, f64, f64),
             (f64, f64, f64, f64),
@@ -62,7 +62,7 @@ impl Matrix4 {
         }
     }
 
-    fn empty() -> Self {
+    pub fn empty() -> Self {
         Self::new((
             (0.0, 0.0, 0.0, 0.0),
             (0.0, 0.0, 0.0, 0.0),
