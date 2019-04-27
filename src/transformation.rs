@@ -48,6 +48,23 @@ fn rotation_z(radians: f64) -> matrix::Matrix4 {
     ))
 }
 
+fn shearing(
+    x_to_y: f64,
+    x_to_z: f64,
+    y_to_x: f64,
+    y_to_z: f64,
+    z_to_x: f64,
+    z_to_y: f64,
+) -> matrix::Matrix4 {
+    // "x_to_y" is shorhand for x in proportion to y, etc.
+    matrix::Matrix4::new((
+        (1.0, x_to_y, x_to_z, 0.0),
+        (y_to_x, 1.0, y_to_z, 0.0),
+        (z_to_x, z_to_y, 1.0, 0.0),
+        (0.0, 0.0, 0.0, 1.0),
+    ))
+}
+
 #[cfg(test)]
 mod transformation_tests {
     use assert_approx_eq::assert_approx_eq;
@@ -175,5 +192,53 @@ mod transformation_tests {
             tuple::point(-2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0)
         );
         assert_tuple_approx_eq!(full_quarter * point, tuple::point(-1.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn test_shearing_transformation_moves_x_in_proportion_to_y() {
+        let shear = transformation::shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let point = tuple::point(2.0, 3.0, 4.0);
+
+        assert_tuple_approx_eq!(shear * point, tuple::point(5.0, 3.0, 4.0));
+    }
+
+    #[test]
+    fn test_shearing_transformation_moves_x_in_proportion_to_z() {
+        let shear = transformation::shearing(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+        let point = tuple::point(2.0, 3.0, 4.0);
+
+        assert_tuple_approx_eq!(shear * point, tuple::point(6.0, 3.0, 4.0));
+    }
+
+    #[test]
+    fn test_shearing_transformation_moves_y_in_proportion_to_x() {
+        let shear = transformation::shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+        let point = tuple::point(2.0, 3.0, 4.0);
+
+        assert_tuple_approx_eq!(shear * point, tuple::point(2.0, 5.0, 4.0));
+    }
+
+    #[test]
+    fn test_shearing_transformation_moves_y_in_proportion_to_z() {
+        let shear = transformation::shearing(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        let point = tuple::point(2.0, 3.0, 4.0);
+
+        assert_tuple_approx_eq!(shear * point, tuple::point(2.0, 7.0, 4.0));
+    }
+
+    #[test]
+    fn test_shearing_transformation_moves_z_in_proportion_to_x() {
+        let shear = transformation::shearing(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        let point = tuple::point(2.0, 3.0, 4.0);
+
+        assert_tuple_approx_eq!(shear * point, tuple::point(2.0, 3.0, 6.0));
+    }
+
+    #[test]
+    fn test_shearing_transformation_moves_z_in_proportion_to_y() {
+        let shear = transformation::shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+        let point = tuple::point(2.0, 3.0, 4.0);
+
+        assert_tuple_approx_eq!(shear * point, tuple::point(2.0, 3.0, 7.0));
     }
 }
