@@ -4,6 +4,7 @@
 mod canvas;
 mod color;
 mod matrix;
+mod ray;
 mod transformation;
 mod tuple;
 
