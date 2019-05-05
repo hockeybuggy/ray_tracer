@@ -16,7 +16,26 @@ impl Ray {
     }
 
     fn intersect(&self, sphere: sphere::Sphere) -> Vec<f64> {
-        vec![4.0_f64, 6.0_f64]
+        let sphere_to_ray = self.origin - tuple::point(0.0, 0.0, 0.0);
+
+        let a = tuple::dot(&self.direction, &self.direction);
+        let b = 2.0 * tuple::dot(&self.direction, &sphere_to_ray);
+        let c = tuple::dot(&sphere_to_ray, &sphere_to_ray) - 1.0;
+
+        let discriminanant = b.powf(2.0) - 4.0 * a * c;
+
+        let mut intersections = Vec::new();
+
+        if discriminanant < 0.0 {
+            return intersections;
+        }
+
+        let t1 = (-b - discriminanant.sqrt()) / (2.0 * a);
+        intersections.push(t1);
+        let t2 = (-b + discriminanant.sqrt()) / (2.0 * a);
+        intersections.push(t2);
+
+        return intersections;
     }
 }
 
@@ -91,7 +110,41 @@ mod ray_tests {
         let intersections = ray.intersect(sphere);
 
         assert_eq!(intersections.len(), 2);
+        assert_eq!(intersections[0], 5.0_f64);
         assert_eq!(intersections[1], 5.0_f64);
-        assert_eq!(intersections[2], 5.0_f64);
+    }
+
+    #[test]
+    fn test_ray_misses_a_sphere() {
+        let ray = ray::ray(tuple::point(0.0, 2.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+        let sphere = sphere::sphere();
+
+        let intersections = ray.intersect(sphere);
+
+        assert_eq!(intersections.len(), 0);
+    }
+
+    #[test]
+    fn test_ray_originates_from_inside_a_sphere() {
+        let ray = ray::ray(tuple::point(0.0, 0.0, 0.0), tuple::vector(0.0, 0.0, 1.0));
+        let sphere = sphere::sphere();
+
+        let intersections = ray.intersect(sphere);
+
+        assert_eq!(intersections.len(), 2);
+        assert_eq!(intersections[0], -1.0_f64);
+        assert_eq!(intersections[1], 1.0_f64);
+    }
+
+    #[test]
+    fn test_ray_is_in_front_of_a_sphere() {
+        let ray = ray::ray(tuple::point(0.0, 0.0, 5.0), tuple::vector(0.0, 0.0, 1.0));
+        let sphere = sphere::sphere();
+
+        let intersections = ray.intersect(sphere);
+
+        assert_eq!(intersections.len(), 2);
+        assert_eq!(intersections[0], -6.0_f64);
+        assert_eq!(intersections[1], -4.0_f64);
     }
 }
