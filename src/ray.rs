@@ -15,7 +15,7 @@ impl Ray {
         self.origin + self.direction * t
     }
 
-    fn intersect(&self, sphere: sphere::Sphere) -> Vec<f64> {
+    fn intersect<'a>(&'a self, sphere: &'a sphere::Sphere) -> Vec<Intersection> {
         let sphere_to_ray = self.origin - tuple::point(0.0, 0.0, 0.0);
 
         let a = tuple::dot(&self.direction, &self.direction);
@@ -31,12 +31,27 @@ impl Ray {
         }
 
         let t1 = (-b - discriminanant.sqrt()) / (2.0 * a);
-        intersections.push(t1);
+        intersections.push(intersection(t1, &sphere));
         let t2 = (-b + discriminanant.sqrt()) / (2.0 * a);
-        intersections.push(t2);
+        intersections.push(intersection(t2, &sphere));
 
         return intersections;
     }
+}
+
+struct Intersection<'a> {
+    t: f64,
+    object: &'a sphere::Sphere,
+}
+
+fn intersection(t: f64, object: &sphere::Sphere) -> Intersection {
+    Intersection { t, object }
+}
+
+#[cfg(test)]
+mod intersection_tests {
+    use crate::ray;
+    use crate::sphere;
 }
 
 #[cfg(test)]
@@ -82,11 +97,11 @@ mod ray_tests {
         let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
         let sphere = sphere::sphere();
 
-        let intersections = ray.intersect(sphere);
+        let intersections = ray.intersect(&sphere);
 
         assert_eq!(intersections.len(), 2);
-        assert_eq!(intersections[1], 4.0_f64);
-        assert_eq!(intersections[2], 6.0_f64);
+        assert_eq!(intersections[1].t, 4.0_f64);
+        assert_eq!(intersections[2].t, 6.0_f64);
     }
 
     #[test]
@@ -107,11 +122,11 @@ mod ray_tests {
         let ray = ray::ray(tuple::point(0.0, 1.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
         let sphere = sphere::sphere();
 
-        let intersections = ray.intersect(sphere);
+        let intersections = ray.intersect(&sphere);
 
         assert_eq!(intersections.len(), 2);
-        assert_eq!(intersections[0], 5.0_f64);
-        assert_eq!(intersections[1], 5.0_f64);
+        assert_eq!(intersections[0].t, 5.0_f64);
+        assert_eq!(intersections[1].t, 5.0_f64);
     }
 
     #[test]
@@ -119,7 +134,7 @@ mod ray_tests {
         let ray = ray::ray(tuple::point(0.0, 2.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
         let sphere = sphere::sphere();
 
-        let intersections = ray.intersect(sphere);
+        let intersections = ray.intersect(&sphere);
 
         assert_eq!(intersections.len(), 0);
     }
@@ -129,11 +144,11 @@ mod ray_tests {
         let ray = ray::ray(tuple::point(0.0, 0.0, 0.0), tuple::vector(0.0, 0.0, 1.0));
         let sphere = sphere::sphere();
 
-        let intersections = ray.intersect(sphere);
+        let intersections = ray.intersect(&sphere);
 
         assert_eq!(intersections.len(), 2);
-        assert_eq!(intersections[0], -1.0_f64);
-        assert_eq!(intersections[1], 1.0_f64);
+        assert_eq!(intersections[0].t, -1.0_f64);
+        assert_eq!(intersections[1].t, 1.0_f64);
     }
 
     #[test]
@@ -141,10 +156,43 @@ mod ray_tests {
         let ray = ray::ray(tuple::point(0.0, 0.0, 5.0), tuple::vector(0.0, 0.0, 1.0));
         let sphere = sphere::sphere();
 
-        let intersections = ray.intersect(sphere);
+        let intersections = ray.intersect(&sphere);
 
         assert_eq!(intersections.len(), 2);
-        assert_eq!(intersections[0], -6.0_f64);
-        assert_eq!(intersections[1], -4.0_f64);
+        assert_eq!(intersections[0].t, -6.0_f64);
+        assert_eq!(intersections[1].t, -4.0_f64);
+    }
+
+    #[test]
+    fn test_intersection_encapsulates_t_and_object() {
+        let sphere = sphere::sphere();
+        let intersection = ray::intersection(3.5, &sphere);
+
+        assert_eq!(intersection.t, 3.5_f64);
+        assert_eq!(intersection.object, &sphere);
+    }
+
+    #[test]
+    fn test_intersections_in_a_vector() {
+        let sphere = sphere::sphere();
+        let intersection1 = ray::intersection(1.0, &sphere);
+        let intersection2 = ray::intersection(2.0, &sphere);
+
+        let intersections = vec![intersection1, intersection2];
+
+        assert_eq!(intersections[0].t, 1.0_f64);
+        assert_eq!(intersections[1].t, 2.0_f64);
+    }
+
+    #[test]
+    fn test_intersections_sets_the_object_in_the_intersection() {
+        let sphere = sphere::sphere();
+        let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+
+        let intersections = ray.intersect(&sphere);
+
+        assert_eq!(intersections.len(), 2);
+        assert_eq!(intersections[0].object, &sphere);
+        assert_eq!(intersections[1].object, &sphere);
     }
 }
