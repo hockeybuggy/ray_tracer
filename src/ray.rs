@@ -1,6 +1,7 @@
 use crate::sphere;
 use crate::tuple;
 
+#[derive(Debug)]
 struct Ray {
     origin: tuple::Tuple,
     direction: tuple::Tuple,
@@ -39,6 +40,7 @@ impl Ray {
     }
 }
 
+#[derive(Debug, PartialEq)]
 struct Intersection<'a> {
     t: f64,
     object: &'a sphere::Sphere,
@@ -48,10 +50,11 @@ fn intersection(t: f64, object: &sphere::Sphere) -> Intersection {
     Intersection { t, object }
 }
 
-#[cfg(test)]
-mod intersection_tests {
-    use crate::ray;
-    use crate::sphere;
+fn hit<'a>(intersections: &'a Vec<Intersection>) -> Option<&'a Intersection<'a>> {
+    intersections
+        .iter()
+        .filter(|inter| inter.t.is_sign_positive())
+        .min_by(|x, y| x.t.partial_cmp(&y.t).unwrap()) // Not sure that this is a runtime safe unwrap
 }
 
 #[cfg(test)]
@@ -194,5 +197,58 @@ mod ray_tests {
         assert_eq!(intersections.len(), 2);
         assert_eq!(intersections[0].object, &sphere);
         assert_eq!(intersections[1].object, &sphere);
+    }
+
+    #[test]
+    fn test_hit_all_intersections_positive_t() {
+        let sphere = sphere::sphere();
+        let intersection1 = ray::intersection(1.0, &sphere);
+        let intersection2 = ray::intersection(2.0, &sphere);
+        let intersections = vec![intersection1, intersection2];
+
+        let hit = ray::hit(&intersections);
+
+        let expected = ray::intersection(1.0, &sphere);
+        assert_eq!(hit.unwrap(), &expected);
+    }
+
+    #[test]
+    fn test_hit_some_intersections_have_negitive_t() {
+        let sphere = sphere::sphere();
+        let intersection1 = ray::intersection(-1.0, &sphere);
+        let intersection2 = ray::intersection(1.0, &sphere);
+        let intersections = vec![intersection1, intersection2];
+
+        let hit = ray::hit(&intersections);
+
+        let expected = ray::intersection(1.0, &sphere);
+        assert_eq!(hit.unwrap(), &expected);
+    }
+
+    #[test]
+    fn test_hit_all_intersections_negitive_t() {
+        let sphere = sphere::sphere();
+        let intersection1 = ray::intersection(-2.0, &sphere);
+        let intersection2 = ray::intersection(-1.0, &sphere);
+        let intersections = vec![intersection1, intersection2];
+
+        let hit = ray::hit(&intersections);
+
+        assert_eq!(hit, None);
+    }
+
+    #[test]
+    fn test_hit_is_always_the_lowest() {
+        let sphere = sphere::sphere();
+        let intersection1 = ray::intersection(5.0, &sphere);
+        let intersection2 = ray::intersection(7.0, &sphere);
+        let intersection3 = ray::intersection(-3.0, &sphere);
+        let intersection4 = ray::intersection(2.0, &sphere);
+        let intersections = vec![intersection1, intersection2, intersection3, intersection4];
+
+        let hit = ray::hit(&intersections);
+
+        let expected = ray::intersection(2.0, &sphere);
+        assert_eq!(hit.unwrap(), &expected);
     }
 }
