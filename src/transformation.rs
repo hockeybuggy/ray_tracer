@@ -65,7 +65,7 @@ fn shearing(
     ))
 }
 
-trait Transform {
+pub trait Transform {
     fn translation(self, x: f64, y: f64, z: f64) -> matrix::Matrix4;
     fn scaling(self, x: f64, y: f64, z: f64) -> matrix::Matrix4;
     fn rotation_x(self, radians: f64) -> matrix::Matrix4;
@@ -127,7 +127,7 @@ mod transformation_tests {
     use crate::tuple;
 
     macro_rules! assert_tuple_approx_eq {
-        ( $a:expr, $b:expr) => {{
+        ($a:expr, $b:expr) => {{
             assert_approx_eq!($a.x, $b.x, 1e-5f64);
             assert_approx_eq!($a.y, $b.y, 1e-5f64);
             assert_approx_eq!($a.z, $b.z, 1e-5f64);

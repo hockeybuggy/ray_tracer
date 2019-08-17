@@ -2,7 +2,7 @@ use std::ops::{Index, Mul};
 
 use crate::tuple;
 
-trait Transpose {
+pub trait Transpose {
     fn transpose(&self) -> Self;
 }
 
