@@ -16,6 +16,11 @@ impl Tuple {
     pub fn is_vector(&self) -> bool {
         return self.w == 0.0;
     }
+
+    pub fn reflect(&self, normal: &Tuple) -> Tuple {
+        // TODO check that this isn't being run on points
+        return *self - *normal * 2.0 * dot(&self, &normal);
+    }
 }
 
 impl Add for Tuple {
@@ -118,6 +123,18 @@ pub fn cross(a: &Tuple, b: &Tuple) -> Tuple {
 
 #[cfg(test)]
 mod tuple_tests {
+    use assert_approx_eq::assert_approx_eq;
+
+    // TODO factor these out into some kind of test utils
+    macro_rules! assert_tuple_approx_eq {
+        ($a:expr, $b:expr) => {{
+            assert_approx_eq!($a.x, $b.x, 1e-5f64);
+            assert_approx_eq!($a.y, $b.y, 1e-5f64);
+            assert_approx_eq!($a.z, $b.z, 1e-5f64);
+            assert_approx_eq!($a.w, $b.w, 1e-5f64);
+        }};
+    }
+
     use crate::tuple;
 
     #[test]
@@ -350,5 +367,27 @@ mod tuple_tests {
             tuple::cross(&vector2, &vector1),
             tuple::vector(1.0, -2.0, 1.0)
         );
+    }
+
+    #[test]
+    fn test_reflecting_a_vector_at_45_degrees() {
+        let vector = tuple::vector(1.0, -1.0, 0.0);
+        let normal = tuple::vector(0.0, 1.0, 0.0);
+
+        let reflected = vector.reflect(&normal);
+
+        let expected = tuple::vector(1.0, 1.0, 0.0);
+        assert_eq!(expected, reflected);
+    }
+
+    #[test]
+    fn test_reflecting_a_vector_off_a_slanted_surface() {
+        let vector = tuple::vector(0.0, -1.0, 0.0);
+        let normal = tuple::vector(2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0);
+
+        let reflected = vector.reflect(&normal);
+
+        let expected = tuple::vector(1.0, 0.0, 0.0);
+        assert_tuple_approx_eq!(expected, reflected);
     }
 }
