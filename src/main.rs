@@ -3,6 +3,8 @@
 
 mod canvas;
 mod color;
+mod lights;
+mod material;
 mod matrix;
 mod ray;
 mod sphere;
