@@ -16,7 +16,6 @@ pub fn sphere() -> Sphere {
 impl Sphere {
     fn normal_at(&self, world_point: tuple::Tuple) -> tuple::Tuple {
         let transform_inverse = self.transform.inverse().unwrap();
-        dbg!(transform_inverse);
         let object_point = transform_inverse * world_point;
         let object_normal = object_point - tuple::point(0.0, 0.0, 0.0);
         let mut world_normal = transform_inverse.transpose() * object_normal;
@@ -42,7 +41,6 @@ mod sphere_tests {
 
     use crate::matrix;
     use crate::sphere;
-    use crate::transformation;
     use crate::transformation::Transform;
     use crate::tuple;
 
@@ -110,11 +108,11 @@ mod sphere_tests {
     #[test]
     fn test_normal_on_a_translated_sphere() {
         let mut sphere = sphere::sphere();
-        sphere.transform = transformation::translation(0.0, 1.0, 0.0);
+        sphere.transform = matrix::Matrix4::IDENTITY.translation(0.0, 1.0, 0.0);
 
-        let normal = sphere.normal_at(tuple::point(0.0, 1.707107, -1.707107));
+        let normal = sphere.normal_at(tuple::point(0.0, 1.707107, -0.707107));
 
-        let expected = tuple::vector(0.0, 0.707107, -1.707107);
+        let expected = tuple::vector(0.0, 0.707107, -0.707107);
         assert_tuple_approx_eq!(expected, normal);
     }
 
@@ -128,7 +126,7 @@ mod sphere_tests {
         let normal = sphere.normal_at(tuple::point(
             0.0,
             2.0_f64.sqrt() / 2.0,
-            2.0_f64.sqrt() / 2.0,
+            -2.0_f64.sqrt() / 2.0,
         ));
 
         let expected = tuple::vector(0.0, 0.97014, -0.24254);
