@@ -1,3 +1,4 @@
+use crate::material;
 use crate::matrix;
 use crate::matrix::{Inverse, Transpose};
 use crate::tuple;
@@ -5,11 +6,13 @@ use crate::tuple;
 #[derive(Debug, PartialEq)]
 pub struct Sphere {
     pub transform: matrix::Matrix4,
+    pub material: material::Material,
 }
 
 pub fn sphere() -> Sphere {
     return Sphere {
         transform: matrix::Matrix4::IDENTITY,
+        material: material::material(),
     };
 }
 
@@ -39,6 +42,7 @@ mod sphere_tests {
         }};
     }
 
+    use crate::material;
     use crate::matrix;
     use crate::sphere;
     use crate::transformation::Transform;
@@ -131,5 +135,22 @@ mod sphere_tests {
 
         let expected = tuple::vector(0.0, 0.97014, -0.24254);
         assert_tuple_approx_eq!(expected, normal);
+    }
+
+    #[test]
+    fn test_sphere_has_a_default_material() {
+        let sphere = sphere::sphere();
+        assert_eq!(sphere.material, material::material());
+    }
+
+    #[test]
+    fn test_spheres_material_can_be_set() {
+        let mut sphere = sphere::sphere();
+        let mut material1 = material::material();
+        material1.ambient = 1.0;
+
+        sphere.material = material1;
+
+        assert_eq!(sphere.material.ambient, 1.0);
     }
 }

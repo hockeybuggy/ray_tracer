@@ -1,11 +1,12 @@
 use crate::color;
 
+#[derive(Debug, PartialEq)]
 pub struct Material {
-    color: color::Color,
-    ambient: f64,
-    diffuse: f64,
-    specular: f64,
-    shininess: f64,
+    pub color: color::Color,
+    pub ambient: f64,
+    pub diffuse: f64,
+    pub specular: f64,
+    pub shininess: f64,
 }
 
 pub fn material() -> Material {
