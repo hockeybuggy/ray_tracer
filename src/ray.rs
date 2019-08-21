@@ -5,8 +5,8 @@ use crate::tuple;
 
 #[derive(Debug)]
 pub struct Ray {
-    origin: tuple::Tuple,
-    direction: tuple::Tuple,
+    pub origin: tuple::Tuple,
+    pub direction: tuple::Tuple,
 }
 
 pub fn ray(origin: tuple::Tuple, direction: tuple::Tuple) -> Ray {
@@ -14,7 +14,7 @@ pub fn ray(origin: tuple::Tuple, direction: tuple::Tuple) -> Ray {
 }
 
 impl Ray {
-    fn position(&self, t: f64) -> tuple::Tuple {
+    pub fn position(&self, t: f64) -> tuple::Tuple {
         self.origin + self.direction * t
     }
 
@@ -52,8 +52,8 @@ impl Ray {
 
 #[derive(Debug, PartialEq)]
 pub struct Intersection<'a> {
-    t: f64,
-    object: &'a sphere::Sphere,
+    pub t: f64,
+    pub object: &'a sphere::Sphere,
 }
 
 fn intersection(t: f64, object: &sphere::Sphere) -> Intersection {

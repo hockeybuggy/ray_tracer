@@ -17,7 +17,7 @@ pub fn sphere() -> Sphere {
 }
 
 impl Sphere {
-    fn normal_at(&self, world_point: tuple::Tuple) -> tuple::Tuple {
+    pub fn normal_at(&self, world_point: tuple::Tuple) -> tuple::Tuple {
         let transform_inverse = self.transform.inverse().unwrap();
         let object_point = transform_inverse * world_point;
         let object_normal = object_point - tuple::point(0.0, 0.0, 0.0);
