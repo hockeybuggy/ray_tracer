@@ -1,17 +1,13 @@
 // TODO remove dead code exception
 #![allow(dead_code)]
 
-mod canvas;
-mod color;
+pub mod canvas;
+pub mod color;
 mod lighting;
 mod lights;
 mod material;
 mod matrix;
-mod ray;
-mod sphere;
+pub mod ray;
+pub mod sphere;
 mod transformation;
-mod tuple;
-
-fn main() {
-    println!("Hello, world!");
-}
+pub mod tuple;

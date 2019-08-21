@@ -35,7 +35,7 @@ impl Canvas {
         &self.grid[y as usize][x as usize]
     }
 
-    pub fn canvas_to_ppm(&self, out_f: File) -> Result<(), std::io::Error> {
+    pub fn canvas_to_ppm(&self, out_f: &mut File) -> Result<(), std::io::Error> {
         let mut output = BufWriter::new(out_f);
         write!(output, "P3\n")?;
         write!(output, "{} {}\n", self.width, self.height)?;
@@ -46,7 +46,6 @@ impl Canvas {
             let mut row_width = 0;
             for x in 0..self.width {
                 let c = self.pixel_at(x, y);
-                println!("{:?}", c);
 
                 let red = format!("{:.*} ", 0, clamp(c.r));
                 row_width = row_width + red.len();
@@ -122,9 +121,9 @@ mod canvas_tests {
         let canvas1 = canvas::canvas(5, 3);
         let path = "output1.ppm";
 
-        let output = File::create(path)?;
+        let mut output = File::create(path)?;
 
-        canvas1.canvas_to_ppm(output)?;
+        canvas1.canvas_to_ppm(&mut output)?;
 
         let mut input = File::open(path)?;
         let mut contents = String::new();
@@ -150,9 +149,9 @@ P3
         let color3 = color::color(-0.5, 0.0, 1.0);
         canvas1.write_pixel(4, 2, color3);
         let path = "output2.ppm";
-        let output = File::create(path)?;
+        let mut output = File::create(path)?;
 
-        canvas1.canvas_to_ppm(output)?;
+        canvas1.canvas_to_ppm(&mut output)?;
 
         let mut input = File::open(path)?;
         let mut contents = String::new();
@@ -172,14 +171,14 @@ P3
     fn test_canvas_to_ppm_splits_long_lines_in_ppm_files() -> Result<(), std::io::Error> {
         let mut canvas1 = canvas::canvas(10, 2);
         let path = "output3.ppm";
-        let output = File::create(path)?;
+        let mut output = File::create(path)?;
         for y in 0..canvas1.height {
             for x in 0..canvas1.width {
                 canvas1.write_pixel(x, y, color::color(1.0, 0.8, 0.6));
             }
         }
 
-        canvas1.canvas_to_ppm(output)?;
+        canvas1.canvas_to_ppm(&mut output)?;
 
         let mut input = File::open(path)?;
         let mut contents = String::new();

@@ -22,3 +22,4 @@ To get started clone the repository then run:
 - Extract the assert helper macros somewhere other than in the tests. The are
   starting to be duplicated.
 - Experiment with different types for point tuples and vector tuples.
+- Update the test that write files to use tempfiles.
