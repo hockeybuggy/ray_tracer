@@ -4,10 +4,11 @@ use std::io::{Read, Seek};
 use ray_tracer::{canvas, color, ray, sphere, tuple};
 
 #[test]
-fn test_simple_sphere_test() -> Result<(), std::io::Error> {
+fn test_simple_circle_test() -> Result<(), std::io::Error> {
     let ray_origin = tuple::point(0.0, 0.0, -5.0);
     let wall_z = 10.0;
     let wall_size = 7.0;
+    let half = wall_size / 2.0;
     let canvas_size = 100;
     let pixel_size = wall_size / canvas_size as f64;
     let mut canvas = canvas::canvas(canvas_size, canvas_size);
@@ -15,10 +16,10 @@ fn test_simple_sphere_test() -> Result<(), std::io::Error> {
 
     for y in 0..canvas.height {
         // Top +half, bottom -half
-        let world_y = (canvas.height as f64 / 2.0) - pixel_size * y as f64;
+        let world_y = half - pixel_size * y as f64;
         for x in 0..canvas.width {
             // left -half, right +half
-            let world_x = -(canvas.width as f64 / 2.0) + pixel_size * x as f64;
+            let world_x = -half + pixel_size * x as f64;
 
             let position = tuple::point(world_x, world_y, wall_z);
 
@@ -29,13 +30,11 @@ fn test_simple_sphere_test() -> Result<(), std::io::Error> {
                 Some(_hit) => canvas.write_pixel(x, y, color::color(1.0, 0.8, 0.6)),
                 None => (),
             }
-
-            canvas.write_pixel(x, y, color::color(1.0, 0.8, 0.6));
         }
     }
 
     // Write to the output file
-    let output_path = "output_simple_sphere.ppm";
+    let output_path = "output_simple_circle.ppm";
     // Borrowed from https://stackoverflow.com/a/47956654
     let mut output_file = std::fs::OpenOptions::new()
         .create(true)
@@ -47,12 +46,11 @@ fn test_simple_sphere_test() -> Result<(), std::io::Error> {
     output_file.seek(std::io::SeekFrom::Start(0))?;
     output_file.read_to_string(&mut output_contents)?;
 
-    let expected_str = include_str!("fixtures/simple_sphere_test.ppm");
+    let expected_str = include_str!("fixtures/simple_circle_test.ppm");
 
     // TODO consider if this would be better as a line by line check
     assert!(output_contents.contains(expected_str));
 
-    // TODO add this back
-    // remove_file(output_path)?;
+    std::fs::remove_file(output_path)?;
     return Ok(());
 }
