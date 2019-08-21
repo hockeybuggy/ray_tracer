@@ -3,6 +3,7 @@
 
 mod canvas;
 mod color;
+mod lighting;
 mod lights;
 mod material;
 mod matrix;

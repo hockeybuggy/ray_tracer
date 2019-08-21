@@ -10,6 +10,9 @@ pub struct Color {
 pub fn color(r: f64, g: f64, b: f64) -> Color {
     Color { r, g, b }
 }
+pub fn black() -> Color {
+    color(0.0, 0.0, 0.0)
+}
 
 impl Add for Color {
     type Output = Self;
@@ -105,5 +108,10 @@ mod color_tests {
 
         let expected_color = color::color(0.9, 0.2, 0.4 * 0.2);
         assert_eq!(color1 * color2, expected_color);
+    }
+
+    #[test]
+    fn test_black_returns_a_black_color() {
+        assert_eq!(color::color(0.0, 0.0, 0.0), color::black());
     }
 }

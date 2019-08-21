@@ -2,8 +2,8 @@ use crate::color;
 use crate::tuple;
 
 pub struct Light {
-    position: tuple::Tuple,
-    intensity: color::Color,
+    pub position: tuple::Tuple,
+    pub intensity: color::Color,
 }
 
 pub fn point_light(position: tuple::Tuple, intensity: color::Color) -> Light {
