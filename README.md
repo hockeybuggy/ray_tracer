@@ -7,6 +7,8 @@ Challenge" by Jamis Buck](https://pragprog.com/book/jbtracer/the-ray-tracer-chal
 
 Quite a bit of it is just me trying to get better at Rust.
 
+![My first sphere](images/first_sphere.jpg)
+
 
 ## Running
 
