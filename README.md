@@ -7,6 +7,8 @@ Challenge" by Jamis Buck](https://pragprog.com/book/jbtracer/the-ray-tracer-chal
 
 Quite a bit of it is just me trying to get better at Rust.
 
+![My first sphere](images/first_sphere.jpg)
+
 
 ## Running
 
@@ -22,3 +24,4 @@ To get started clone the repository then run:
 - Extract the assert helper macros somewhere other than in the tests. The are
   starting to be duplicated.
 - Experiment with different types for point tuples and vector tuples.
+- Update the test that write files to use tempfiles.

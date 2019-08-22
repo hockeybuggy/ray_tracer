@@ -4,21 +4,21 @@ use crate::sphere;
 use crate::tuple;
 
 #[derive(Debug)]
-struct Ray {
-    origin: tuple::Tuple,
-    direction: tuple::Tuple,
+pub struct Ray {
+    pub origin: tuple::Tuple,
+    pub direction: tuple::Tuple,
 }
 
-fn ray(origin: tuple::Tuple, direction: tuple::Tuple) -> Ray {
+pub fn ray(origin: tuple::Tuple, direction: tuple::Tuple) -> Ray {
     return Ray { origin, direction };
 }
 
 impl Ray {
-    fn position(&self, t: f64) -> tuple::Tuple {
+    pub fn position(&self, t: f64) -> tuple::Tuple {
         self.origin + self.direction * t
     }
 
-    fn intersect<'a>(&'a self, sphere: &'a sphere::Sphere) -> Vec<Intersection> {
+    pub fn intersect<'a>(&'a self, sphere: &'a sphere::Sphere) -> Vec<Intersection> {
         let transformed_ray = self.transform(&sphere.transform.inverse().unwrap());
         let sphere_to_ray = transformed_ray.origin - tuple::point(0.0, 0.0, 0.0);
 
@@ -51,16 +51,16 @@ impl Ray {
 }
 
 #[derive(Debug, PartialEq)]
-struct Intersection<'a> {
-    t: f64,
-    object: &'a sphere::Sphere,
+pub struct Intersection<'a> {
+    pub t: f64,
+    pub object: &'a sphere::Sphere,
 }
 
 fn intersection(t: f64, object: &sphere::Sphere) -> Intersection {
     Intersection { t, object }
 }
 
-fn hit<'a>(intersections: &'a Vec<Intersection>) -> Option<&'a Intersection<'a>> {
+pub fn hit<'a>(intersections: &'a Vec<Intersection>) -> Option<&'a Intersection<'a>> {
     intersections
         .iter()
         .filter(|inter| inter.t.is_sign_positive())
