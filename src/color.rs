@@ -14,6 +14,10 @@ pub fn black() -> Color {
     color(0.0, 0.0, 0.0)
 }
 
+pub fn white() -> Color {
+    color(1.0, 1.0, 1.0)
+}
+
 impl Add for Color {
     type Output = Self;
 
