@@ -5,9 +5,9 @@ use crate::sphere;
 use crate::transformation::Transform;
 use crate::tuple;
 
-struct World {
-    light: Option<lights::Light>,
-    shapes: Vec<sphere::Sphere>,
+pub struct World {
+    pub light: Option<lights::Light>,
+    pub shapes: Vec<sphere::Sphere>,
 }
 
 fn world() -> World {
@@ -37,6 +37,7 @@ mod world_tests {
     use crate::color;
     use crate::lights;
     use crate::matrix;
+    use crate::ray;
     use crate::sphere;
     use crate::transformation::Transform;
     use crate::tuple;
@@ -51,7 +52,7 @@ mod world_tests {
     }
 
     #[test]
-    fn default_world__properties() {
+    fn default_world_properties() {
         let world = world::default_world();
 
         // There is a white point light in the world.
@@ -74,5 +75,20 @@ mod world_tests {
         expected_s2.transform = matrix::Matrix4::IDENTITY.scaling(0.5, 0.5, 0.5);
         let second_shape = &world.shapes[1];
         assert_eq!(second_shape.transform, expected_s2.transform);
+    }
+
+    #[test]
+    fn default_world_intersected_with_a_ray() {
+        let world = world::default_world();
+        let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+
+        let intersections = ray.intersect_world(&world);
+
+        assert_eq!(intersections.len(), 4);
+        // Note that these are sorted by `.t`
+        assert_eq!(intersections[0].t, 4.0_f64);
+        assert_eq!(intersections[1].t, 4.5_f64);
+        assert_eq!(intersections[2].t, 5.5_f64);
+        assert_eq!(intersections[3].t, 6.0_f64);
     }
 }

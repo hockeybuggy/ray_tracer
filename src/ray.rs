@@ -2,6 +2,7 @@ use crate::matrix;
 use crate::matrix::Inverse;
 use crate::sphere;
 use crate::tuple;
+use crate::world;
 
 #[derive(Debug)]
 pub struct Ray {
@@ -39,6 +40,16 @@ impl Ray {
         let t2 = (-b + discriminanant.sqrt()) / (2.0 * a);
         intersections.push(intersection(t2, &sphere));
 
+        return intersections;
+    }
+
+    pub fn intersect_world<'a>(&'a self, world: &'a world::World) -> Vec<Intersection> {
+        let mut intersections: Vec<Intersection> = world
+            .shapes
+            .iter()
+            .flat_map(|shape| self.intersect(&shape))
+            .collect();
+        intersections.sort_unstable_by(|x, y| x.t.partial_cmp(&y.t).unwrap());
         return intersections;
     }
 
