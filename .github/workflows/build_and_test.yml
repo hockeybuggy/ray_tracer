@@ -1,4 +1,4 @@
-name: Rust
+name: Build and Test
 
 on: [push]
 
@@ -15,6 +15,3 @@ jobs:
 
     - name: Run tests
       run: cargo test --verbose
-
-    - name: Check formatting
-      run: rustup component add rustfmt && cargo fmt --all -- --check

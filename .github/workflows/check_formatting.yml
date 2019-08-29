@@ -1,0 +1,14 @@
+name: Check Formatting
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Check formatting
+      run: rustup component add rustfmt && cargo fmt --all -- --check
