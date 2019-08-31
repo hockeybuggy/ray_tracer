@@ -241,6 +241,7 @@ mod tuple_tests {
         assert_eq!(point1 - vector, expected_point);
     }
 
+    #[test]
     fn test_subtracting_two_vectors() {
         let vector1 = tuple::vector(3.0, 2.0, 1.0);
         let vector2 = tuple::vector(5.0, 6.0, 7.0);

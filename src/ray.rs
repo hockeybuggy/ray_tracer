@@ -96,6 +96,7 @@ mod ray_tests {
         assert_eq!(ray.position(2.5), tuple::point(4.5, 3.0, 4.0));
     }
 
+    #[test]
     fn test_ray_intersects_a_sphere_at_two_points() {
         /*
            Sphere at origin, ray along the z
@@ -115,8 +116,8 @@ mod ray_tests {
         let intersections = ray.intersect(&sphere);
 
         assert_eq!(intersections.len(), 2);
-        assert_eq!(intersections[1].t, 4.0_f64);
-        assert_eq!(intersections[2].t, 6.0_f64);
+        assert_eq!(intersections[0].t, 4.0_f64);
+        assert_eq!(intersections[1].t, 6.0_f64);
     }
 
     #[test]
