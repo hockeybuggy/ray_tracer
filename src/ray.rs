@@ -67,7 +67,7 @@ pub struct Intersection<'a> {
     pub object: &'a sphere::Sphere,
 }
 
-fn intersection(t: f64, object: &sphere::Sphere) -> Intersection {
+pub fn intersection(t: f64, object: &sphere::Sphere) -> Intersection {
     Intersection { t, object }
 }
 

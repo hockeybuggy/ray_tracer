@@ -3,6 +3,7 @@
 
 pub mod canvas;
 pub mod color;
+mod intersections;
 pub mod lighting;
 pub mod lights;
 pub mod material;
