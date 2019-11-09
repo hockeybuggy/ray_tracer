@@ -1,6 +1,7 @@
 use crate::color;
 use crate::lights;
 use crate::matrix;
+use crate::ray;
 use crate::sphere;
 use crate::transformation::Transform;
 use crate::tuple;
@@ -15,6 +16,12 @@ fn world() -> World {
     World {
         light: None,
         shapes: Vec::new(),
+    }
+}
+
+impl World {
+    pub fn color_at(&self, _ray: &ray::Ray) -> color::Color {
+        color::black()
     }
 }
 
@@ -35,6 +42,7 @@ pub fn default_world() -> World {
 
 #[cfg(test)]
 mod world_tests {
+    use crate::assert_color_approx_eq;
     use crate::color;
     use crate::lights;
     use crate::matrix;
@@ -91,5 +99,37 @@ mod world_tests {
         assert_eq!(intersections[1].t, 4.5_f64);
         assert_eq!(intersections[2].t, 5.5_f64);
         assert_eq!(intersections[3].t, 6.0_f64);
+    }
+
+    #[test]
+    fn color_at_when_a_ray_misses() {
+        let world = world::default_world();
+        let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+
+        let color = world.color_at(&ray);
+
+        assert_color_approx_eq!(color, color::black());
+    }
+
+    #[test]
+    fn color_at_when_a_ray_hits() {
+        let world = world::default_world();
+        let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+
+        let color = world.color_at(&ray);
+
+        assert_color_approx_eq!(color, color::color(0.38066, 0.47583, 0.2855));
+    }
+
+    #[test]
+    fn color_at_with_an_intersection_behind_the_ray() {
+        let world = world::default_world();
+        let mut outer = &world.shapes[0];
+        outer.material.ambient = 1.0;
+        let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+
+        let color = world.color_at(&ray);
+
+        assert_color_approx_eq!(color, color::color(0.38066, 0.47583, 0.2855));
     }
 }

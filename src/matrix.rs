@@ -334,22 +334,10 @@ impl Determinant for Matrix2 {
 
 #[cfg(test)]
 mod matrix_tests {
-    use assert_approx_eq::assert_approx_eq;
-
+    use crate::assert_matrix_approx_eq;
     use crate::matrix;
     use crate::matrix::{Cofactor, Determinant, Inverse, Minor, Submatrix, Transpose};
     use crate::tuple;
-
-    macro_rules! assert_matrix_approx_eq {
-        ( $a:expr, $b:expr) => {{
-            // use assert_approx_eq::assert_approx_eq;
-            for x in 0..4 {
-                for y in 0..4 {
-                    assert_approx_eq!($a[(x, y)], $b[(x, y)], 1e-5f64);
-                }
-            }
-        }};
-    }
 
     #[test]
     fn test_constructor_4_by_4() {
