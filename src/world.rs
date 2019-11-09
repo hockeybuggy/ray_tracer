@@ -6,6 +6,7 @@ use crate::transformation::Transform;
 use crate::tuple;
 
 pub struct World {
+    // TODO Adding multiple light sources can be done by changing this to a vector of lights.
     pub light: Option<lights::Light>,
     pub shapes: Vec<sphere::Sphere>,
 }

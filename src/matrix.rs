@@ -92,7 +92,6 @@ impl Mul for Matrix4 {
                     + self[(x, 1)] * other[(1, y)]
                     + self[(x, 2)] * other[(2, y)]
                     + self[(x, 3)] * other[(3, y)];
-                ;
             }
         }
         result

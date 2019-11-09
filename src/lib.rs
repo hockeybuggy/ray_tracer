@@ -3,7 +3,6 @@
 
 pub mod canvas;
 pub mod color;
-mod intersections;
 pub mod lighting;
 pub mod lights;
 pub mod material;
@@ -13,3 +12,6 @@ pub mod sphere;
 pub mod transformation;
 pub mod tuple;
 pub mod world;
+
+mod intersections; // TODO not sure if this should be public
+mod test_helpers;

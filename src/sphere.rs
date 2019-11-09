@@ -30,18 +30,7 @@ impl Sphere {
 
 #[cfg(test)]
 mod sphere_tests {
-    use assert_approx_eq::assert_approx_eq;
-
-    // TODO factor these out into some kind of test utils
-    macro_rules! assert_tuple_approx_eq {
-        ($a:expr, $b:expr) => {{
-            assert_approx_eq!($a.x, $b.x, 1e-5f64);
-            assert_approx_eq!($a.y, $b.y, 1e-5f64);
-            assert_approx_eq!($a.z, $b.z, 1e-5f64);
-            assert_approx_eq!($a.w, $b.w, 1e-5f64);
-        }};
-    }
-
+    use crate::assert_tuple_approx_eq;
     use crate::material;
     use crate::matrix;
     use crate::sphere;
