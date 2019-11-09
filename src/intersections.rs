@@ -54,8 +54,7 @@ impl<'a> Computation<'a> {
 
 #[cfg(test)]
 mod intersections_tests {
-    use assert_approx_eq::assert_approx_eq;
-
+    use crate::assert_color_approx_eq;
     use crate::color;
     use crate::intersections;
     use crate::lights;
@@ -63,15 +62,6 @@ mod intersections_tests {
     use crate::sphere;
     use crate::tuple;
     use crate::world;
-
-    // TODO factor these out into some kind of test utils
-    macro_rules! assert_color_approx_eq {
-        ($a:expr, $b:expr) => {{
-            assert_approx_eq!($a.r, $b.r, 1e-5f64);
-            assert_approx_eq!($a.g, $b.g, 1e-5f64);
-            assert_approx_eq!($a.b, $b.b, 1e-5f64);
-        }};
-    }
 
     #[test]
     fn test_precompute_intersection_state() {

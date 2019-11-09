@@ -21,17 +21,7 @@ pub fn material() -> Material {
 
 #[cfg(test)]
 mod material_tests {
-    use assert_approx_eq::assert_approx_eq;
-
-    // TODO factor these out into some kind of test utils
-    macro_rules! assert_color_approx_eq {
-        ($a:expr, $b:expr) => {{
-            assert_approx_eq!($a.r, $b.r, 1e-5f64);
-            assert_approx_eq!($a.g, $b.g, 1e-5f64);
-            assert_approx_eq!($a.b, $b.b, 1e-5f64);
-        }};
-    }
-
+    use crate::assert_color_approx_eq;
     use crate::color;
     use crate::lighting;
     use crate::lights;
@@ -145,5 +135,4 @@ mod material_tests {
         let expected = color::color(0.1, 0.1, 0.1);
         assert_color_approx_eq!(expected, result);
     }
-
 }
