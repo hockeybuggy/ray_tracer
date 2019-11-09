@@ -54,12 +54,24 @@ impl<'a> Computation<'a> {
 
 #[cfg(test)]
 mod intersections_tests {
+    use assert_approx_eq::assert_approx_eq;
+
     use crate::color;
     use crate::intersections;
+    use crate::lights;
     use crate::ray;
     use crate::sphere;
     use crate::tuple;
     use crate::world;
+
+    // TODO factor these out into some kind of test utils
+    macro_rules! assert_color_approx_eq {
+        ($a:expr, $b:expr) => {{
+            assert_approx_eq!($a.r, $b.r, 1e-5f64);
+            assert_approx_eq!($a.g, $b.g, 1e-5f64);
+            assert_approx_eq!($a.b, $b.b, 1e-5f64);
+        }};
+    }
 
     #[test]
     fn test_precompute_intersection_state() {
@@ -102,6 +114,7 @@ mod intersections_tests {
         assert_eq!(computations.normalv, tuple::vector(0.0, 0.0, -1.0));
     }
 
+    #[test]
     fn test_shading_an_intersection() {
         let world = world::default_world();
         let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
@@ -111,6 +124,23 @@ mod intersections_tests {
         let computations = intersections::prepare_computations(&intersection, &ray);
         let colour = computations.shade_hit(&world);
 
-        assert_eq!(colour, color::color(0.38066, 0.47583, 0.2855));
+        assert_color_approx_eq!(colour, color::color(0.38066, 0.47583, 0.2855));
+    }
+
+    #[test]
+    fn test_shading_an_intersection_from_inside() {
+        let mut world = world::default_world();
+        world.light = Some(lights::point_light(
+            tuple::point(0.0, 0.25, 0.0),
+            color::white(),
+        ));
+        let ray = ray::ray(tuple::point(0.0, 0.0, 0.0), tuple::vector(0.0, 0.0, 1.0));
+        let shape = &world.shapes[1];
+        let intersection = ray::intersection(0.5, &shape);
+
+        let computations = intersections::prepare_computations(&intersection, &ray);
+        let colour = computations.shade_hit(&world);
+
+        assert_color_approx_eq!(colour, color::color(0.90498, 0.90498, 0.90498));
     }
 }
