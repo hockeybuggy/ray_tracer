@@ -17,7 +17,7 @@ fn world() -> World {
     }
 }
 
-fn default_world() -> World {
+pub fn default_world() -> World {
     let white_point_light = lights::point_light(tuple::point(-10.0, 10.0, -10.0), color::white());
     let mut lime_sphere = sphere::sphere();
     lime_sphere.material.color = color::color(0.8, 1.0, 0.6);

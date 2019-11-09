@@ -1,7 +1,10 @@
 // TODO should the Intersection struct move here
+use crate::color;
+use crate::lighting;
 use crate::ray;
 use crate::sphere;
 use crate::tuple;
+use crate::world;
 
 #[derive(Debug, PartialEq)]
 pub struct Computation<'a> {
@@ -34,12 +37,29 @@ pub fn prepare_computations<'a>(
     }
 }
 
+impl<'a> Computation<'a> {
+    pub fn shade_hit(&self, world: &world::World) -> color::Color {
+        match &world.light {
+            Some(world_light) => lighting::lighting(
+                &self.object.material,
+                world_light,
+                &self.point,
+                &self.eyev,
+                &self.normalv,
+            ),
+            None => color::black(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod intersections_tests {
+    use crate::color;
     use crate::intersections;
     use crate::ray;
     use crate::sphere;
     use crate::tuple;
+    use crate::world;
 
     #[test]
     fn test_precompute_intersection_state() {
@@ -80,5 +100,17 @@ mod intersections_tests {
         assert_eq!(computations.inside, true);
         // Normal is inverted
         assert_eq!(computations.normalv, tuple::vector(0.0, 0.0, -1.0));
+    }
+
+    fn test_shading_an_intersection() {
+        let world = world::default_world();
+        let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+        let shape = &world.shapes[0];
+        let intersection = ray::intersection(4.0, &shape);
+
+        let computations = intersections::prepare_computations(&intersection, &ray);
+        let colour = computations.shade_hit(&world);
+
+        assert_eq!(colour, color::color(0.38066, 0.47583, 0.2855));
     }
 }
