@@ -1,4 +1,6 @@
 use crate::matrix;
+use crate::transformation;
+use crate::tuple;
 
 pub fn translation(x: f64, y: f64, z: f64) -> matrix::Matrix4 {
     matrix::Matrix4::new((
@@ -116,14 +118,29 @@ impl Transform for matrix::Matrix4 {
     }
 }
 
+fn view_transform(from: &tuple::Tuple, to: &tuple::Tuple, up: &tuple::Tuple) -> matrix::Matrix4 {
+    let forward = tuple::normalize(&(to.to_owned() - from.to_owned()));
+    let left = tuple::cross(&forward, &tuple::normalize(up));
+    let true_up = tuple::cross(&left, &forward);
+
+    let orientation = matrix::Matrix4::new((
+        (left.x, left.y, left.z, 0.0),
+        (true_up.x, true_up.y, true_up.z, 0.0),
+        (-forward.x, -forward.y, -forward.z, 0.0),
+        (0.0, 0.0, 0.0, 1.0),
+    ));
+
+    return orientation * transformation::translation(-from.x, -from.y, -from.z);
+}
+
 #[cfg(test)]
 mod transformation_tests {
-    use crate::assert_tuple_approx_eq;
     use crate::matrix;
     use crate::matrix::Inverse;
     use crate::transformation;
     use crate::transformation::Transform;
     use crate::tuple;
+    use crate::{assert_matrix_approx_eq, assert_tuple_approx_eq};
 
     #[test]
     fn test_simple_translation_matrix() {
@@ -325,5 +342,63 @@ mod transformation_tests {
 
         let point2 = t * point1;
         assert_tuple_approx_eq!(point2, tuple::point(15.0, 0.0, 7.0));
+    }
+
+    #[test]
+    fn test_view_transform_for_default_orientation() {
+        let from = tuple::point(0.0, 0.0, 0.0);
+        let to = tuple::point(0.0, 0.0, -1.0);
+        let up = tuple::vector(0.0, 1.0, 0.0);
+
+        let transformation = transformation::view_transform(&from, &to, &up);
+
+        assert_matrix_approx_eq!(transformation, matrix::Matrix4::IDENTITY);
+    }
+
+    #[test]
+    fn test_view_transform_looking_in_positive_z_direction() {
+        let from = tuple::point(0.0, 0.0, 0.0);
+        let to = tuple::point(0.0, 0.0, 1.0);
+        let up = tuple::vector(0.0, 1.0, 0.0);
+
+        let transformation = transformation::view_transform(&from, &to, &up);
+
+        assert_matrix_approx_eq!(
+            transformation,
+            matrix::Matrix4::IDENTITY.scaling(-1.0, 1.0, -1.0)
+        );
+    }
+
+    #[test]
+    fn test_view_transform_moves_the_world() {
+        let from = tuple::point(0.0, 0.0, 8.0);
+        let to = tuple::point(0.0, 0.0, 1.0);
+        let up = tuple::vector(0.0, 1.0, 0.0);
+
+        let transformation = transformation::view_transform(&from, &to, &up);
+
+        assert_matrix_approx_eq!(
+            transformation,
+            matrix::Matrix4::IDENTITY.translation(0.0, 0.0, -8.0)
+        );
+    }
+
+    #[test]
+    fn test_view_transform_an_arbitrary_view_transformation() {
+        let from = tuple::point(1.0, 3.0, 2.0);
+        let to = tuple::point(4.0, -2.0, 8.0);
+        // Notice `up` is not normalized
+        let up = tuple::vector(1.0, 1.0, 0.0);
+
+        let transformation = transformation::view_transform(&from, &to, &up);
+
+        // The value for the expected
+        let expected = matrix::Matrix4::new((
+            (-0.50709, 0.50709, 0.67612, -2.36643),
+            (0.76772, 0.60609, 0.12122, -2.82843),
+            (-0.35857, 0.59761, -0.71714, 0.0),
+            (0.0, 0.0, 0.0, 1.0),
+        ));
+        assert_matrix_approx_eq!(transformation, expected);
     }
 }

@@ -1,6 +1,7 @@
 // TODO remove dead code exception
 #![allow(dead_code)]
 
+pub mod camera;
 pub mod canvas;
 pub mod color;
 pub mod lighting;
