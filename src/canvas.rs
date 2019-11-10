@@ -4,12 +4,12 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 
 pub struct Canvas {
-    pub width: u64,
-    pub height: u64,
+    pub width: u32,
+    pub height: u32,
     grid: Vec<Vec<color::Color>>,
 }
 
-pub fn canvas(width: u64, height: u64) -> Canvas {
+pub fn canvas(width: u32, height: u32) -> Canvas {
     let mut grid = Vec::with_capacity(height as usize);
     for _y in 0..height {
         let mut row = Vec::with_capacity(width as usize);
@@ -27,11 +27,11 @@ pub fn canvas(width: u64, height: u64) -> Canvas {
 }
 
 impl Canvas {
-    pub fn write_pixel(&mut self, x: u64, y: u64, value: color::Color) {
+    pub fn write_pixel(&mut self, x: u32, y: u32, value: color::Color) {
         self.grid[y as usize][x as usize] = value;
     }
 
-    pub fn pixel_at(&self, x: u64, y: u64) -> &color::Color {
+    pub fn pixel_at(&self, x: u32, y: u32) -> &color::Color {
         &self.grid[y as usize][x as usize]
     }
 
