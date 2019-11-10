@@ -118,7 +118,11 @@ impl Transform for matrix::Matrix4 {
     }
 }
 
-fn view_transform(from: &tuple::Tuple, to: &tuple::Tuple, up: &tuple::Tuple) -> matrix::Matrix4 {
+pub fn view_transform(
+    from: &tuple::Tuple,
+    to: &tuple::Tuple,
+    up: &tuple::Tuple,
+) -> matrix::Matrix4 {
     let forward = tuple::normalize(&(to.to_owned() - from.to_owned()));
     let left = tuple::cross(&forward, &tuple::normalize(up));
     let true_up = tuple::cross(&left, &forward);

@@ -1,11 +1,13 @@
+use crate::canvas;
 use crate::matrix;
 use crate::matrix::Inverse;
 use crate::ray;
 use crate::tuple;
+use crate::world;
 
 pub struct Camera {
-    hsize: i32,
-    vsize: i32,
+    hsize: u32,
+    vsize: u32,
     field_of_view: f64,
     half_width: f64,
     half_height: f64,
@@ -14,7 +16,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(hsize: i32, vsize: i32, field_of_view: f64) -> Camera {
+    pub fn new(hsize: u32, vsize: u32, field_of_view: f64) -> Camera {
         let half_view = (field_of_view / 2.0).tan();
         let aspect = f64::from(hsize) / f64::from(vsize);
         let half_width;
@@ -41,7 +43,7 @@ impl Camera {
         }
     }
 
-    pub fn ray_for_pixel(&self, x: i32, y: i32) -> ray::Ray {
+    pub fn ray_for_pixel(&self, x: u32, y: u32) -> ray::Ray {
         // offset from the edge of the canvas to the pixel's center
         let xoffset = ((x as f64) + 0.5) * self.pixel_size;
         let yoffset = ((y as f64) + 0.5) * self.pixel_size;
@@ -58,15 +60,30 @@ impl Camera {
 
         return ray::ray(origin, direction);
     }
+
+    pub fn render(&self, world: &world::World) -> canvas::Canvas {
+        let mut image = canvas::canvas(self.hsize, self.vsize);
+        for y in 0..self.hsize {
+            for x in 0..self.vsize {
+                let ray = self.ray_for_pixel(x, y);
+                let color = world.color_at(&ray);
+                image.write_pixel(x, y, color);
+            }
+        }
+        return image;
+    }
 }
 
 #[cfg(test)]
 mod camera_tests {
-    use crate::assert_tuple_approx_eq;
     use crate::camera;
+    use crate::color;
     use crate::matrix;
+    use crate::transformation;
     use crate::transformation::Transform;
     use crate::tuple;
+    use crate::world;
+    use crate::{assert_color_approx_eq, assert_tuple_approx_eq};
     use assert_approx_eq::assert_approx_eq;
 
     #[test]
@@ -131,5 +148,19 @@ mod camera_tests {
             ray.direction,
             tuple::vector(2.0_f64.sqrt() / 2.0, 0.0, -2.0_f64.sqrt() / 2.0,)
         );
+    }
+
+    #[test]
+    fn test_rendering_a_world_with_a_camera() {
+        let world = world::default_world();
+        let mut camera = camera::Camera::new(11, 11, std::f64::consts::PI / 2.0);
+        let from = tuple::point(0.0, 0.0, -5.0);
+        let to = tuple::point(0.0, 0.0, 0.0);
+        let up = tuple::vector(0.0, 1.0, 0.0);
+        camera.transform = transformation::view_transform(&from, &to, &up);
+
+        let image = camera.render(&world);
+
+        assert_color_approx_eq!(image.pixel_at(5, 5), color::color(0.38066, 0.47583, 0.2855));
     }
 }
