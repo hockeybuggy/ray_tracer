@@ -4,6 +4,8 @@ use std::io::{Read, Seek};
 use ray_tracer::transformation::Transform;
 use ray_tracer::{camera, color, lights, material, matrix, sphere, transformation, tuple, world};
 
+const SCALE: u32 = 1;
+
 #[test]
 fn test_simple_world() -> Result<(), std::io::Error> {
     let mut world = world::world();
@@ -93,7 +95,7 @@ fn test_simple_world() -> Result<(), std::io::Error> {
     let white_point_light = lights::point_light(tuple::point(-10.0, 10.0, -10.0), color::white());
     world.light = Some(white_point_light);
 
-    let mut camera = camera::Camera::new(100, 50, std::f64::consts::PI / 3.0);
+    let mut camera = camera::Camera::new(100 * SCALE, 50 * SCALE, std::f64::consts::PI / 3.0);
     camera.transform = transformation::view_transform(
         &tuple::point(0.0, 1.5, -5.0),
         &tuple::point(0.0, 1.0, 0.0),
