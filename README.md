@@ -25,3 +25,6 @@ To get started clone the repository then run:
 - Experiment with different types for point tuples and vector tuples.
 - Update the test that write files to use tempfiles.
 - Use a more compact (and more supported format than PPM).
+- Builder interface for worlds.
+- Builder interface for shapes.
+- Fix black border in camera rendering

@@ -12,7 +12,7 @@ pub struct Camera {
     half_width: f64,
     half_height: f64,
     pixel_size: f64,
-    transform: matrix::Matrix4,
+    pub transform: matrix::Matrix4,
 }
 
 impl Camera {
@@ -63,8 +63,8 @@ impl Camera {
 
     pub fn render(&self, world: &world::World) -> canvas::Canvas {
         let mut image = canvas::canvas(self.hsize, self.vsize);
-        for y in 0..self.hsize {
-            for x in 0..self.vsize {
+        for y in 0..(self.vsize - 1) {
+            for x in 0..(self.hsize - 1) {
                 let ray = self.ray_for_pixel(x, y);
                 let color = world.color_at(&ray);
                 image.write_pixel(x, y, color);
@@ -138,7 +138,6 @@ mod camera_tests {
         let transform = matrix::Matrix4::IDENTITY
             .translation(0.0, -2.0, 5.0)
             .rotation_y(std::f64::consts::PI / 4.0);
-        // TODO might be reversed
         camera.transform = transform;
 
         let ray = camera.ray_for_pixel(100, 50);

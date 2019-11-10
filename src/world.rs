@@ -13,7 +13,7 @@ pub struct World {
     pub shapes: Vec<sphere::Sphere>,
 }
 
-fn world() -> World {
+pub fn world() -> World {
     World {
         light: None,
         shapes: Vec::new(),
