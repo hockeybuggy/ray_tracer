@@ -1,5 +1,5 @@
 use crate::color;
-use crate::intersections;
+use crate::intersection;
 use crate::lights;
 use crate::matrix;
 use crate::ray;
@@ -27,7 +27,7 @@ impl World {
         if hit.is_none() {
             return color::black();
         }
-        let computations = intersections::prepare_computations(&hit.unwrap(), &ray);
+        let computations = intersection::prepare_computations(&hit.unwrap(), &ray);
         return computations.shade_hit(&self);
     }
 }

@@ -14,5 +14,5 @@ pub mod transformation;
 pub mod tuple;
 pub mod world;
 
-mod intersections; // TODO not sure if this should be public
+mod intersection;
 mod test_helpers;
