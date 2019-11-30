@@ -33,7 +33,8 @@ impl World {
 }
 
 pub fn default_world() -> World {
-    let white_point_light = lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
+    let white_point_light =
+        lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
     let mut lime_sphere = sphere::sphere();
     lime_sphere.material.color = color::color(0.8, 1.0, 0.6);
     lime_sphere.material.diffuse = 0.7;
@@ -72,7 +73,8 @@ mod world_tests {
         let world = world::default_world();
 
         // There is a white point light in the world.
-        let expected_light = lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
+        let expected_light =
+            lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
         assert_eq!(world.light.is_some(), true);
         let world_light = world.light.unwrap();
         assert_eq!(world_light.position, expected_light.position);
@@ -96,7 +98,10 @@ mod world_tests {
     #[test]
     fn default_world_intersected_with_a_ray() {
         let world = world::default_world();
-        let ray = ray::ray(tuple::Point::new(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
 
         let intersections = ray.intersect_world(&world);
 
@@ -111,7 +116,10 @@ mod world_tests {
     #[test]
     fn color_at_when_a_ray_misses() {
         let world = world::default_world();
-        let ray = ray::ray(tuple::Point::new(0.0, 0.0, -5.0), tuple::vector(0.0, 1.0, 0.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+        );
 
         let color = world.color_at(&ray);
 
@@ -121,7 +129,10 @@ mod world_tests {
     #[test]
     fn color_at_when_a_ray_hits() {
         let world = world::default_world();
-        let ray = ray::ray(tuple::Point::new(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
 
         let color = world.color_at(&ray);
 
@@ -137,7 +148,10 @@ mod world_tests {
             let inner = world.shapes.get_mut(1);
             inner.unwrap().material.ambient = 1.0;
         }
-        let ray = ray::ray(tuple::Point::new(0.0, 0.0, 0.075), tuple::vector(0.0, 0.0, -1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, 0.075),
+            tuple::Vector::new(0.0, 0.0, -1.0),
+        );
 
         let color = world.color_at(&ray);
 

@@ -98,7 +98,7 @@ mod intersection_tests {
         let sphere = sphere::sphere();
         let ray = ray::ray(
             tuple::Point::new(0.0, 0.0, -5.0),
-            tuple::vector(0.0, 0.0, 1.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
         );
 
         let intersections = ray.intersect(&sphere);
@@ -165,7 +165,7 @@ mod intersection_tests {
     fn test_precompute_intersection_state() {
         let ray = ray::ray(
             tuple::Point::new(0.0, 0.0, -5.0),
-            tuple::vector(0.0, 0.0, 1.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
         );
         let shape = sphere::sphere();
         let intersection = intersection::intersection(4.0, &shape);
@@ -175,15 +175,15 @@ mod intersection_tests {
         assert_eq!(computations.t, intersection.t);
         assert_eq!(computations.object, intersection.object);
         assert_eq!(computations.point, tuple::Point::new(0.0, 0.0, -1.0));
-        assert_eq!(computations.eyev, tuple::vector(0.0, 0.0, -1.0));
-        assert_eq!(computations.normalv, tuple::vector(0.0, 0.0, -1.0));
+        assert_eq!(computations.eyev, tuple::Vector::new(0.0, 0.0, -1.0));
+        assert_eq!(computations.normalv, tuple::Vector::new(0.0, 0.0, -1.0));
     }
 
     #[test]
     fn test_prepare_computations_when_the_intersection_occurs_on_the_outside() {
         let ray = ray::ray(
             tuple::Point::new(0.0, 0.0, -5.0),
-            tuple::vector(0.0, 0.0, 1.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
         );
         let shape = sphere::sphere();
         let intersection = intersection::intersection(4.0, &shape);
@@ -197,7 +197,7 @@ mod intersection_tests {
     fn test_prepare_computations_when_the_intersection_occurs_on_the_inside() {
         let ray = ray::ray(
             tuple::Point::new(0.0, 0.0, 0.0),
-            tuple::vector(0.0, 0.0, 1.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
         );
         let shape = sphere::sphere();
         let intersection = intersection::intersection(1.0, &shape);
@@ -205,10 +205,10 @@ mod intersection_tests {
         let computations = intersection::prepare_computations(&intersection, &ray);
 
         assert_eq!(computations.point, tuple::Point::new(0.0, 0.0, 1.0));
-        assert_eq!(computations.eyev, tuple::vector(0.0, 0.0, -1.0));
+        assert_eq!(computations.eyev, tuple::Vector::new(0.0, 0.0, -1.0));
         assert_eq!(computations.inside, true);
         // Normal is inverted
-        assert_eq!(computations.normalv, tuple::vector(0.0, 0.0, -1.0));
+        assert_eq!(computations.normalv, tuple::Vector::new(0.0, 0.0, -1.0));
     }
 
     #[test]
@@ -216,7 +216,7 @@ mod intersection_tests {
         let world = world::default_world();
         let ray = ray::ray(
             tuple::Point::new(0.0, 0.0, -5.0),
-            tuple::vector(0.0, 0.0, 1.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
         );
         let shape = &world.shapes[0];
         let intersection = intersection::intersection(4.0, &shape);
@@ -236,7 +236,7 @@ mod intersection_tests {
         ));
         let ray = ray::ray(
             tuple::Point::new(0.0, 0.0, 0.0),
-            tuple::vector(0.0, 0.0, 1.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
         );
         let shape = &world.shapes[1];
         let intersection = intersection::intersection(0.5, &shape);

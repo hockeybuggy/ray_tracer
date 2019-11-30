@@ -13,10 +13,6 @@ impl Point {
         Point { x, y, z, w: 1.0 }
     }
 }
-// TODO remove this
-pub fn point(x: f64, y: f64, z: f64) -> Point {
-    Point::new(x, y, z)
-}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Vector {
@@ -34,10 +30,6 @@ impl Vector {
     pub fn reflect(&self, normal: &Vector) -> Vector {
         return *self - *normal * 2.0 * dot(&self, &normal);
     }
-}
-// TODO remove this
-pub fn vector(x: f64, y: f64, z: f64) -> Vector {
-    Vector::new(x, y, z)
 }
 
 impl Add<Vector> for Point {

@@ -169,7 +169,7 @@ mod transformation_tests {
     #[test]
     fn test_translation_does_not_affect_vectors() {
         let translation_matrix = transformation::translation(5.0, -3.0, 2.0);
-        let vector = tuple::vector(-3.0, 4.0, 5.0);
+        let vector = tuple::Vector::new(-3.0, 4.0, 5.0);
 
         assert_eq!(translation_matrix * vector, vector);
     }
@@ -185,19 +185,19 @@ mod transformation_tests {
     #[test]
     fn test_scaling_applied_to_a_vector() {
         let scaling_matrix = transformation::scaling(2.0, 3.0, 4.0);
-        let vector = tuple::vector(-4.0, 6.0, 8.0);
+        let vector = tuple::Vector::new(-4.0, 6.0, 8.0);
 
-        assert_eq!(scaling_matrix * vector, tuple::vector(-8.0, 18.0, 32.0));
+        assert_eq!(scaling_matrix * vector, tuple::Vector::new(-8.0, 18.0, 32.0));
     }
 
     #[test]
     fn test_scaling_with_the_inverse() {
         let scaling_matrix = transformation::scaling(2.0, 3.0, 4.0);
-        let vector = tuple::vector(-4.0, 6.0, 8.0);
+        let vector = tuple::Vector::new(-4.0, 6.0, 8.0);
 
         assert_eq!(
             scaling_matrix.inverse().unwrap() * vector,
-            tuple::vector(-2.0, 2.0, 2.0)
+            tuple::Vector::new(-2.0, 2.0, 2.0)
         );
     }
 
@@ -352,7 +352,7 @@ mod transformation_tests {
     fn test_view_transform_for_default_orientation() {
         let from = tuple::Point::new(0.0, 0.0, 0.0);
         let to = tuple::Point::new(0.0, 0.0, -1.0);
-        let up = tuple::vector(0.0, 1.0, 0.0);
+        let up = tuple::Vector::new(0.0, 1.0, 0.0);
 
         let transformation = transformation::view_transform(&from, &to, &up);
 
@@ -363,7 +363,7 @@ mod transformation_tests {
     fn test_view_transform_looking_in_positive_z_direction() {
         let from = tuple::Point::new(0.0, 0.0, 0.0);
         let to = tuple::Point::new(0.0, 0.0, 1.0);
-        let up = tuple::vector(0.0, 1.0, 0.0);
+        let up = tuple::Vector::new(0.0, 1.0, 0.0);
 
         let transformation = transformation::view_transform(&from, &to, &up);
 
@@ -377,7 +377,7 @@ mod transformation_tests {
     fn test_view_transform_moves_the_world() {
         let from = tuple::Point::new(0.0, 0.0, 8.0);
         let to = tuple::Point::new(0.0, 0.0, 1.0);
-        let up = tuple::vector(0.0, 1.0, 0.0);
+        let up = tuple::Vector::new(0.0, 1.0, 0.0);
 
         let transformation = transformation::view_transform(&from, &to, &up);
 
@@ -392,7 +392,7 @@ mod transformation_tests {
         let from = tuple::Point::new(1.0, 3.0, 2.0);
         let to = tuple::Point::new(4.0, -2.0, 8.0);
         // Notice `up` is not normalized
-        let up = tuple::vector(1.0, 1.0, 0.0);
+        let up = tuple::Vector::new(1.0, 1.0, 0.0);
 
         let transformation = transformation::view_transform(&from, &to, &up);
 

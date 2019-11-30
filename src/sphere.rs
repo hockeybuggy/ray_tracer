@@ -43,7 +43,7 @@ mod sphere_tests {
 
         let normal = sphere.normal_at(tuple::Point::new(1.0, 0.0, 0.0));
 
-        let expected = tuple::vector(1.0, 0.0, 0.0);
+        let expected = tuple::Vector::new(1.0, 0.0, 0.0);
         assert_eq!(expected, normal);
     }
 
@@ -53,7 +53,7 @@ mod sphere_tests {
 
         let normal = sphere.normal_at(tuple::Point::new(0.0, 1.0, 0.0));
 
-        let expected = tuple::vector(0.0, 1.0, 0.0);
+        let expected = tuple::Vector::new(0.0, 1.0, 0.0);
         assert_eq!(expected, normal);
     }
 
@@ -63,7 +63,7 @@ mod sphere_tests {
 
         let normal = sphere.normal_at(tuple::Point::new(0.0, 0.0, 1.0));
 
-        let expected = tuple::vector(0.0, 0.0, 1.0);
+        let expected = tuple::Vector::new(0.0, 0.0, 1.0);
         assert_eq!(expected, normal);
     }
 
@@ -77,7 +77,7 @@ mod sphere_tests {
             3.0_f64.sqrt() / 3.0,
         ));
 
-        let expected = tuple::vector(
+        let expected = tuple::Vector::new(
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
@@ -105,7 +105,7 @@ mod sphere_tests {
 
         let normal = sphere.normal_at(tuple::Point::new(0.0, 1.707107, -0.707107));
 
-        let expected = tuple::vector(0.0, 0.707107, -0.707107);
+        let expected = tuple::Vector::new(0.0, 0.707107, -0.707107);
         assert_tuple_approx_eq!(expected, normal);
     }
 
@@ -122,7 +122,7 @@ mod sphere_tests {
             -2.0_f64.sqrt() / 2.0,
         ));
 
-        let expected = tuple::vector(0.0, 0.97014, -0.24254);
+        let expected = tuple::Vector::new(0.0, 0.97014, -0.24254);
         assert_tuple_approx_eq!(expected, normal);
     }
 
