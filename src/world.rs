@@ -48,6 +48,23 @@ pub fn default_world() -> World {
     }
 }
 
+pub fn is_shadowed(world: &World, point: &tuple::Point) -> bool {
+    // TODO this unwrap doesn't feel safe
+    let v = world.light.as_ref().unwrap().position - *point;
+    let distance = tuple::magnitude(&v);
+    let direction = tuple::normalize(&v);
+
+    let ray = ray::ray(*point, direction);
+    let intersections = ray.intersect_world(&world);
+
+    let hit = ray::hit(&intersections);
+    dbg!(hit);
+    if hit.is_some() && hit.unwrap().t < distance {
+        return true;
+    }
+    false
+}
+
 #[cfg(test)]
 mod world_tests {
     use crate::assert_color_approx_eq;
@@ -157,5 +174,37 @@ mod world_tests {
 
         let inner = world.shapes.get_mut(1);
         assert_color_approx_eq!(color, inner.as_ref().unwrap().material.color);
+    }
+
+    #[test]
+    fn there_is_no_shadow_when_nothing_is_collinear_with_point_and_light() {
+        let world = world::default_world();
+        let point = tuple::Point::new(0.0, 10.0, 0.0);
+
+        assert_eq!(world::is_shadowed(&world, &point), false);
+    }
+
+    #[test]
+    fn there_is_a_shadow_when_an_object_is_between_the_point_and_the_light() {
+        let world = world::default_world();
+        let point = tuple::Point::new(10.0, -10.0, 10.0);
+
+        assert_eq!(world::is_shadowed(&world, &point), true);
+    }
+
+    #[test]
+    fn there_is_no_shadow_when_an_object_is_behind_the_light() {
+        let world = world::default_world();
+        let point = tuple::Point::new(-20.0, 20.0, -20.0);
+
+        assert_eq!(world::is_shadowed(&world, &point), false);
+    }
+
+    #[test]
+    fn there_is_no_shadow_when_an_object_is_behind_the_point() {
+        let world = world::default_world();
+        let point = tuple::Point::new(-2.0, 2.0, -2.0);
+
+        assert_eq!(world::is_shadowed(&world, &point), false);
     }
 }
