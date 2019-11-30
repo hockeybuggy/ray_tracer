@@ -6,9 +6,9 @@ use crate::tuple;
 pub fn lighting(
     material: &material::Material,
     light: &lights::Light,
-    point: &tuple::Tuple,
-    camerav: &tuple::Tuple,
-    normalv: &tuple::Tuple,
+    point: &tuple::Point,
+    camerav: &tuple::Vector,
+    normalv: &tuple::Vector,
 ) -> color::Color {
     let ambient: color::Color;
     let diffuse: color::Color;

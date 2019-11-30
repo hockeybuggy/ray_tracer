@@ -98,11 +98,42 @@ impl Mul for Matrix4 {
     }
 }
 
-impl Mul<tuple::Tuple> for Matrix4 {
-    type Output = tuple::Tuple;
+impl Mul<tuple::Point> for Matrix4 {
+    type Output = tuple::Point;
 
-    fn mul(self, other: tuple::Tuple) -> tuple::Tuple {
-        let mut result = tuple::Tuple {
+    fn mul(self, other: tuple::Point) -> tuple::Point {
+        let mut result = tuple::Point {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            w: 0.0,
+        };
+
+        result.x = self[(0, 0)] * other.x
+            + self[(0, 1)] * other.y
+            + self[(0, 2)] * other.z
+            + self[(0, 3)] * other.w;
+        result.y = self[(1, 0)] * other.x
+            + self[(1, 1)] * other.y
+            + self[(1, 2)] * other.z
+            + self[(1, 3)] * other.w;
+        result.z = self[(2, 0)] * other.x
+            + self[(2, 1)] * other.y
+            + self[(2, 2)] * other.z
+            + self[(2, 3)] * other.w;
+        result.w = self[(3, 0)] * other.x
+            + self[(3, 1)] * other.y
+            + self[(3, 2)] * other.z
+            + self[(3, 3)] * other.w;
+        result
+    }
+}
+
+impl Mul<tuple::Vector> for Matrix4 {
+    type Output = tuple::Vector;
+
+    fn mul(self, other: tuple::Vector) -> tuple::Vector {
+        let mut result = tuple::Vector {
             x: 0.0,
             y: 0.0,
             z: 0.0,
@@ -498,18 +529,18 @@ mod matrix_tests {
             (8.0, 6.0, 4.0, 1.0),
             (0.0, 0.0, 0.0, 1.0),
         ));
-        let tuple1 = tuple::Tuple {
+        let tuple1 = tuple::Point {
             x: 1.0,
             y: 2.0,
             z: 3.0,
             w: 1.0,
         };
 
-        let result: tuple::Tuple = matrix1 * tuple1;
+        let result: tuple::Point = matrix1 * tuple1;
 
         assert_eq!(
             result,
-            tuple::Tuple {
+            tuple::Point {
                 x: 18.0,
                 y: 24.0,
                 z: 33.0,

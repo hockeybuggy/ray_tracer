@@ -92,13 +92,13 @@ fn test_simple_world() -> Result<(), std::io::Error> {
     }
 
     // Let there be light
-    let white_point_light = lights::point_light(tuple::point(-10.0, 10.0, -10.0), color::white());
+    let white_point_light = lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
     world.light = Some(white_point_light);
 
     let mut camera = camera::Camera::new(100 * SCALE, 50 * SCALE, std::f64::consts::PI / 3.0);
     camera.transform = transformation::view_transform(
-        &tuple::point(0.0, 1.5, -5.0),
-        &tuple::point(0.0, 1.0, 0.0),
+        &tuple::Point::new(0.0, 1.5, -5.0),
+        &tuple::Point::new(0.0, 1.0, 0.0),
         &tuple::vector(0.0, 1.0, 0.0),
     );
 
