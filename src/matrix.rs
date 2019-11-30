@@ -310,8 +310,6 @@ pub struct Matrix2 {
 }
 
 impl Matrix2 {
-    const SIZE: usize = 2;
-
     pub fn new(m: ((f64, f64), (f64, f64))) -> Self {
         Self {
             m: [[(m.0).0, (m.0).1], [(m.1).0, (m.1).1]],

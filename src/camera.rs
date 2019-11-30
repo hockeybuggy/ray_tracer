@@ -8,7 +8,6 @@ use crate::world;
 pub struct Camera {
     hsize: u32,
     vsize: u32,
-    field_of_view: f64,
     half_width: f64,
     half_height: f64,
     pixel_size: f64,
@@ -35,7 +34,6 @@ impl Camera {
         Camera {
             hsize,
             vsize,
-            field_of_view,
             half_width,
             half_height,
             pixel_size,
@@ -96,7 +94,6 @@ mod camera_tests {
 
         assert_eq!(camera.hsize, hsize);
         assert_eq!(camera.vsize, vsize);
-        assert_eq!(camera.field_of_view, field_of_view);
         assert_eq!(camera.transform, matrix::Matrix4::IDENTITY);
     }
 
