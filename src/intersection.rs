@@ -20,9 +20,9 @@ pub struct Computation<'a> {
     pub t: f64,
     pub object: &'a sphere::Sphere,
 
-    pub point: tuple::Tuple,
-    pub eyev: tuple::Tuple,
-    pub normalv: tuple::Tuple,
+    pub point: tuple::Point,
+    pub eyev: tuple::Vector,
+    pub normalv: tuple::Vector,
     pub inside: bool,
 }
 
@@ -96,7 +96,10 @@ mod intersection_tests {
     #[test]
     fn test_intersections_sets_the_object_in_the_intersection() {
         let sphere = sphere::sphere();
-        let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
 
         let intersections = ray.intersect(&sphere);
 
@@ -160,7 +163,10 @@ mod intersection_tests {
 
     #[test]
     fn test_precompute_intersection_state() {
-        let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
         let shape = sphere::sphere();
         let intersection = intersection::intersection(4.0, &shape);
 
@@ -168,14 +174,17 @@ mod intersection_tests {
 
         assert_eq!(computations.t, intersection.t);
         assert_eq!(computations.object, intersection.object);
-        assert_eq!(computations.point, tuple::point(0.0, 0.0, -1.0));
-        assert_eq!(computations.eyev, tuple::vector(0.0, 0.0, -1.0));
-        assert_eq!(computations.normalv, tuple::vector(0.0, 0.0, -1.0));
+        assert_eq!(computations.point, tuple::Point::new(0.0, 0.0, -1.0));
+        assert_eq!(computations.eyev, tuple::Vector::new(0.0, 0.0, -1.0));
+        assert_eq!(computations.normalv, tuple::Vector::new(0.0, 0.0, -1.0));
     }
 
     #[test]
     fn test_prepare_computations_when_the_intersection_occurs_on_the_outside() {
-        let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
         let shape = sphere::sphere();
         let intersection = intersection::intersection(4.0, &shape);
 
@@ -186,23 +195,29 @@ mod intersection_tests {
 
     #[test]
     fn test_prepare_computations_when_the_intersection_occurs_on_the_inside() {
-        let ray = ray::ray(tuple::point(0.0, 0.0, 0.0), tuple::vector(0.0, 0.0, 1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, 0.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
         let shape = sphere::sphere();
         let intersection = intersection::intersection(1.0, &shape);
 
         let computations = intersection::prepare_computations(&intersection, &ray);
 
-        assert_eq!(computations.point, tuple::point(0.0, 0.0, 1.0));
-        assert_eq!(computations.eyev, tuple::vector(0.0, 0.0, -1.0));
+        assert_eq!(computations.point, tuple::Point::new(0.0, 0.0, 1.0));
+        assert_eq!(computations.eyev, tuple::Vector::new(0.0, 0.0, -1.0));
         assert_eq!(computations.inside, true);
         // Normal is inverted
-        assert_eq!(computations.normalv, tuple::vector(0.0, 0.0, -1.0));
+        assert_eq!(computations.normalv, tuple::Vector::new(0.0, 0.0, -1.0));
     }
 
     #[test]
     fn test_shading_an_intersection() {
         let world = world::default_world();
-        let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
         let shape = &world.shapes[0];
         let intersection = intersection::intersection(4.0, &shape);
 
@@ -216,10 +231,13 @@ mod intersection_tests {
     fn test_shading_an_intersection_from_inside() {
         let mut world = world::default_world();
         world.light = Some(lights::point_light(
-            tuple::point(0.0, 0.25, 0.0),
+            tuple::Point::new(0.0, 0.25, 0.0),
             color::white(),
         ));
-        let ray = ray::ray(tuple::point(0.0, 0.0, 0.0), tuple::vector(0.0, 0.0, 1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, 0.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
         let shape = &world.shapes[1];
         let intersection = intersection::intersection(0.5, &shape);
 

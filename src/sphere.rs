@@ -17,10 +17,10 @@ pub fn sphere() -> Sphere {
 }
 
 impl Sphere {
-    pub fn normal_at(&self, world_point: tuple::Tuple) -> tuple::Tuple {
+    pub fn normal_at(&self, world_point: tuple::Point) -> tuple::Vector {
         let transform_inverse = self.transform.inverse().unwrap();
         let object_point = transform_inverse * world_point;
-        let object_normal = object_point - tuple::point(0.0, 0.0, 0.0);
+        let object_normal = object_point - tuple::Point::new(0.0, 0.0, 0.0);
         let mut world_normal = transform_inverse.transpose() * object_normal;
         // This is sorta a cheat to skip finding the submatrix.
         world_normal.w = 0.0;
@@ -41,9 +41,9 @@ mod sphere_tests {
     fn test_normal_on_a_sphere_on_the_x() {
         let sphere = sphere::sphere();
 
-        let normal = sphere.normal_at(tuple::point(1.0, 0.0, 0.0));
+        let normal = sphere.normal_at(tuple::Point::new(1.0, 0.0, 0.0));
 
-        let expected = tuple::vector(1.0, 0.0, 0.0);
+        let expected = tuple::Vector::new(1.0, 0.0, 0.0);
         assert_eq!(expected, normal);
     }
 
@@ -51,9 +51,9 @@ mod sphere_tests {
     fn test_normal_on_a_sphere_on_the_y() {
         let sphere = sphere::sphere();
 
-        let normal = sphere.normal_at(tuple::point(0.0, 1.0, 0.0));
+        let normal = sphere.normal_at(tuple::Point::new(0.0, 1.0, 0.0));
 
-        let expected = tuple::vector(0.0, 1.0, 0.0);
+        let expected = tuple::Vector::new(0.0, 1.0, 0.0);
         assert_eq!(expected, normal);
     }
 
@@ -61,9 +61,9 @@ mod sphere_tests {
     fn test_normal_on_a_sphere_on_the_z() {
         let sphere = sphere::sphere();
 
-        let normal = sphere.normal_at(tuple::point(0.0, 0.0, 1.0));
+        let normal = sphere.normal_at(tuple::Point::new(0.0, 0.0, 1.0));
 
-        let expected = tuple::vector(0.0, 0.0, 1.0);
+        let expected = tuple::Vector::new(0.0, 0.0, 1.0);
         assert_eq!(expected, normal);
     }
 
@@ -71,13 +71,13 @@ mod sphere_tests {
     fn test_normal_on_a_sphere_at_a_nonaxial_point() {
         let sphere = sphere::sphere();
 
-        let normal = sphere.normal_at(tuple::point(
+        let normal = sphere.normal_at(tuple::Point::new(
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
         ));
 
-        let expected = tuple::vector(
+        let expected = tuple::Vector::new(
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
@@ -89,7 +89,7 @@ mod sphere_tests {
     fn test_normal_is_nornalized_vector() {
         let sphere = sphere::sphere();
 
-        let normal = sphere.normal_at(tuple::point(
+        let normal = sphere.normal_at(tuple::Point::new(
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
@@ -103,9 +103,9 @@ mod sphere_tests {
         let mut sphere = sphere::sphere();
         sphere.transform = matrix::Matrix4::IDENTITY.translation(0.0, 1.0, 0.0);
 
-        let normal = sphere.normal_at(tuple::point(0.0, 1.707107, -0.707107));
+        let normal = sphere.normal_at(tuple::Point::new(0.0, 1.707107, -0.707107));
 
-        let expected = tuple::vector(0.0, 0.707107, -0.707107);
+        let expected = tuple::Vector::new(0.0, 0.707107, -0.707107);
         assert_tuple_approx_eq!(expected, normal);
     }
 
@@ -116,13 +116,13 @@ mod sphere_tests {
             .rotation_x(std::f64::consts::PI / 5.0)
             .scaling(1.0, 0.5, 1.0);
 
-        let normal = sphere.normal_at(tuple::point(
+        let normal = sphere.normal_at(tuple::Point::new(
             0.0,
             2.0_f64.sqrt() / 2.0,
             -2.0_f64.sqrt() / 2.0,
         ));
 
-        let expected = tuple::vector(0.0, 0.97014, -0.24254);
+        let expected = tuple::Vector::new(0.0, 0.97014, -0.24254);
         assert_tuple_approx_eq!(expected, normal);
     }
 

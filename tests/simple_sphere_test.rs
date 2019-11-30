@@ -6,7 +6,7 @@ use ray_tracer::{canvas, color, lighting, lights, material, matrix, ray, sphere,
 
 #[test]
 fn test_simple_sphere_test() -> Result<(), std::io::Error> {
-    let ray_origin = tuple::point(0.0, 0.0, -5.0);
+    let ray_origin = tuple::Point::new(0.0, 0.0, -5.0);
     let wall_z = 10.0;
     let wall_size = 7.0;
     let half = wall_size / 2.0;
@@ -18,7 +18,7 @@ fn test_simple_sphere_test() -> Result<(), std::io::Error> {
     pink_material.color = color::color(1.0, 0.2, 1.0);
     sphere.material = pink_material;
 
-    let light_position = tuple::point(-10.0, 10.0, -10.0);
+    let light_position = tuple::Point::new(-10.0, 10.0, -10.0);
     let light_color = color::color(1.0, 1.0, 1.0);
     let light = lights::point_light(light_position, light_color);
 
@@ -29,7 +29,7 @@ fn test_simple_sphere_test() -> Result<(), std::io::Error> {
             // left -half, right +half
             let world_x = -half + pixel_size * x as f64;
 
-            let position = tuple::point(world_x, world_y, wall_z);
+            let position = tuple::Point::new(world_x, world_y, wall_z);
 
             let ray = ray::ray(ray_origin, tuple::normalize(&(position - ray_origin)));
 
@@ -73,7 +73,7 @@ fn test_simple_sphere_test() -> Result<(), std::io::Error> {
 
 #[test]
 fn test_translated_sphere_test() -> Result<(), std::io::Error> {
-    let ray_origin = tuple::point(0.0, 0.0, -5.0);
+    let ray_origin = tuple::Point::new(0.0, 0.0, -5.0);
     let wall_z = 10.0;
     let wall_size = 7.0;
     let half = wall_size / 2.0;
@@ -87,7 +87,7 @@ fn test_translated_sphere_test() -> Result<(), std::io::Error> {
     let translation_matrix = matrix::Matrix4::IDENTITY.translation(1.0, 0.0, 0.0);
     sphere.transform = translation_matrix;
 
-    let light_position = tuple::point(-10.0, 10.0, -10.0);
+    let light_position = tuple::Point::new(-10.0, 10.0, -10.0);
     let light_color = color::color(1.0, 1.0, 1.0);
     let light = lights::point_light(light_position, light_color);
 
@@ -98,7 +98,7 @@ fn test_translated_sphere_test() -> Result<(), std::io::Error> {
             // left -half, right +half
             let world_x = -half + pixel_size * x as f64;
 
-            let position = tuple::point(world_x, world_y, wall_z);
+            let position = tuple::Point::new(world_x, world_y, wall_z);
 
             let ray = ray::ray(ray_origin, tuple::normalize(&(position - ray_origin)));
 

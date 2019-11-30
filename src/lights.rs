@@ -2,11 +2,11 @@ use crate::color;
 use crate::tuple;
 
 pub struct Light {
-    pub position: tuple::Tuple,
+    pub position: tuple::Point,
     pub intensity: color::Color,
 }
 
-pub fn point_light(position: tuple::Tuple, intensity: color::Color) -> Light {
+pub fn point_light(position: tuple::Point, intensity: color::Color) -> Light {
     Light {
         position,
         intensity,
@@ -22,7 +22,7 @@ mod lights_tests {
     #[test]
     fn test_point_light_has_position_an_instensity() {
         let intensity = color::color(1.0, 1.0, 1.0);
-        let position = tuple::point(0.0, 0.0, 0.0);
+        let position = tuple::Point::new(0.0, 0.0, 0.0);
 
         let light = lights::point_light(position, intensity);
 

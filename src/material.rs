@@ -45,10 +45,13 @@ mod material_tests {
     #[test]
     fn test_lighting_with_the_camera_between_light_and_surface() {
         let material = material::material();
-        let position = tuple::point(0.0, 0.0, 0.0);
-        let camera = tuple::vector(0.0, 0.0, -1.0);
-        let normal = tuple::vector(0.0, 0.0, -1.0);
-        let light = lights::point_light(tuple::point(0.0, 0.0, -10.0), color::color(1.0, 1.0, 1.0));
+        let position = tuple::Point::new(0.0, 0.0, 0.0);
+        let camera = tuple::Vector::new(0.0, 0.0, -1.0);
+        let normal = tuple::Vector::new(0.0, 0.0, -1.0);
+        let light = lights::point_light(
+            tuple::Point::new(0.0, 0.0, -10.0),
+            color::color(1.0, 1.0, 1.0),
+        );
 
         let result = lighting::lighting(&material, &light, &position, &camera, &normal);
 
@@ -65,10 +68,13 @@ mod material_tests {
     #[test]
     fn test_lighting_with_the_camera_opposite_surface_eye_offset_45() {
         let material = material::material();
-        let position = tuple::point(0.0, 0.0, 0.0);
-        let camera = tuple::vector(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
-        let normal = tuple::vector(0.0, 0.0, -1.0);
-        let light = lights::point_light(tuple::point(0.0, 0.0, -10.0), color::color(1.0, 1.0, 1.0));
+        let position = tuple::Point::new(0.0, 0.0, 0.0);
+        let camera = tuple::Vector::new(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
+        let normal = tuple::Vector::new(0.0, 0.0, -1.0);
+        let light = lights::point_light(
+            tuple::Point::new(0.0, 0.0, -10.0),
+            color::color(1.0, 1.0, 1.0),
+        );
 
         let result = lighting::lighting(&material, &light, &position, &camera, &normal);
 
@@ -85,11 +91,13 @@ mod material_tests {
     #[test]
     fn test_lighting_with_the_eye_opposite_surface_light_offset_45() {
         let material = material::material();
-        let position = tuple::point(0.0, 0.0, 0.0);
-        let camera = tuple::vector(0.0, 0.0, -1.0);
-        let normal = tuple::vector(0.0, 0.0, -1.0);
-        let light =
-            lights::point_light(tuple::point(0.0, 10.0, -10.0), color::color(1.0, 1.0, 1.0));
+        let position = tuple::Point::new(0.0, 0.0, 0.0);
+        let camera = tuple::Vector::new(0.0, 0.0, -1.0);
+        let normal = tuple::Vector::new(0.0, 0.0, -1.0);
+        let light = lights::point_light(
+            tuple::Point::new(0.0, 10.0, -10.0),
+            color::color(1.0, 1.0, 1.0),
+        );
 
         let result = lighting::lighting(&material, &light, &position, &camera, &normal);
 
@@ -107,11 +115,13 @@ mod material_tests {
     #[test]
     fn test_lighting_with_the_eye_in_the_path_of_the_reflection() {
         let material = material::material();
-        let position = tuple::point(0.0, 0.0, 0.0);
-        let camera = tuple::vector(0.0, -2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
-        let normal = tuple::vector(0.0, 0.0, -1.0);
-        let light =
-            lights::point_light(tuple::point(0.0, 10.0, -10.0), color::color(1.0, 1.0, 1.0));
+        let position = tuple::Point::new(0.0, 0.0, 0.0);
+        let camera = tuple::Vector::new(0.0, -2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
+        let normal = tuple::Vector::new(0.0, 0.0, -1.0);
+        let light = lights::point_light(
+            tuple::Point::new(0.0, 10.0, -10.0),
+            color::color(1.0, 1.0, 1.0),
+        );
 
         let result = lighting::lighting(&material, &light, &position, &camera, &normal);
 
@@ -125,10 +135,13 @@ mod material_tests {
     #[test]
     fn test_lighting_with_the_light_behind_the_surface() {
         let material = material::material();
-        let position = tuple::point(0.0, 0.0, 0.0);
-        let camera = tuple::vector(0.0, 0.0, -1.0);
-        let normal = tuple::vector(0.0, 0.0, -1.0);
-        let light = lights::point_light(tuple::point(0.0, 0.0, 10.0), color::color(1.0, 1.0, 1.0));
+        let position = tuple::Point::new(0.0, 0.0, 0.0);
+        let camera = tuple::Vector::new(0.0, 0.0, -1.0);
+        let normal = tuple::Vector::new(0.0, 0.0, -1.0);
+        let light = lights::point_light(
+            tuple::Point::new(0.0, 0.0, 10.0),
+            color::color(1.0, 1.0, 1.0),
+        );
 
         let result = lighting::lighting(&material, &light, &position, &camera, &normal);
 

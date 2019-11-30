@@ -8,7 +8,6 @@ use crate::world;
 pub struct Camera {
     hsize: u32,
     vsize: u32,
-    field_of_view: f64,
     half_width: f64,
     half_height: f64,
     pixel_size: f64,
@@ -35,7 +34,6 @@ impl Camera {
         Camera {
             hsize,
             vsize,
-            field_of_view,
             half_width,
             half_height,
             pixel_size,
@@ -54,8 +52,8 @@ impl Camera {
         let world_y = self.half_height - yoffset;
 
         let inverse_transform = self.transform.inverse().unwrap();
-        let pixel = inverse_transform * tuple::point(world_x, world_y, -1.0);
-        let origin = inverse_transform * tuple::point(0.0, 0.0, 0.0);
+        let pixel = inverse_transform * tuple::Point::new(world_x, world_y, -1.0);
+        let origin = inverse_transform * tuple::Point::new(0.0, 0.0, 0.0);
         let direction = tuple::normalize(&(pixel - origin));
 
         return ray::ray(origin, direction);
@@ -96,7 +94,6 @@ mod camera_tests {
 
         assert_eq!(camera.hsize, hsize);
         assert_eq!(camera.vsize, vsize);
-        assert_eq!(camera.field_of_view, field_of_view);
         assert_eq!(camera.transform, matrix::Matrix4::IDENTITY);
     }
 
@@ -118,8 +115,8 @@ mod camera_tests {
 
         let ray = camera.ray_for_pixel(100, 50);
 
-        assert_tuple_approx_eq!(ray.origin, tuple::point(0.0, 0.0, 0.0));
-        assert_tuple_approx_eq!(ray.direction, tuple::vector(0.0, 0.0, -1.0));
+        assert_tuple_approx_eq!(ray.origin, tuple::Point::new(0.0, 0.0, 0.0));
+        assert_tuple_approx_eq!(ray.direction, tuple::Vector::new(0.0, 0.0, -1.0));
     }
 
     #[test]
@@ -128,8 +125,11 @@ mod camera_tests {
 
         let ray = camera.ray_for_pixel(0, 0);
 
-        assert_tuple_approx_eq!(ray.origin, tuple::point(0.0, 0.0, 0.0));
-        assert_tuple_approx_eq!(ray.direction, tuple::vector(0.66519, 0.33259, -0.66851));
+        assert_tuple_approx_eq!(ray.origin, tuple::Point::new(0.0, 0.0, 0.0));
+        assert_tuple_approx_eq!(
+            ray.direction,
+            tuple::Vector::new(0.66519, 0.33259, -0.66851)
+        );
     }
 
     #[test]
@@ -138,8 +138,11 @@ mod camera_tests {
 
         let ray = camera.ray_for_pixel(200, 100);
 
-        assert_tuple_approx_eq!(ray.origin, tuple::point(0.0, 0.0, 0.0));
-        assert_tuple_approx_eq!(ray.direction, tuple::vector(-0.66519, -0.33259, -0.66851));
+        assert_tuple_approx_eq!(ray.origin, tuple::Point::new(0.0, 0.0, 0.0));
+        assert_tuple_approx_eq!(
+            ray.direction,
+            tuple::Vector::new(-0.66519, -0.33259, -0.66851)
+        );
     }
 
     #[test]
@@ -152,10 +155,10 @@ mod camera_tests {
 
         let ray = camera.ray_for_pixel(100, 50);
 
-        assert_tuple_approx_eq!(ray.origin, tuple::point(0.0, 2.0, -5.0));
+        assert_tuple_approx_eq!(ray.origin, tuple::Point::new(0.0, 2.0, -5.0));
         assert_tuple_approx_eq!(
             ray.direction,
-            tuple::vector(2.0_f64.sqrt() / 2.0, 0.0, -2.0_f64.sqrt() / 2.0,)
+            tuple::Vector::new(2.0_f64.sqrt() / 2.0, 0.0, -2.0_f64.sqrt() / 2.0,)
         );
     }
 
@@ -163,9 +166,9 @@ mod camera_tests {
     fn test_rendering_a_world_with_a_camera() {
         let world = world::default_world();
         let mut camera = camera::Camera::new(11, 11, std::f64::consts::PI / 2.0);
-        let from = tuple::point(0.0, 0.0, -5.0);
-        let to = tuple::point(0.0, 0.0, 0.0);
-        let up = tuple::vector(0.0, 1.0, 0.0);
+        let from = tuple::Point::new(0.0, 0.0, -5.0);
+        let to = tuple::Point::new(0.0, 0.0, 0.0);
+        let up = tuple::Vector::new(0.0, 1.0, 0.0);
         camera.transform = transformation::view_transform(&from, &to, &up);
 
         let image = camera.render(&world);
@@ -194,13 +197,13 @@ mod camera_tests {
         }
         // Let there be light
         let white_point_light =
-            lights::point_light(tuple::point(-10.0, 10.0, -10.0), color::white());
+            lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
         world.light = Some(white_point_light);
 
         let mut camera = camera::Camera::new(11, 11, std::f64::consts::PI / 2.0);
-        let from = tuple::point(0.0, 0.0, -5.0);
-        let to = tuple::point(0.0, 0.0, 0.0);
-        let up = tuple::vector(0.0, 1.0, 0.0);
+        let from = tuple::Point::new(0.0, 0.0, -5.0);
+        let to = tuple::Point::new(0.0, 0.0, 0.0);
+        let up = tuple::Vector::new(0.0, 1.0, 0.0);
         camera.transform = transformation::view_transform(&from, &to, &up);
 
         let image = camera.render(&world);

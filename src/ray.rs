@@ -7,22 +7,22 @@ use crate::world;
 
 #[derive(Debug)]
 pub struct Ray {
-    pub origin: tuple::Tuple,
-    pub direction: tuple::Tuple,
+    pub origin: tuple::Point,
+    pub direction: tuple::Vector,
 }
 
-pub fn ray(origin: tuple::Tuple, direction: tuple::Tuple) -> Ray {
+pub fn ray(origin: tuple::Point, direction: tuple::Vector) -> Ray {
     return Ray { origin, direction };
 }
 
 impl Ray {
-    pub fn position(&self, t: f64) -> tuple::Tuple {
+    pub fn position(&self, t: f64) -> tuple::Point {
         self.origin + self.direction * t
     }
 
     pub fn intersect<'a>(&'a self, sphere: &'a sphere::Sphere) -> Vec<intersection::Intersection> {
         let transformed_ray = self.transform(&sphere.transform.inverse().unwrap());
-        let sphere_to_ray = transformed_ray.origin - tuple::point(0.0, 0.0, 0.0);
+        let sphere_to_ray = transformed_ray.origin - tuple::Point::new(0.0, 0.0, 0.0);
 
         let a = tuple::dot(&transformed_ray.direction, &transformed_ray.direction);
         let b = 2.0 * tuple::dot(&transformed_ray.direction, &sphere_to_ray);
@@ -79,13 +79,13 @@ mod ray_tests {
     use crate::matrix;
     use crate::ray;
     use crate::sphere;
-    use crate::transformation;
+    use crate::transformation::Transform;
     use crate::tuple;
 
     #[test]
     fn test_create_and_query_a_ray() {
-        let origin = tuple::point(1.0, 2.0, 3.0);
-        let direction = tuple::vector(4.0, 5.0, 6.0);
+        let origin = tuple::Point::new(1.0, 2.0, 3.0);
+        let direction = tuple::Vector::new(4.0, 5.0, 6.0);
 
         let ray = ray::ray(origin, direction);
 
@@ -95,12 +95,15 @@ mod ray_tests {
 
     #[test]
     fn test_compute_a_point_from_a_distance() {
-        let ray = ray::ray(tuple::point(2.0, 3.0, 4.0), tuple::vector(1.0, 0.0, 0.0));
+        let ray = ray::ray(
+            tuple::Point::new(2.0, 3.0, 4.0),
+            tuple::Vector::new(1.0, 0.0, 0.0),
+        );
 
-        assert_eq!(ray.position(0.0), tuple::point(2.0, 3.0, 4.0));
-        assert_eq!(ray.position(1.0), tuple::point(3.0, 3.0, 4.0));
-        assert_eq!(ray.position(-1.0), tuple::point(1.0, 3.0, 4.0));
-        assert_eq!(ray.position(2.5), tuple::point(4.5, 3.0, 4.0));
+        assert_eq!(ray.position(0.0), tuple::Point::new(2.0, 3.0, 4.0));
+        assert_eq!(ray.position(1.0), tuple::Point::new(3.0, 3.0, 4.0));
+        assert_eq!(ray.position(-1.0), tuple::Point::new(1.0, 3.0, 4.0));
+        assert_eq!(ray.position(2.5), tuple::Point::new(4.5, 3.0, 4.0));
     }
 
     #[test]
@@ -117,7 +120,10 @@ mod ray_tests {
             A: (0, 0, -1)
             B: (0, 0, 1)
         */
-        let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
         let sphere = sphere::sphere();
 
         let intersections = ray.intersect(&sphere);
@@ -142,7 +148,10 @@ mod ray_tests {
             A: (0, 1, 0)
         */
 
-        let ray = ray::ray(tuple::point(0.0, 1.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 1.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
         let sphere = sphere::sphere();
 
         let intersections = ray.intersect(&sphere);
@@ -154,7 +163,10 @@ mod ray_tests {
 
     #[test]
     fn test_ray_misses_a_sphere() {
-        let ray = ray::ray(tuple::point(0.0, 2.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 2.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
         let sphere = sphere::sphere();
 
         let intersections = ray.intersect(&sphere);
@@ -164,7 +176,10 @@ mod ray_tests {
 
     #[test]
     fn test_ray_originates_from_inside_a_sphere() {
-        let ray = ray::ray(tuple::point(0.0, 0.0, 0.0), tuple::vector(0.0, 0.0, 1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, 0.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
         let sphere = sphere::sphere();
 
         let intersections = ray.intersect(&sphere);
@@ -176,7 +191,10 @@ mod ray_tests {
 
     #[test]
     fn test_ray_is_in_front_of_a_sphere() {
-        let ray = ray::ray(tuple::point(0.0, 0.0, 5.0), tuple::vector(0.0, 0.0, 1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, 5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
         let sphere = sphere::sphere();
 
         let intersections = ray.intersect(&sphere);
@@ -188,24 +206,30 @@ mod ray_tests {
 
     #[test]
     fn test_translating_a_ray() {
-        let ray = ray::ray(tuple::point(1.0, 2.0, 3.0), tuple::vector(0.0, 1.0, 0.0));
-        let tmatrix = transformation::translation(3.0, 4.0, 5.0);
+        let ray = ray::ray(
+            tuple::Point::new(1.0, 2.0, 3.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+        );
+        let tmatrix = matrix::Matrix4::IDENTITY.translation(3.0, 4.0, 5.0);
 
         let transformed_ray = ray.transform(&tmatrix);
 
-        assert_eq!(transformed_ray.origin, tuple::point(4.0, 6.0, 8.0));
-        assert_eq!(transformed_ray.direction, tuple::vector(0.0, 1.0, 0.0));
+        assert_eq!(transformed_ray.origin, tuple::Point::new(4.0, 6.0, 8.0));
+        assert_eq!(transformed_ray.direction, tuple::Vector::new(0.0, 1.0, 0.0));
     }
 
     #[test]
     fn test_scaling_a_ray() {
-        let ray = ray::ray(tuple::point(1.0, 2.0, 3.0), tuple::vector(0.0, 1.0, 0.0));
-        let tmatrix = transformation::scaling(2.0, 3.0, 4.0);
+        let ray = ray::ray(
+            tuple::Point::new(1.0, 2.0, 3.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+        );
+        let tmatrix = matrix::Matrix4::IDENTITY.scaling(2.0, 3.0, 4.0);
 
         let transformed_ray = ray.transform(&tmatrix);
 
-        assert_eq!(transformed_ray.origin, tuple::point(2.0, 6.0, 12.0));
-        assert_eq!(transformed_ray.direction, tuple::vector(0.0, 3.0, 0.0));
+        assert_eq!(transformed_ray.origin, tuple::Point::new(2.0, 6.0, 12.0));
+        assert_eq!(transformed_ray.direction, tuple::Vector::new(0.0, 3.0, 0.0));
     }
 
     #[test]
@@ -218,17 +242,23 @@ mod ray_tests {
     fn test_spheres_can_have_its_transformation_set() {
         let mut sphere = sphere::sphere();
 
-        sphere.transform = transformation::translation(2.0, 3.0, 4.0);
+        sphere.transform = matrix::Matrix4::IDENTITY.translation(2.0, 3.0, 4.0);
 
-        assert_eq!(sphere.transform, transformation::translation(2.0, 3.0, 4.0));
+        assert_eq!(
+            sphere.transform,
+            matrix::Matrix4::IDENTITY.translation(2.0, 3.0, 4.0)
+        );
     }
 
     #[test]
     fn test_intersecting_a_scaled_sphere_with_a_ray() {
-        let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
 
         let mut sphere = sphere::sphere();
-        sphere.transform = transformation::scaling(2.0, 2.0, 2.0);
+        sphere.transform = matrix::Matrix4::IDENTITY.scaling(2.0, 2.0, 2.0);
 
         let intersections = ray.intersect(&sphere);
 
@@ -239,10 +269,13 @@ mod ray_tests {
 
     #[test]
     fn test_intersecting_a_translated_sphere_with_a_ray() {
-        let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
 
         let mut sphere = sphere::sphere();
-        sphere.transform = transformation::translation(5.0, 0.0, 0.0);
+        sphere.transform = matrix::Matrix4::IDENTITY.translation(5.0, 0.0, 0.0);
 
         let intersections = ray.intersect(&sphere);
 

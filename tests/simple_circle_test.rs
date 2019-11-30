@@ -5,7 +5,7 @@ use ray_tracer::{canvas, color, ray, sphere, tuple};
 
 #[test]
 fn test_simple_circle_test() -> Result<(), std::io::Error> {
-    let ray_origin = tuple::point(0.0, 0.0, -5.0);
+    let ray_origin = tuple::Point::new(0.0, 0.0, -5.0);
     let wall_z = 10.0;
     let wall_size = 7.0;
     let half = wall_size / 2.0;
@@ -21,7 +21,7 @@ fn test_simple_circle_test() -> Result<(), std::io::Error> {
             // left -half, right +half
             let world_x = -half + pixel_size * x as f64;
 
-            let position = tuple::point(world_x, world_y, wall_z);
+            let position = tuple::Point::new(world_x, world_y, wall_z);
 
             let ray = ray::ray(ray_origin, tuple::normalize(&(position - ray_origin)));
             let intersections = ray.intersect(&sphere);
