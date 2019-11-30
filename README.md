@@ -1,7 +1,7 @@
 # Ray Tracer
 
-[![Tests Status](https://github.com/hockeybuggy/ray_tracer/workflows/build_and_test/badge.svg)](https://github.com/hockeybuggy/ray_tracer/actions)
-[![Formatting Status](https://github.com/hockeybuggy/ray_tracer/workflows/check_formatting/badge.svg)](https://github.com/hockeybuggy/ray_tracer/actions)
+[![Build and Test Status](https://img.shields.io/github/workflow/status/hockeybuggy/ray_tracer/Build%20and%20Test/master.svg?label=Build%20%26%20Test)](https://github.com/hockeybuggy/ray_tracer/actions?query=workflow%3A%22Build+and+Test%22+branch%3Amaster)
+[![Check Formatting Status](https://img.shields.io/github/workflow/status/hockeybuggy/ray_tracer/Check%20Formatting/master.svg?label=Check%20Formatting)](https://github.com/hockeybuggy/ray_tracer/actions?query=workflow%3A%22Check+Formatting%22+branch%3Amaster)
 
 This repository is just me working through the exercises in ["The Ray Tracer
 Challenge" by Jamis Buck](https://pragprog.com/book/jbtracer/the-ray-tracer-challenge).
