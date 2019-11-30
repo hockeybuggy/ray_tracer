@@ -79,7 +79,7 @@ mod ray_tests {
     use crate::matrix;
     use crate::ray;
     use crate::sphere;
-    use crate::transformation;
+    use crate::transformation::Transform;
     use crate::tuple;
 
     #[test]
@@ -189,7 +189,7 @@ mod ray_tests {
     #[test]
     fn test_translating_a_ray() {
         let ray = ray::ray(tuple::point(1.0, 2.0, 3.0), tuple::vector(0.0, 1.0, 0.0));
-        let tmatrix = transformation::translation(3.0, 4.0, 5.0);
+        let tmatrix = matrix::Matrix4::IDENTITY.translation(3.0, 4.0, 5.0);
 
         let transformed_ray = ray.transform(&tmatrix);
 
@@ -200,7 +200,7 @@ mod ray_tests {
     #[test]
     fn test_scaling_a_ray() {
         let ray = ray::ray(tuple::point(1.0, 2.0, 3.0), tuple::vector(0.0, 1.0, 0.0));
-        let tmatrix = transformation::scaling(2.0, 3.0, 4.0);
+        let tmatrix = matrix::Matrix4::IDENTITY.scaling(2.0, 3.0, 4.0);
 
         let transformed_ray = ray.transform(&tmatrix);
 
@@ -218,9 +218,12 @@ mod ray_tests {
     fn test_spheres_can_have_its_transformation_set() {
         let mut sphere = sphere::sphere();
 
-        sphere.transform = transformation::translation(2.0, 3.0, 4.0);
+        sphere.transform = matrix::Matrix4::IDENTITY.translation(2.0, 3.0, 4.0);
 
-        assert_eq!(sphere.transform, transformation::translation(2.0, 3.0, 4.0));
+        assert_eq!(
+            sphere.transform,
+            matrix::Matrix4::IDENTITY.translation(2.0, 3.0, 4.0)
+        );
     }
 
     #[test]
@@ -228,7 +231,7 @@ mod ray_tests {
         let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
 
         let mut sphere = sphere::sphere();
-        sphere.transform = transformation::scaling(2.0, 2.0, 2.0);
+        sphere.transform = matrix::Matrix4::IDENTITY.scaling(2.0, 2.0, 2.0);
 
         let intersections = ray.intersect(&sphere);
 
@@ -242,7 +245,7 @@ mod ray_tests {
         let ray = ray::ray(tuple::point(0.0, 0.0, -5.0), tuple::vector(0.0, 0.0, 1.0));
 
         let mut sphere = sphere::sphere();
-        sphere.transform = transformation::translation(5.0, 0.0, 0.0);
+        sphere.transform = matrix::Matrix4::IDENTITY.translation(5.0, 0.0, 0.0);
 
         let intersections = ray.intersect(&sphere);
 

@@ -2,7 +2,7 @@ use crate::matrix;
 use crate::transformation;
 use crate::tuple;
 
-pub fn translation(x: f64, y: f64, z: f64) -> matrix::Matrix4 {
+fn translation(x: f64, y: f64, z: f64) -> matrix::Matrix4 {
     matrix::Matrix4::new((
         (1.0, 0.0, 0.0, x),
         (0.0, 1.0, 0.0, y),
@@ -11,7 +11,7 @@ pub fn translation(x: f64, y: f64, z: f64) -> matrix::Matrix4 {
     ))
 }
 
-pub fn scaling(x: f64, y: f64, z: f64) -> matrix::Matrix4 {
+fn scaling(x: f64, y: f64, z: f64) -> matrix::Matrix4 {
     matrix::Matrix4::new((
         (x, 0.0, 0.0, 0.0),
         (0.0, y, 0.0, 0.0),
