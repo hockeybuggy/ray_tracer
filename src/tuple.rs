@@ -9,18 +9,31 @@ pub struct Tuple {
 }
 
 impl Tuple {
-    pub fn is_point(&self) -> bool {
+    fn is_point(&self) -> bool {
         return self.w == 1.0;
     }
 
-    pub fn is_vector(&self) -> bool {
+    fn is_vector(&self) -> bool {
         return self.w == 0.0;
     }
+}
 
-    pub fn reflect(&self, normal: &Tuple) -> Tuple {
+type Point = Tuple;
+type Vector = Tuple;
+
+impl Vector {
+    pub fn reflect(&self, normal: &Vector) -> Vector {
         // TODO check that this isn't being run on points
         return *self - *normal * 2.0 * dot(&self, &normal);
     }
+}
+
+pub fn point(x: f64, y: f64, z: f64) -> Point {
+    Point { x, y, z, w: 1.0 }
+}
+
+pub fn vector(x: f64, y: f64, z: f64) -> Vector {
+    Vector { x, y, z, w: 0.0 }
 }
 
 impl Add for Tuple {
@@ -85,14 +98,6 @@ impl Div<f64> for Tuple {
             w: self.w / other,
         }
     }
-}
-
-pub fn point(x: f64, y: f64, z: f64) -> Tuple {
-    Tuple { x, y, z, w: 1.0 }
-}
-
-pub fn vector(x: f64, y: f64, z: f64) -> Tuple {
-    Tuple { x, y, z, w: 0.0 }
 }
 
 pub fn magnitude(v: &Tuple) -> f64 {
