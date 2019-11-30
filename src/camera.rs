@@ -129,7 +129,10 @@ mod camera_tests {
         let ray = camera.ray_for_pixel(0, 0);
 
         assert_tuple_approx_eq!(ray.origin, tuple::Point::new(0.0, 0.0, 0.0));
-        assert_tuple_approx_eq!(ray.direction, tuple::Vector::new(0.66519, 0.33259, -0.66851));
+        assert_tuple_approx_eq!(
+            ray.direction,
+            tuple::Vector::new(0.66519, 0.33259, -0.66851)
+        );
     }
 
     #[test]
@@ -139,7 +142,10 @@ mod camera_tests {
         let ray = camera.ray_for_pixel(200, 100);
 
         assert_tuple_approx_eq!(ray.origin, tuple::Point::new(0.0, 0.0, 0.0));
-        assert_tuple_approx_eq!(ray.direction, tuple::Vector::new(-0.66519, -0.33259, -0.66851));
+        assert_tuple_approx_eq!(
+            ray.direction,
+            tuple::Vector::new(-0.66519, -0.33259, -0.66851)
+        );
     }
 
     #[test]

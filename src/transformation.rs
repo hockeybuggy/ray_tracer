@@ -187,7 +187,10 @@ mod transformation_tests {
         let scaling_matrix = transformation::scaling(2.0, 3.0, 4.0);
         let vector = tuple::Vector::new(-4.0, 6.0, 8.0);
 
-        assert_eq!(scaling_matrix * vector, tuple::Vector::new(-8.0, 18.0, 32.0));
+        assert_eq!(
+            scaling_matrix * vector,
+            tuple::Vector::new(-8.0, 18.0, 32.0)
+        );
     }
 
     #[test]
