@@ -40,8 +40,14 @@ fn test_simple_sphere_test() -> Result<(), std::io::Error> {
                     let point = ray.position(hit.t);
                     let normal = hit.object.normal_at(point);
                     let camera = -ray.direction;
-                    let color =
-                        lighting::lighting(&hit.object.material, &light, &point, &camera, &normal);
+                    let color = lighting::lighting(
+                        &hit.object.material,
+                        &light,
+                        &point,
+                        &camera,
+                        &normal,
+                        false,
+                    );
                     canvas.write_pixel(x, y, color);
                 }
                 None => (),
@@ -109,8 +115,14 @@ fn test_translated_sphere_test() -> Result<(), std::io::Error> {
                     let point = ray.position(hit.t);
                     let normal = hit.object.normal_at(point);
                     let camera = -ray.direction;
-                    let color =
-                        lighting::lighting(&hit.object.material, &light, &point, &camera, &normal);
+                    let color = lighting::lighting(
+                        &hit.object.material,
+                        &light,
+                        &point,
+                        &camera,
+                        &normal,
+                        false,
+                    );
                     canvas.write_pixel(x, y, color);
                 }
                 None => (),

@@ -55,6 +55,7 @@ impl<'a> Computation<'a> {
                 &self.point,
                 &self.eyev,
                 &self.normalv,
+                false,
             ),
             None => color::black(),
         }
