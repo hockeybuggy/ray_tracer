@@ -188,7 +188,7 @@ mod camera_tests {
         // Add  big sphere to the center so that the whole image is full of something
         {
             let mut big_guy = sphere::Sphere::default();
-            big_guy.transform = matrix::Matrix4::IDENTITY.scaling(5.0, 5.0, 5.0);
+            big_guy.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(5.0, 5.0, 5.0));
             let mut material = material::material();
             material.color = color::color(0.5, 1.0, 0.5);
             material.diffuse = 0.7;

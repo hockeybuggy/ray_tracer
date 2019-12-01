@@ -7,8 +7,7 @@ use crate::tuple;
 
 #[derive(Debug, PartialEq)]
 pub struct Sphere {
-    // TODO make this non public
-    pub transform: matrix::Matrix4,
+    transform: matrix::Matrix4,
     pub material: material::Material,
 }
 
@@ -20,12 +19,12 @@ impl Shape for Sphere {
         };
     }
 
-    fn get_transform(&self) -> &matrix::Matrix4 {
+    fn transformation_matrix(&self) -> &matrix::Matrix4 {
         &self.transform
     }
 
-    fn get_mut_transform(&mut self) -> &mut matrix::Matrix4 {
-        &mut self.transform
+    fn set_transformation_matrix(&mut self, new_transform: matrix::Matrix4) {
+        self.transform = new_transform;
     }
 
     fn normal_at(&self, world_point: tuple::Point) -> tuple::Vector {
@@ -117,7 +116,7 @@ mod sphere_tests {
     #[test]
     fn test_normal_on_a_translated_sphere() {
         let mut sphere = sphere::Sphere::default();
-        sphere.transform = matrix::Matrix4::IDENTITY.translation(0.0, 1.0, 0.0);
+        sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 1.0, 0.0));
 
         let normal = sphere.normal_at(tuple::Point::new(0.0, 1.707107, -0.707107));
 
@@ -128,9 +127,11 @@ mod sphere_tests {
     #[test]
     fn test_normal_on_a_transformed_sphere() {
         let mut sphere = sphere::Sphere::default();
-        sphere.transform = matrix::Matrix4::IDENTITY
-            .rotation_x(std::f64::consts::PI / 5.0)
-            .scaling(1.0, 0.5, 1.0);
+        sphere.set_transformation_matrix(
+            matrix::Matrix4::IDENTITY
+                .rotation_x(std::f64::consts::PI / 5.0)
+                .scaling(1.0, 0.5, 1.0),
+        );
 
         let normal = sphere.normal_at(tuple::Point::new(
             0.0,

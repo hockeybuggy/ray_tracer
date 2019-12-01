@@ -41,7 +41,7 @@ pub fn default_world() -> World {
     lime_sphere.material.diffuse = 0.7;
     lime_sphere.material.specular = 0.2;
     let mut small_sphere = sphere::Sphere::default();
-    small_sphere.transform = matrix::Matrix4::IDENTITY.scaling(0.5, 0.5, 0.5);
+    small_sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(0.5, 0.5, 0.5));
     let shapes = vec![lime_sphere, small_sphere];
     World {
         light: Some(white_point_light),
@@ -109,9 +109,13 @@ mod world_tests {
         assert_eq!(first_shape.material.color, expected_s1.material.color);
         // One is a different size
         let mut expected_s2 = sphere::Sphere::default();
-        expected_s2.transform = matrix::Matrix4::IDENTITY.scaling(0.5, 0.5, 0.5);
+        expected_s2.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(0.5, 0.5, 0.5));
+
         let second_shape = &world.shapes[1];
-        assert_eq!(second_shape.transform, expected_s2.transform);
+        assert_eq!(
+            second_shape.transformation_matrix(),
+            expected_s2.transformation_matrix()
+        );
     }
 
     #[test]
@@ -219,7 +223,7 @@ mod world_tests {
         let sphere1 = sphere::Sphere::default();
         world.shapes.push(sphere1);
         let mut sphere2 = sphere::Sphere::default();
-        sphere2.transform = matrix::Matrix4::IDENTITY.translation(0.0, 0.0, 10.0);
+        sphere2.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 0.0, 10.0));
         world.shapes.push(sphere2);
         let ray = ray::ray(
             tuple::Point::new(0.0, 0.0, 5.0),

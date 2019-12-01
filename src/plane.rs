@@ -7,7 +7,7 @@ use crate::tuple;
 
 #[derive(Debug, PartialEq)]
 pub struct Plane {
-    pub transform: matrix::Matrix4,
+    transform: matrix::Matrix4,
     pub material: material::Material,
 }
 
@@ -19,12 +19,12 @@ impl Shape for Plane {
         };
     }
 
-    fn get_transform(&self) -> &matrix::Matrix4 {
+    fn transformation_matrix(&self) -> &matrix::Matrix4 {
         &self.transform
     }
 
-    fn get_mut_transform(&mut self) -> &mut matrix::Matrix4 {
-        &mut self.transform
+    fn set_transformation_matrix(&mut self, new_transform: matrix::Matrix4) {
+        self.transform = new_transform;
     }
 
     fn normal_at(&self, _world_point: tuple::Point) -> tuple::Vector {

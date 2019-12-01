@@ -91,8 +91,11 @@ fn test_translated_sphere_test() -> Result<(), std::io::Error> {
     let mut pink_material = material::material();
     pink_material.color = color::color(1.0, 0.2, 1.0);
     sphere.material = pink_material;
-    let translation_matrix = matrix::Matrix4::IDENTITY.translation(1.0, 0.0, 0.0);
-    sphere.transform = translation_matrix;
+    sphere.set_transformation_matrix(
+        matrix::Matrix4::IDENTITY
+            .identity()
+            .translation(1.0, 0.0, 0.0),
+    );
 
     let light_position = tuple::Point::new(-10.0, 10.0, -10.0);
     let light_color = color::color(1.0, 1.0, 1.0);

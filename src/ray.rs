@@ -1,6 +1,7 @@
 use crate::intersection;
 use crate::matrix;
 use crate::matrix::Inverse;
+use crate::shape::Shape;
 use crate::sphere;
 use crate::tuple;
 use crate::world;
@@ -21,7 +22,7 @@ impl Ray {
     }
 
     pub fn intersect<'a>(&'a self, sphere: &'a sphere::Sphere) -> Vec<intersection::Intersection> {
-        let transformed_ray = self.transform(&sphere.transform.inverse().unwrap());
+        let transformed_ray = self.transform(&sphere.transformation_matrix().inverse().unwrap());
         let sphere_to_ray = transformed_ray.origin - tuple::Point::new(0.0, 0.0, 0.0);
 
         let a = tuple::dot(&transformed_ray.direction, &transformed_ray.direction);
@@ -236,18 +237,18 @@ mod ray_tests {
     #[test]
     fn test_spheres_default_transformation_matrix() {
         let sphere = sphere::Sphere::default();
-        assert_eq!(sphere.transform, matrix::Matrix4::IDENTITY);
+        assert_eq!(sphere.transformation_matrix(), &matrix::Matrix4::IDENTITY);
     }
 
     #[test]
     fn test_spheres_can_have_its_transformation_set() {
         let mut sphere = sphere::Sphere::default();
 
-        sphere.transform = matrix::Matrix4::IDENTITY.translation(2.0, 3.0, 4.0);
+        sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(2.0, 3.0, 4.0));
 
         assert_eq!(
-            sphere.transform,
-            matrix::Matrix4::IDENTITY.translation(2.0, 3.0, 4.0)
+            sphere.transformation_matrix(),
+            &matrix::Matrix4::IDENTITY.translation(2.0, 3.0, 4.0)
         );
     }
 
@@ -259,7 +260,7 @@ mod ray_tests {
         );
 
         let mut sphere = sphere::Sphere::default();
-        sphere.transform = matrix::Matrix4::IDENTITY.scaling(2.0, 2.0, 2.0);
+        sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(2.0, 2.0, 2.0));
 
         let intersections = ray.intersect(&sphere);
 
@@ -276,7 +277,7 @@ mod ray_tests {
         );
 
         let mut sphere = sphere::Sphere::default();
-        sphere.transform = matrix::Matrix4::IDENTITY.translation(5.0, 0.0, 0.0);
+        sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(5.0, 0.0, 0.0));
 
         let intersections = ray.intersect(&sphere);
 

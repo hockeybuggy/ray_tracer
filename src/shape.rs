@@ -8,15 +8,14 @@ pub trait Shape {
     fn default() -> Self;
 
     /// Get a reference to the Shape's transformation matrix
-    fn get_transform(&self) -> &matrix::Matrix4;
+    fn transformation_matrix(&self) -> &matrix::Matrix4;
 
-    /// Get a mutable reference to the Shape's transformation matrix
-    fn get_mut_transform(&mut self) -> &mut matrix::Matrix4;
+    fn set_transformation_matrix(&mut self, new_transform: matrix::Matrix4);
 
     fn normal_at(&self, world_point: tuple::Point) -> tuple::Vector;
 
     fn intersect(&self, ray: ray::Ray) -> tuple::Point {
-        let local_ray = ray.transform(&self.get_transform().inverse().unwrap());
+        let local_ray = ray.transform(&self.transformation_matrix().inverse().unwrap());
         return self.local_intersect(local_ray);
     }
 
