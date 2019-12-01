@@ -57,7 +57,7 @@ impl Ray {
         return intersections;
     }
 
-    fn transform(&self, matrix: &matrix::Matrix4) -> Ray {
+    pub fn transform(&self, matrix: &matrix::Matrix4) -> Ray {
         Ray {
             origin: *matrix * self.origin,
             direction: *matrix * self.direction,

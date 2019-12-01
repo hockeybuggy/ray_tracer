@@ -1,6 +1,7 @@
 use crate::material;
 use crate::matrix;
 // use crate::matrix::{Inverse, Transpose};
+use crate::ray;
 use crate::shape::Shape;
 use crate::tuple;
 
@@ -18,9 +19,21 @@ impl Shape for Plane {
         };
     }
 
+    fn get_transform(&self) -> &matrix::Matrix4 {
+        &self.transform
+    }
+
+    fn get_mut_transform(&mut self) -> &mut matrix::Matrix4 {
+        &mut self.transform
+    }
+
     fn normal_at(&self, _world_point: tuple::Point) -> tuple::Vector {
         // TODO this is a stub
         tuple::Vector::new(0.0, 1.0, 0.0)
+    }
+
+    fn local_intersect(&self, _local_ray: ray::Ray) -> tuple::Point {
+        tuple::Point::new(0.0, 1.0, 0.0)
     }
 }
 

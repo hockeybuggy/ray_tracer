@@ -1,11 +1,13 @@
 use crate::material;
 use crate::matrix;
 use crate::matrix::{Inverse, Transpose};
+use crate::ray;
 use crate::shape::Shape;
 use crate::tuple;
 
 #[derive(Debug, PartialEq)]
 pub struct Sphere {
+    // TODO make this non public
     pub transform: matrix::Matrix4,
     pub material: material::Material,
 }
@@ -18,6 +20,14 @@ impl Shape for Sphere {
         };
     }
 
+    fn get_transform(&self) -> &matrix::Matrix4 {
+        &self.transform
+    }
+
+    fn get_mut_transform(&mut self) -> &mut matrix::Matrix4 {
+        &mut self.transform
+    }
+
     fn normal_at(&self, world_point: tuple::Point) -> tuple::Vector {
         let transform_inverse = self.transform.inverse().unwrap();
         let object_point = transform_inverse * world_point;
@@ -26,6 +36,10 @@ impl Shape for Sphere {
         // This is sorta a cheat to skip finding the submatrix.
         world_normal.w = 0.0;
         return tuple::normalize(&world_normal);
+    }
+
+    fn local_intersect(&self, _local_ray: ray::Ray) -> tuple::Point {
+        tuple::Point::new(0.0, 1.0, 0.0)
     }
 }
 
