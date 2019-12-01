@@ -5,6 +5,8 @@ use crate::sphere;
 use crate::tuple;
 use crate::world;
 
+const EPSILON: f64 = 1e-5;
+
 #[derive(Debug, PartialEq)]
 pub struct Intersection<'a> {
     pub t: f64,
@@ -24,6 +26,7 @@ pub struct Computation<'a> {
     pub eyev: tuple::Vector,
     pub normalv: tuple::Vector,
     pub inside: bool,
+    pub over_point: tuple::Point,
 }
 
 pub fn prepare_computations<'a>(
@@ -36,18 +39,21 @@ pub fn prepare_computations<'a>(
     let eyev = -ray.direction;
     let normalv = object.normal_at(point);
     let inside: bool = tuple::dot(&normalv, &eyev) < 0.0;
+    let maybe_inverted_normalv = if inside { -normalv } else { normalv };
     Computation {
         t,
         object,
         point,
         eyev,
-        normalv: if inside { -normalv } else { normalv },
+        normalv: maybe_inverted_normalv,
         inside,
+        over_point: point + maybe_inverted_normalv * EPSILON,
     }
 }
 
 impl<'a> Computation<'a> {
     pub fn shade_hit(&self, world: &world::World) -> color::Color {
+        let shadowed = world::is_shadowed(&world, &self.over_point);
         match &world.light {
             Some(world_light) => lighting::lighting(
                 &self.object.material,
@@ -55,7 +61,7 @@ impl<'a> Computation<'a> {
                 &self.point,
                 &self.eyev,
                 &self.normalv,
-                false,
+                shadowed,
             ),
             None => color::black(),
         }

@@ -58,7 +58,6 @@ pub fn is_shadowed(world: &World, point: &tuple::Point) -> bool {
     let intersections = ray.intersect_world(&world);
 
     let hit = ray::hit(&intersections);
-    dbg!(hit);
     if hit.is_some() && hit.unwrap().t < distance {
         return true;
     }
@@ -69,6 +68,7 @@ pub fn is_shadowed(world: &World, point: &tuple::Point) -> bool {
 mod world_tests {
     use crate::assert_color_approx_eq;
     use crate::color;
+    use crate::intersection;
     use crate::lights;
     use crate::matrix;
     use crate::ray;
@@ -206,5 +206,28 @@ mod world_tests {
         let point = tuple::Point::new(-2.0, 2.0, -2.0);
 
         assert_eq!(world::is_shadowed(&world, &point), false);
+    }
+
+    #[test]
+    fn shade_hit_is_given_an_intersection_in_shadow() {
+        let mut world = world::world();
+        let light_position = tuple::Point::new(0.0, 0.0, -10.0);
+        let light_color = color::color(1.0, 1.0, 1.0);
+        world.light = Some(lights::point_light(light_position, light_color));
+        let sphere1 = sphere::sphere();
+        world.shapes.push(sphere1);
+        let mut sphere2 = sphere::sphere();
+        sphere2.transform = matrix::Matrix4::IDENTITY.translation(0.0, 0.0, 10.0);
+        world.shapes.push(sphere2);
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, 5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+        let intersection = intersection::intersection(4.0, &world.shapes[1]);
+
+        let computations = intersection::prepare_computations(&intersection, &ray);
+        let color = computations.shade_hit(&world);
+        let expected_color = color::color(0.1, 0.1, 0.1);
+        assert_color_approx_eq!(color, expected_color);
     }
 }
