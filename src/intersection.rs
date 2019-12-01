@@ -1,6 +1,7 @@
 use crate::color;
 use crate::lighting;
 use crate::ray;
+use crate::shape::Shape;
 use crate::sphere;
 use crate::tuple;
 use crate::world;

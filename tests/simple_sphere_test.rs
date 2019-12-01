@@ -1,6 +1,7 @@
 extern crate ray_tracer;
 use std::io::{Read, Seek};
 
+use ray_tracer::shape::Shape;
 use ray_tracer::transformation::Transform;
 use ray_tracer::{canvas, color, lighting, lights, material, matrix, ray, sphere, tuple};
 

@@ -1,6 +1,7 @@
 use crate::material;
 use crate::matrix;
 use crate::matrix::{Inverse, Transpose};
+use crate::shape::Shape;
 use crate::tuple;
 
 #[derive(Debug, PartialEq)]
@@ -9,15 +10,20 @@ pub struct Sphere {
     pub material: material::Material,
 }
 
+// TODO remove this alias
 pub fn sphere() -> Sphere {
-    return Sphere {
-        transform: matrix::Matrix4::IDENTITY,
-        material: material::material(),
-    };
+    Sphere::default()
 }
 
-impl Sphere {
-    pub fn normal_at(&self, world_point: tuple::Point) -> tuple::Vector {
+impl Shape for Sphere {
+    fn default() -> Self {
+        return Sphere {
+            transform: matrix::Matrix4::IDENTITY,
+            material: material::material(),
+        };
+    }
+
+    fn normal_at(&self, world_point: tuple::Point) -> tuple::Vector {
         let transform_inverse = self.transform.inverse().unwrap();
         let object_point = transform_inverse * world_point;
         let object_normal = object_point - tuple::Point::new(0.0, 0.0, 0.0);
@@ -33,6 +39,7 @@ mod sphere_tests {
     use crate::assert_tuple_approx_eq;
     use crate::material;
     use crate::matrix;
+    use crate::shape::Shape;
     use crate::sphere;
     use crate::transformation::Transform;
     use crate::tuple;
