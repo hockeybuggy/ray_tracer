@@ -1,6 +1,7 @@
 extern crate ray_tracer;
 use std::io::{Read, Seek};
 
+use ray_tracer::shape::Shape;
 use ray_tracer::{canvas, color, ray, sphere, tuple};
 
 #[test]
@@ -12,7 +13,7 @@ fn test_simple_circle_test() -> Result<(), std::io::Error> {
     let canvas_size = 100;
     let pixel_size = wall_size / canvas_size as f64;
     let mut canvas = canvas::canvas(canvas_size, canvas_size);
-    let sphere = sphere::sphere();
+    let sphere = sphere::Sphere::default();
 
     for y in 0..canvas.height {
         // Top +half, bottom -half

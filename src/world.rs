@@ -3,6 +3,7 @@ use crate::intersection;
 use crate::lights;
 use crate::matrix;
 use crate::ray;
+use crate::shape::Shape;
 use crate::sphere;
 use crate::transformation::Transform;
 use crate::tuple;
@@ -35,11 +36,11 @@ impl World {
 pub fn default_world() -> World {
     let white_point_light =
         lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
-    let mut lime_sphere = sphere::sphere();
+    let mut lime_sphere = sphere::Sphere::default();
     lime_sphere.material.color = color::color(0.8, 1.0, 0.6);
     lime_sphere.material.diffuse = 0.7;
     lime_sphere.material.specular = 0.2;
-    let mut small_sphere = sphere::sphere();
+    let mut small_sphere = sphere::Sphere::default();
     small_sphere.transform = matrix::Matrix4::IDENTITY.scaling(0.5, 0.5, 0.5);
     let shapes = vec![lime_sphere, small_sphere];
     World {
@@ -72,6 +73,7 @@ mod world_tests {
     use crate::lights;
     use crate::matrix;
     use crate::ray;
+    use crate::shape::Shape;
     use crate::sphere;
     use crate::transformation::Transform;
     use crate::tuple;
@@ -99,14 +101,14 @@ mod world_tests {
         // There are two spheres
         assert_eq!(world.shapes.len(), 2);
         // One is a different color
-        let mut expected_s1 = sphere::sphere();
+        let mut expected_s1 = sphere::Sphere::default();
         expected_s1.material.color = color::color(0.8, 1.0, 0.6);
         expected_s1.material.diffuse = 0.7;
         expected_s1.material.specular = 0.2;
         let first_shape = &world.shapes[0];
         assert_eq!(first_shape.material.color, expected_s1.material.color);
         // One is a different size
-        let mut expected_s2 = sphere::sphere();
+        let mut expected_s2 = sphere::Sphere::default();
         expected_s2.transform = matrix::Matrix4::IDENTITY.scaling(0.5, 0.5, 0.5);
         let second_shape = &world.shapes[1];
         assert_eq!(second_shape.transform, expected_s2.transform);
@@ -214,9 +216,9 @@ mod world_tests {
         let light_position = tuple::Point::new(0.0, 0.0, -10.0);
         let light_color = color::color(1.0, 1.0, 1.0);
         world.light = Some(lights::point_light(light_position, light_color));
-        let sphere1 = sphere::sphere();
+        let sphere1 = sphere::Sphere::default();
         world.shapes.push(sphere1);
-        let mut sphere2 = sphere::sphere();
+        let mut sphere2 = sphere::Sphere::default();
         sphere2.transform = matrix::Matrix4::IDENTITY.translation(0.0, 0.0, 10.0);
         world.shapes.push(sphere2);
         let ray = ray::ray(

@@ -10,11 +10,6 @@ pub struct Sphere {
     pub material: material::Material,
 }
 
-// TODO remove this alias
-pub fn sphere() -> Sphere {
-    Sphere::default()
-}
-
 impl Shape for Sphere {
     fn default() -> Self {
         return Sphere {
@@ -46,7 +41,7 @@ mod sphere_tests {
 
     #[test]
     fn test_normal_on_a_sphere_on_the_x() {
-        let sphere = sphere::sphere();
+        let sphere = sphere::Sphere::default();
 
         let normal = sphere.normal_at(tuple::Point::new(1.0, 0.0, 0.0));
 
@@ -56,7 +51,7 @@ mod sphere_tests {
 
     #[test]
     fn test_normal_on_a_sphere_on_the_y() {
-        let sphere = sphere::sphere();
+        let sphere = sphere::Sphere::default();
 
         let normal = sphere.normal_at(tuple::Point::new(0.0, 1.0, 0.0));
 
@@ -66,7 +61,7 @@ mod sphere_tests {
 
     #[test]
     fn test_normal_on_a_sphere_on_the_z() {
-        let sphere = sphere::sphere();
+        let sphere = sphere::Sphere::default();
 
         let normal = sphere.normal_at(tuple::Point::new(0.0, 0.0, 1.0));
 
@@ -76,7 +71,7 @@ mod sphere_tests {
 
     #[test]
     fn test_normal_on_a_sphere_at_a_nonaxial_point() {
-        let sphere = sphere::sphere();
+        let sphere = sphere::Sphere::default();
 
         let normal = sphere.normal_at(tuple::Point::new(
             3.0_f64.sqrt() / 3.0,
@@ -94,7 +89,7 @@ mod sphere_tests {
 
     #[test]
     fn test_normal_is_nornalized_vector() {
-        let sphere = sphere::sphere();
+        let sphere = sphere::Sphere::default();
 
         let normal = sphere.normal_at(tuple::Point::new(
             3.0_f64.sqrt() / 3.0,
@@ -107,7 +102,7 @@ mod sphere_tests {
 
     #[test]
     fn test_normal_on_a_translated_sphere() {
-        let mut sphere = sphere::sphere();
+        let mut sphere = sphere::Sphere::default();
         sphere.transform = matrix::Matrix4::IDENTITY.translation(0.0, 1.0, 0.0);
 
         let normal = sphere.normal_at(tuple::Point::new(0.0, 1.707107, -0.707107));
@@ -118,7 +113,7 @@ mod sphere_tests {
 
     #[test]
     fn test_normal_on_a_transformed_sphere() {
-        let mut sphere = sphere::sphere();
+        let mut sphere = sphere::Sphere::default();
         sphere.transform = matrix::Matrix4::IDENTITY
             .rotation_x(std::f64::consts::PI / 5.0)
             .scaling(1.0, 0.5, 1.0);
@@ -135,13 +130,13 @@ mod sphere_tests {
 
     #[test]
     fn test_sphere_has_a_default_material() {
-        let sphere = sphere::sphere();
+        let sphere = sphere::Sphere::default();
         assert_eq!(sphere.material, material::material());
     }
 
     #[test]
     fn test_spheres_material_can_be_set() {
-        let mut sphere = sphere::sphere();
+        let mut sphere = sphere::Sphere::default();
         let mut material1 = material::material();
         material1.ambient = 1.0;
 

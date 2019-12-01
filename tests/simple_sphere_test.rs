@@ -14,7 +14,7 @@ fn test_simple_sphere_test() -> Result<(), std::io::Error> {
     let canvas_size = 100;
     let pixel_size = wall_size / canvas_size as f64;
     let mut canvas = canvas::canvas(canvas_size, canvas_size);
-    let mut sphere = sphere::sphere();
+    let mut sphere = sphere::Sphere::default();
     let mut pink_material = material::material();
     pink_material.color = color::color(1.0, 0.2, 1.0);
     sphere.material = pink_material;
@@ -87,7 +87,7 @@ fn test_translated_sphere_test() -> Result<(), std::io::Error> {
     let canvas_size = 100;
     let pixel_size = wall_size / canvas_size as f64;
     let mut canvas = canvas::canvas(canvas_size, canvas_size);
-    let mut sphere = sphere::sphere();
+    let mut sphere = sphere::Sphere::default();
     let mut pink_material = material::material();
     pink_material.color = color::color(1.0, 0.2, 1.0);
     sphere.material = pink_material;
