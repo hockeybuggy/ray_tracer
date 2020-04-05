@@ -1,7 +1,7 @@
 use crate::color;
 use crate::lighting;
 use crate::ray;
-use crate::sphere;
+use crate::shape;
 use crate::tuple;
 use crate::world;
 
@@ -10,17 +10,17 @@ const EPSILON: f64 = 1e-5;
 #[derive(Debug, PartialEq)]
 pub struct Intersection<'a> {
     pub t: f64,
-    pub object: &'a sphere::Sphere,
+    pub object: &'a shape::Shape,
 }
 
-pub fn intersection(t: f64, object: &sphere::Sphere) -> Intersection {
+pub fn intersection(t: f64, object: &shape::Shape) -> Intersection {
     Intersection { t, object }
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Computation<'a> {
     pub t: f64,
-    pub object: &'a sphere::Sphere,
+    pub object: &'a shape::Shape,
 
     pub point: tuple::Point,
     pub eyev: tuple::Vector,
@@ -75,13 +75,13 @@ mod intersection_tests {
     use crate::intersection;
     use crate::lights;
     use crate::ray;
-    use crate::sphere;
+    use crate::shape;
     use crate::tuple;
     use crate::world;
 
     #[test]
     fn test_intersection_encapsulates_t_and_object() {
-        let sphere = sphere::sphere();
+        let sphere = shape::Shape::default_sphere();
         let intersection = intersection::intersection(3.5, &sphere);
 
         assert_eq!(intersection.t, 3.5_f64);
@@ -90,7 +90,7 @@ mod intersection_tests {
 
     #[test]
     fn test_intersections_in_a_vector() {
-        let sphere = sphere::sphere();
+        let sphere = shape::Shape::default_sphere();
         let intersection1 = intersection::intersection(1.0, &sphere);
         let intersection2 = intersection::intersection(2.0, &sphere);
 
@@ -102,7 +102,7 @@ mod intersection_tests {
 
     #[test]
     fn test_intersections_sets_the_object_in_the_intersection() {
-        let sphere = sphere::sphere();
+        let sphere = shape::Shape::default_sphere();
         let ray = ray::ray(
             tuple::Point::new(0.0, 0.0, -5.0),
             tuple::Vector::new(0.0, 0.0, 1.0),
@@ -117,7 +117,7 @@ mod intersection_tests {
 
     #[test]
     fn test_hit_all_intersections_positive_t() {
-        let sphere = sphere::sphere();
+        let sphere = shape::Shape::default_sphere();
         let intersection1 = intersection::intersection(1.0, &sphere);
         let intersection2 = intersection::intersection(2.0, &sphere);
         let intersections = vec![intersection1, intersection2];
@@ -130,7 +130,7 @@ mod intersection_tests {
 
     #[test]
     fn test_hit_some_intersections_have_negitive_t() {
-        let sphere = sphere::sphere();
+        let sphere = shape::Shape::default_sphere();
         let intersection1 = intersection::intersection(-1.0, &sphere);
         let intersection2 = intersection::intersection(1.0, &sphere);
         let intersections = vec![intersection1, intersection2];
@@ -143,7 +143,7 @@ mod intersection_tests {
 
     #[test]
     fn test_hit_all_intersections_negitive_t() {
-        let sphere = sphere::sphere();
+        let sphere = shape::Shape::default_sphere();
         let intersection1 = intersection::intersection(-2.0, &sphere);
         let intersection2 = intersection::intersection(-1.0, &sphere);
         let intersections = vec![intersection1, intersection2];
@@ -155,7 +155,7 @@ mod intersection_tests {
 
     #[test]
     fn test_hit_is_always_the_lowest() {
-        let sphere = sphere::sphere();
+        let sphere = shape::Shape::default_sphere();
         let intersection1 = intersection::intersection(5.0, &sphere);
         let intersection2 = intersection::intersection(7.0, &sphere);
         let intersection3 = intersection::intersection(-3.0, &sphere);
@@ -174,7 +174,7 @@ mod intersection_tests {
             tuple::Point::new(0.0, 0.0, -5.0),
             tuple::Vector::new(0.0, 0.0, 1.0),
         );
-        let shape = sphere::sphere();
+        let shape = shape::Shape::default_sphere();
         let intersection = intersection::intersection(4.0, &shape);
 
         let computations = intersection::prepare_computations(&intersection, &ray);
@@ -192,7 +192,7 @@ mod intersection_tests {
             tuple::Point::new(0.0, 0.0, -5.0),
             tuple::Vector::new(0.0, 0.0, 1.0),
         );
-        let shape = sphere::sphere();
+        let shape = shape::Shape::default_sphere();
         let intersection = intersection::intersection(4.0, &shape);
 
         let computations = intersection::prepare_computations(&intersection, &ray);
@@ -206,7 +206,7 @@ mod intersection_tests {
             tuple::Point::new(0.0, 0.0, 0.0),
             tuple::Vector::new(0.0, 0.0, 1.0),
         );
-        let shape = sphere::sphere();
+        let shape = shape::Shape::default_sphere();
         let intersection = intersection::intersection(1.0, &shape);
 
         let computations = intersection::prepare_computations(&intersection, &ray);

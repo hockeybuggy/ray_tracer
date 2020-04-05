@@ -2,7 +2,7 @@ extern crate ray_tracer;
 use std::io::{Read, Seek};
 
 use ray_tracer::transformation::Transform;
-use ray_tracer::{canvas, color, lighting, lights, material, matrix, ray, sphere, tuple};
+use ray_tracer::{canvas, color, lighting, lights, material, matrix, ray, shape, tuple};
 
 #[test]
 fn test_simple_sphere_test() -> Result<(), std::io::Error> {
@@ -13,7 +13,7 @@ fn test_simple_sphere_test() -> Result<(), std::io::Error> {
     let canvas_size = 100;
     let pixel_size = wall_size / canvas_size as f64;
     let mut canvas = canvas::canvas(canvas_size, canvas_size);
-    let mut sphere = sphere::sphere();
+    let mut sphere = shape::Shape::default_sphere();
     let mut pink_material = material::material();
     pink_material.color = color::color(1.0, 0.2, 1.0);
     sphere.material = pink_material;
@@ -86,12 +86,15 @@ fn test_translated_sphere_test() -> Result<(), std::io::Error> {
     let canvas_size = 100;
     let pixel_size = wall_size / canvas_size as f64;
     let mut canvas = canvas::canvas(canvas_size, canvas_size);
-    let mut sphere = sphere::sphere();
+    let mut sphere = shape::Shape::default_sphere();
     let mut pink_material = material::material();
     pink_material.color = color::color(1.0, 0.2, 1.0);
     sphere.material = pink_material;
-    let translation_matrix = matrix::Matrix4::IDENTITY.translation(1.0, 0.0, 0.0);
-    sphere.transform = translation_matrix;
+    sphere.set_transformation_matrix(
+        matrix::Matrix4::IDENTITY
+            .identity()
+            .translation(1.0, 0.0, 0.0),
+    );
 
     let light_position = tuple::Point::new(-10.0, 10.0, -10.0);
     let light_color = color::color(1.0, 1.0, 1.0);

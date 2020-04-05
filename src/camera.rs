@@ -181,13 +181,13 @@ mod camera_tests {
         // I added this test because the edges of the camera were black.
         use crate::lights;
         use crate::material;
-        use crate::sphere;
+        use crate::shape;
 
         let mut world = world::world();
         // Add  big sphere to the center so that the whole image is full of something
         {
-            let mut big_guy = sphere::sphere();
-            big_guy.transform = matrix::Matrix4::IDENTITY.scaling(5.0, 5.0, 5.0);
+            let mut big_guy = shape::Shape::default_sphere();
+            big_guy.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(5.0, 5.0, 5.0));
             let mut material = material::material();
             material.color = color::color(0.5, 1.0, 0.5);
             material.diffuse = 0.7;

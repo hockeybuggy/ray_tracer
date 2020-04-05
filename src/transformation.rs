@@ -68,6 +68,7 @@ fn shearing(
 }
 
 pub trait Transform {
+    fn identity(self) -> matrix::Matrix4;
     fn translation(self, x: f64, y: f64, z: f64) -> matrix::Matrix4;
     fn scaling(self, x: f64, y: f64, z: f64) -> matrix::Matrix4;
     fn rotation_x(self, radians: f64) -> matrix::Matrix4;
@@ -85,6 +86,10 @@ pub trait Transform {
 }
 
 impl Transform for matrix::Matrix4 {
+    fn identity(self) -> matrix::Matrix4 {
+        matrix::Matrix4::IDENTITY
+    }
+
     fn translation(self, x: f64, y: f64, z: f64) -> matrix::Matrix4 {
         translation(x, y, z) * self
     }
