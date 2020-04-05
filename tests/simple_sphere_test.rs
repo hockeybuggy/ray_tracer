@@ -1,9 +1,8 @@
 extern crate ray_tracer;
 use std::io::{Read, Seek};
 
-use ray_tracer::shape::Shape;
 use ray_tracer::transformation::Transform;
-use ray_tracer::{canvas, color, lighting, lights, material, matrix, ray, sphere, tuple};
+use ray_tracer::{canvas, color, lighting, lights, material, matrix, ray, shape, tuple};
 
 #[test]
 fn test_simple_sphere_test() -> Result<(), std::io::Error> {
@@ -14,7 +13,7 @@ fn test_simple_sphere_test() -> Result<(), std::io::Error> {
     let canvas_size = 100;
     let pixel_size = wall_size / canvas_size as f64;
     let mut canvas = canvas::canvas(canvas_size, canvas_size);
-    let mut sphere = sphere::Sphere::default();
+    let mut sphere = shape::Shape::default_sphere();
     let mut pink_material = material::material();
     pink_material.color = color::color(1.0, 0.2, 1.0);
     sphere.material = pink_material;
@@ -87,7 +86,7 @@ fn test_translated_sphere_test() -> Result<(), std::io::Error> {
     let canvas_size = 100;
     let pixel_size = wall_size / canvas_size as f64;
     let mut canvas = canvas::canvas(canvas_size, canvas_size);
-    let mut sphere = sphere::Sphere::default();
+    let mut sphere = shape::Shape::default_sphere();
     let mut pink_material = material::material();
     pink_material.color = color::color(1.0, 0.2, 1.0);
     sphere.material = pink_material;

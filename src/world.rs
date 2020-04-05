@@ -3,15 +3,14 @@ use crate::intersection;
 use crate::lights;
 use crate::matrix;
 use crate::ray;
-use crate::shape::Shape;
-use crate::sphere;
+use crate::shape;
 use crate::transformation::Transform;
 use crate::tuple;
 
 pub struct World {
     // TODO Adding multiple light sources can be done by changing this to a vector of lights.
     pub light: Option<lights::Light>,
-    pub shapes: Vec<sphere::Sphere>,
+    pub shapes: Vec<shape::Shape>,
 }
 
 pub fn world() -> World {
@@ -36,11 +35,11 @@ impl World {
 pub fn default_world() -> World {
     let white_point_light =
         lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
-    let mut lime_sphere = sphere::Sphere::default();
+    let mut lime_sphere = shape::Shape::default_sphere();
     lime_sphere.material.color = color::color(0.8, 1.0, 0.6);
     lime_sphere.material.diffuse = 0.7;
     lime_sphere.material.specular = 0.2;
-    let mut small_sphere = sphere::Sphere::default();
+    let mut small_sphere = shape::Shape::default_sphere();
     small_sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(0.5, 0.5, 0.5));
     let shapes = vec![lime_sphere, small_sphere];
     World {
@@ -73,8 +72,7 @@ mod world_tests {
     use crate::lights;
     use crate::matrix;
     use crate::ray;
-    use crate::shape::Shape;
-    use crate::sphere;
+    use crate::shape;
     use crate::transformation::Transform;
     use crate::tuple;
     use crate::world;
@@ -101,14 +99,14 @@ mod world_tests {
         // There are two spheres
         assert_eq!(world.shapes.len(), 2);
         // One is a different color
-        let mut expected_s1 = sphere::Sphere::default();
+        let mut expected_s1 = shape::Shape::default_sphere();
         expected_s1.material.color = color::color(0.8, 1.0, 0.6);
         expected_s1.material.diffuse = 0.7;
         expected_s1.material.specular = 0.2;
         let first_shape = &world.shapes[0];
         assert_eq!(first_shape.material.color, expected_s1.material.color);
         // One is a different size
-        let mut expected_s2 = sphere::Sphere::default();
+        let mut expected_s2 = shape::Shape::default_sphere();
         expected_s2.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(0.5, 0.5, 0.5));
 
         let second_shape = &world.shapes[1];
@@ -220,9 +218,9 @@ mod world_tests {
         let light_position = tuple::Point::new(0.0, 0.0, -10.0);
         let light_color = color::color(1.0, 1.0, 1.0);
         world.light = Some(lights::point_light(light_position, light_color));
-        let sphere1 = sphere::Sphere::default();
+        let sphere1 = shape::Shape::default_sphere();
         world.shapes.push(sphere1);
-        let mut sphere2 = sphere::Sphere::default();
+        let mut sphere2 = shape::Shape::default_sphere();
         sphere2.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 0.0, 10.0));
         world.shapes.push(sphere2);
         let ray = ray::ray(

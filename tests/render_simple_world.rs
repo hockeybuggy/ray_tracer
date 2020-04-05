@@ -1,9 +1,8 @@
 extern crate ray_tracer;
 use std::io::{Read, Seek};
 
-use ray_tracer::shape::Shape;
 use ray_tracer::transformation::Transform;
-use ray_tracer::{camera, color, lights, material, matrix, sphere, transformation, tuple, world};
+use ray_tracer::{camera, color, lights, material, matrix, shape, transformation, tuple, world};
 
 const SCALE: u32 = 1;
 
@@ -13,7 +12,7 @@ fn test_simple_world() -> Result<(), std::io::Error> {
 
     // Create a floor and add it to the scene
     {
-        let mut floor = sphere::Sphere::default();
+        let mut floor = shape::Shape::default_sphere();
         floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
         let mut material = material::material();
         material.color = color::color(1.0, 0.9, 0.9);
@@ -24,7 +23,7 @@ fn test_simple_world() -> Result<(), std::io::Error> {
 
     // Create a wall and add it to the scene
     {
-        let mut left_wall = sphere::Sphere::default();
+        let mut left_wall = shape::Shape::default_sphere();
         left_wall.set_transformation_matrix(
             matrix::Matrix4::IDENTITY
                 .scaling(10.0, 0.01, 10.0)
@@ -41,7 +40,7 @@ fn test_simple_world() -> Result<(), std::io::Error> {
 
     // Create another wall and add it to the scene
     {
-        let mut right_wall = sphere::Sphere::default();
+        let mut right_wall = shape::Shape::default_sphere();
         right_wall.set_transformation_matrix(
             matrix::Matrix4::IDENTITY
                 .scaling(10.0, 0.01, 10.0)
@@ -58,7 +57,7 @@ fn test_simple_world() -> Result<(), std::io::Error> {
 
     // Add a sphere to the center
     {
-        let mut middle = sphere::Sphere::default();
+        let mut middle = shape::Shape::default_sphere();
         middle.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(-0.5, 1.0, 0.5));
         let mut material = material::material();
         material.color = color::color(0.1, 1.0, 0.5);
@@ -70,7 +69,7 @@ fn test_simple_world() -> Result<(), std::io::Error> {
 
     // Add a small green sphere on the right
     {
-        let mut right = sphere::Sphere::default();
+        let mut right = shape::Shape::default_sphere();
         right.set_transformation_matrix(
             matrix::Matrix4::IDENTITY
                 .scaling(0.5, 0.5, 0.5)
@@ -86,7 +85,7 @@ fn test_simple_world() -> Result<(), std::io::Error> {
 
     // Add a smaller green sphere on the left
     {
-        let mut left = sphere::Sphere::default();
+        let mut left = shape::Shape::default_sphere();
         left.set_transformation_matrix(
             matrix::Matrix4::IDENTITY
                 .scaling(0.3333, 0.3333, 0.3333)

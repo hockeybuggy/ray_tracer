@@ -1,8 +1,7 @@
 use crate::intersection;
 use crate::matrix;
 use crate::matrix::Inverse;
-use crate::shape::Shape;
-use crate::sphere;
+use crate::shape;
 use crate::tuple;
 use crate::world;
 
@@ -21,7 +20,7 @@ impl Ray {
         self.origin + self.direction * t
     }
 
-    pub fn intersect<'a>(&'a self, sphere: &'a sphere::Sphere) -> Vec<intersection::Intersection> {
+    pub fn intersect<'a>(&'a self, sphere: &'a shape::Shape) -> Vec<intersection::Intersection> {
         let transformed_ray = self.transform(&sphere.transformation_matrix().inverse().unwrap());
         let sphere_to_ray = transformed_ray.origin - tuple::Point::new(0.0, 0.0, 0.0);
 
@@ -79,8 +78,7 @@ pub fn hit<'a>(
 mod ray_tests {
     use crate::matrix;
     use crate::ray;
-    use crate::shape::Shape;
-    use crate::sphere;
+    use crate::shape;
     use crate::transformation::Transform;
     use crate::tuple;
 
@@ -126,7 +124,7 @@ mod ray_tests {
             tuple::Point::new(0.0, 0.0, -5.0),
             tuple::Vector::new(0.0, 0.0, 1.0),
         );
-        let sphere = sphere::Sphere::default();
+        let sphere = shape::Shape::default_sphere();
 
         let intersections = ray.intersect(&sphere);
 
@@ -154,7 +152,7 @@ mod ray_tests {
             tuple::Point::new(0.0, 1.0, -5.0),
             tuple::Vector::new(0.0, 0.0, 1.0),
         );
-        let sphere = sphere::Sphere::default();
+        let sphere = shape::Shape::default_sphere();
 
         let intersections = ray.intersect(&sphere);
 
@@ -169,7 +167,7 @@ mod ray_tests {
             tuple::Point::new(0.0, 2.0, -5.0),
             tuple::Vector::new(0.0, 0.0, 1.0),
         );
-        let sphere = sphere::Sphere::default();
+        let sphere = shape::Shape::default_sphere();
 
         let intersections = ray.intersect(&sphere);
 
@@ -182,7 +180,7 @@ mod ray_tests {
             tuple::Point::new(0.0, 0.0, 0.0),
             tuple::Vector::new(0.0, 0.0, 1.0),
         );
-        let sphere = sphere::Sphere::default();
+        let sphere = shape::Shape::default_sphere();
 
         let intersections = ray.intersect(&sphere);
 
@@ -197,7 +195,7 @@ mod ray_tests {
             tuple::Point::new(0.0, 0.0, 5.0),
             tuple::Vector::new(0.0, 0.0, 1.0),
         );
-        let sphere = sphere::Sphere::default();
+        let sphere = shape::Shape::default_sphere();
 
         let intersections = ray.intersect(&sphere);
 
@@ -236,13 +234,13 @@ mod ray_tests {
 
     #[test]
     fn test_spheres_default_transformation_matrix() {
-        let sphere = sphere::Sphere::default();
+        let sphere = shape::Shape::default_sphere();
         assert_eq!(sphere.transformation_matrix(), &matrix::Matrix4::IDENTITY);
     }
 
     #[test]
     fn test_spheres_can_have_its_transformation_set() {
-        let mut sphere = sphere::Sphere::default();
+        let mut sphere = shape::Shape::default_sphere();
 
         sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(2.0, 3.0, 4.0));
 
@@ -259,7 +257,7 @@ mod ray_tests {
             tuple::Vector::new(0.0, 0.0, 1.0),
         );
 
-        let mut sphere = sphere::Sphere::default();
+        let mut sphere = shape::Shape::default_sphere();
         sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(2.0, 2.0, 2.0));
 
         let intersections = ray.intersect(&sphere);
@@ -276,7 +274,7 @@ mod ray_tests {
             tuple::Vector::new(0.0, 0.0, 1.0),
         );
 
-        let mut sphere = sphere::Sphere::default();
+        let mut sphere = shape::Shape::default_sphere();
         sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(5.0, 0.0, 0.0));
 
         let intersections = ray.intersect(&sphere);
