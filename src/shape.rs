@@ -1,8 +1,11 @@
+use crate::intersection;
 use crate::material;
 use crate::matrix;
 use crate::matrix::{Inverse, Transpose};
 use crate::ray;
 use crate::tuple;
+
+const EPSILON: f64 = 1e-5;
 
 #[derive(Debug, PartialEq)]
 enum ShapeType {
@@ -42,7 +45,7 @@ impl Shape {
         self.transform = new_transform;
     }
 
-    pub fn intersect(&self, ray: ray::Ray) -> tuple::Point {
+    pub fn intersect(&self, ray: ray::Ray) -> Vec<intersection::Intersection> {
         let local_ray = ray.transform(&self.transformation_matrix().inverse().unwrap());
         return self.local_intersect(local_ray);
     }
@@ -68,8 +71,26 @@ impl Shape {
         }
     }
 
-    fn local_intersect(&self, _local_ray: ray::Ray) -> tuple::Point {
-        tuple::Point::new(0.0, 1.0, 0.0)
+    pub fn local_intersect(&self, local_ray: ray::Ray) -> Vec<intersection::Intersection> {
+        match self.shape_type {
+            ShapeType::Sphere => self.sphere_local_intersect(local_ray),
+            ShapeType::Plane => self.plane_local_intersect(local_ray),
+        }
+    }
+
+    fn sphere_local_intersect(&self, _local_ray: ray::Ray) -> Vec<intersection::Intersection> {
+        return vec![
+            // tuple::Point::new(0.0, 1.0, 0.0)
+        ];
+    }
+
+    fn plane_local_intersect(&self, local_ray: ray::Ray) -> Vec<intersection::Intersection> {
+        if local_ray.direction.y.abs() < EPSILON {
+            return vec![];
+        }
+        let t = -local_ray.origin.y / local_ray.direction.y;
+
+        return vec![intersection::intersection(t, self)];
     }
 }
 
@@ -193,11 +214,8 @@ mod sphere_tests {
 
 #[cfg(test)]
 mod plane_tests {
-    // use crate::assert_tuple_approx_eq;
-    // use crate::material;
-    // use crate::matrix;
+    use crate::ray;
     use crate::shape;
-    // use crate::transformation::Transform;
     use crate::tuple;
 
     #[test]
@@ -216,5 +234,61 @@ mod plane_tests {
             plane.normal_at(tuple::Point::new(-5.0, 0.0, 150.0)),
             tuple::Vector::new(0.0, 1.0, 0.0),
         );
+    }
+
+    #[test]
+    fn test_intersect_with_a_ray_parallel_to_the_plane() {
+        let plane = shape::Shape::default_plane();
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 10.0, 0.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+
+        let intersections = plane.local_intersect(ray);
+
+        assert_eq!(intersections.len(), 0);
+    }
+
+    #[test]
+    fn test_intersect_with_a_coplaner_ray() {
+        let plane = shape::Shape::default_plane();
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, 0.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+
+        let intersections = plane.local_intersect(ray);
+
+        assert_eq!(intersections.len(), 0);
+    }
+
+    #[test]
+    fn test_intersect_with_a_plane_from_above() {
+        let plane = shape::Shape::default_plane();
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 1.0, 0.0),
+            tuple::Vector::new(0.0, -1.0, 0.0),
+        );
+
+        let intersections = plane.local_intersect(ray);
+
+        assert_eq!(intersections.len(), 1);
+        assert_eq!(intersections[0].t, 1.0);
+        assert_eq!(intersections[0].object, &plane);
+    }
+
+    #[test]
+    fn test_intersect_with_a_plane_from_below() {
+        let plane = shape::Shape::default_plane();
+        let ray = ray::ray(
+            tuple::Point::new(0.0, -1.0, 0.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+        );
+
+        let intersections = plane.local_intersect(ray);
+
+        assert_eq!(intersections.len(), 1);
+        assert_eq!(intersections[0].t, 1.0);
+        assert_eq!(intersections[0].object, &plane);
     }
 }
