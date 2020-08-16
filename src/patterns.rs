@@ -107,6 +107,10 @@ impl Pattern {
 
         self.pattern_at(&pattern_point)
     }
+
+    pub fn set_transformation_matrix(&mut self, new_transform: matrix::Matrix4) {
+        self.transform = new_transform;
+    }
 }
 
 #[cfg(test)]
