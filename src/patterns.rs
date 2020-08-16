@@ -9,6 +9,7 @@ enum PatternType {
     Stripe,
     Gradient,
     Ring,
+    Checkers,
 }
 
 #[derive(Debug, PartialEq)]
@@ -47,6 +48,15 @@ impl Pattern {
         };
     }
 
+    pub fn checkers(a: color::Color, b: color::Color) -> Pattern {
+        return Pattern {
+            a,
+            b,
+            transform: matrix::Matrix4::IDENTITY,
+            pattern_type: PatternType::Checkers,
+        };
+    }
+
     pub fn stripe_at(&self, point: &tuple::Point) -> color::Color {
         return if point.x.floor() % 2.0 == 0.0 {
             self.a
@@ -70,11 +80,20 @@ impl Pattern {
         };
     }
 
+    pub fn checkers_at(&self, point: &tuple::Point) -> color::Color {
+        return if ((point.x.floor() + point.y.floor() + point.z.floor()) as i64) % 2 == 0 {
+            self.a
+        } else {
+            self.b
+        };
+    }
+
     pub fn pattern_at(&self, point: &tuple::Point) -> color::Color {
         return match self.pattern_type {
             PatternType::Stripe => self.stripe_at(point),
             PatternType::Gradient => self.gradient_at(point),
             PatternType::Ring => self.ring_at(point),
+            PatternType::Checkers => self.checkers_at(point),
         };
     }
 
@@ -250,6 +269,57 @@ mod patterns_tests {
         assert_color_approx_eq!(
             pattern.pattern_at(&tuple::Point::new(0.708, 0.0, 0.708)),
             // 0.708 is more than 2.sqrt() / 2
+            color::black()
+        );
+    }
+
+    #[test]
+    fn test_checkers_should_repeat_in_x() {
+        let pattern = patterns::Pattern::checkers(color::white(), color::black());
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.0, 0.0, 0.0)),
+            color::white()
+        );
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.99, 0.0, 0.0)),
+            color::white()
+        );
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(1.01, 0.0, 0.0)),
+            color::black()
+        );
+    }
+
+    #[test]
+    fn test_checkers_should_repeat_in_y() {
+        let pattern = patterns::Pattern::checkers(color::white(), color::black());
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.0, 0.0, 0.0)),
+            color::white()
+        );
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.0, 0.99, 0.0)),
+            color::white()
+        );
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.0, 1.01, 0.0)),
+            color::black()
+        );
+    }
+
+    #[test]
+    fn test_checkers_should_repeat_in_z() {
+        let pattern = patterns::Pattern::checkers(color::white(), color::black());
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.0, 0.0, 0.0)),
+            color::white()
+        );
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.0, 0.0, 0.99)),
+            color::white()
+        );
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.0, 0.0, 1.01)),
             color::black()
         );
     }
