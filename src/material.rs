@@ -8,7 +8,7 @@ pub struct Material {
     pub diffuse: f64,
     pub specular: f64,
     pub shininess: f64,
-    pub pattern: Option<patterns::StripePattern>,
+    pub pattern: Option<patterns::Pattern>,
 }
 
 pub fn material() -> Material {
@@ -193,7 +193,7 @@ mod material_tests {
     #[test]
     fn test_lighting_with_a_pattern_applied() {
         let mut material = material::material();
-        material.pattern = Some(patterns::StripePattern::new(color::white(), color::black()));
+        material.pattern = Some(patterns::Pattern::stripe(color::white(), color::black()));
         material.ambient = 1.0;
         material.diffuse = 0.0;
         material.specular = 0.0;

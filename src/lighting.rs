@@ -22,7 +22,7 @@ pub fn lighting(
             .pattern
             .as_ref()
             .unwrap()
-            .stripe_at_object(object, &point)
+            .pattern_at_object(object, &point)
     } else {
         material.color
     };
