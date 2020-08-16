@@ -15,7 +15,7 @@ enum ShapeType {
 
 #[derive(Debug, PartialEq)]
 pub struct Shape {
-    transform: matrix::Matrix4,
+    pub transform: matrix::Matrix4,
     pub material: material::Material,
     shape_type: ShapeType,
 }
