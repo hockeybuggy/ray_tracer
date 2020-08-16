@@ -42,6 +42,7 @@ fn test_simple_sphere_test() -> Result<(), std::io::Error> {
                     let camera = -ray.direction;
                     let color = lighting::lighting(
                         &hit.object.material,
+                        &hit.object,
                         &light,
                         &point,
                         &camera,
@@ -120,6 +121,7 @@ fn test_translated_sphere_test() -> Result<(), std::io::Error> {
                     let camera = -ray.direction;
                     let color = lighting::lighting(
                         &hit.object.material,
+                        &hit.object,
                         &light,
                         &point,
                         &camera,

@@ -1,10 +1,12 @@
 use crate::color;
 use crate::lights;
 use crate::material;
+use crate::shape;
 use crate::tuple;
 
 pub fn lighting(
     material: &material::Material,
+    object: &shape::Shape,
     light: &lights::Light,
     point: &tuple::Point,
     camerav: &tuple::Vector,
@@ -16,7 +18,11 @@ pub fn lighting(
     let specular: color::Color;
 
     let color = if material.pattern.is_some() {
-        material.pattern.as_ref().unwrap().stripe_at(&point)
+        material
+            .pattern
+            .as_ref()
+            .unwrap()
+            .stripe_at_object(object, &point)
     } else {
         material.color
     };

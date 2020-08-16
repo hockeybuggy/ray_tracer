@@ -57,6 +57,7 @@ impl<'a> Computation<'a> {
         match &world.light {
             Some(world_light) => lighting::lighting(
                 &self.object.material,
+                &self.object,
                 world_light,
                 &self.point,
                 &self.eyev,
