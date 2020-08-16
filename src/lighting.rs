@@ -1,10 +1,12 @@
 use crate::color;
 use crate::lights;
 use crate::material;
+use crate::shape;
 use crate::tuple;
 
 pub fn lighting(
     material: &material::Material,
+    object: &shape::Shape,
     light: &lights::Light,
     point: &tuple::Point,
     camerav: &tuple::Vector,
@@ -14,8 +16,19 @@ pub fn lighting(
     let ambient: color::Color;
     let diffuse: color::Color;
     let specular: color::Color;
+
+    let color = if material.pattern.is_some() {
+        material
+            .pattern
+            .as_ref()
+            .unwrap()
+            .pattern_at_object(object, &point)
+    } else {
+        material.color
+    };
+
     // combine the surface color with the light's color/intensity
-    let effective_color = material.color * light.intensity;
+    let effective_color = color * light.intensity;
 
     // find the direction to the light source
     let lightv = tuple::normalize(&(light.position - *point));

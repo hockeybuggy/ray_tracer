@@ -15,7 +15,7 @@ enum ShapeType {
 
 #[derive(Debug, PartialEq)]
 pub struct Shape {
-    transform: matrix::Matrix4,
+    pub transform: matrix::Matrix4,
     pub material: material::Material,
     shape_type: ShapeType,
 }
@@ -60,7 +60,7 @@ impl Shape {
         return tuple::normalize(&world_normal);
     }
 
-    fn plane_normal_at(&self, world_point: tuple::Point) -> tuple::Vector {
+    fn plane_normal_at(&self, _world_point: tuple::Point) -> tuple::Vector {
         tuple::Vector::new(0.0, 1.0, 0.0)
     }
 
