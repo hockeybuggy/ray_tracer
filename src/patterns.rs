@@ -1,25 +1,22 @@
-// TODO remove allow dead code later on
 use crate::color;
 use crate::tuple;
 
-#[allow(dead_code)]
-struct StripePattern {
+#[derive(Debug, PartialEq)]
+pub struct StripePattern {
     a: color::Color,
     b: color::Color,
 }
 
 impl StripePattern {
-    #[allow(dead_code)]
-    fn new(a: color::Color, b: color::Color) -> StripePattern {
+    pub fn new(a: color::Color, b: color::Color) -> StripePattern {
         return StripePattern { a, b };
     }
 
-    #[allow(dead_code)]
-    fn stripe_at(&self, point: tuple::Point) -> color::Color {
+    pub fn stripe_at(&self, point: &tuple::Point) -> color::Color {
         return if point.x.floor() % 2.0 == 0.0 {
-            color::white()
+            self.a
         } else {
-            color::black()
+            self.b
         };
     }
 }
@@ -44,15 +41,15 @@ mod patterns_tests {
         let pattern = patterns::StripePattern::new(color::white(), color::black());
 
         assert_color_approx_eq!(
-            pattern.stripe_at(tuple::Point::new(0.0, 0.0, 0.0)),
+            pattern.stripe_at(&tuple::Point::new(0.0, 0.0, 0.0)),
             color::white()
         );
         assert_color_approx_eq!(
-            pattern.stripe_at(tuple::Point::new(0.0, 1.0, 0.0)),
+            pattern.stripe_at(&tuple::Point::new(0.0, 1.0, 0.0)),
             color::white()
         );
         assert_color_approx_eq!(
-            pattern.stripe_at(tuple::Point::new(0.0, 2.0, 0.0)),
+            pattern.stripe_at(&tuple::Point::new(0.0, 2.0, 0.0)),
             color::white()
         );
     }
@@ -62,15 +59,15 @@ mod patterns_tests {
         let pattern = patterns::StripePattern::new(color::white(), color::black());
 
         assert_color_approx_eq!(
-            pattern.stripe_at(tuple::Point::new(0.0, 0.0, 0.0)),
+            pattern.stripe_at(&tuple::Point::new(0.0, 0.0, 0.0)),
             color::white()
         );
         assert_color_approx_eq!(
-            pattern.stripe_at(tuple::Point::new(0.0, 0.0, 1.0)),
+            pattern.stripe_at(&tuple::Point::new(0.0, 0.0, 1.0)),
             color::white()
         );
         assert_color_approx_eq!(
-            pattern.stripe_at(tuple::Point::new(0.0, 0.0, 2.0)),
+            pattern.stripe_at(&tuple::Point::new(0.0, 0.0, 2.0)),
             color::white()
         );
     }
@@ -80,27 +77,27 @@ mod patterns_tests {
         let pattern = patterns::StripePattern::new(color::white(), color::black());
 
         assert_color_approx_eq!(
-            pattern.stripe_at(tuple::Point::new(0.0, 0.0, 0.0)),
+            pattern.stripe_at(&tuple::Point::new(0.0, 0.0, 0.0)),
             color::white()
         );
         assert_color_approx_eq!(
-            pattern.stripe_at(tuple::Point::new(0.9, 0.0, 0.0)),
+            pattern.stripe_at(&tuple::Point::new(0.9, 0.0, 0.0)),
             color::white()
         );
         assert_color_approx_eq!(
-            pattern.stripe_at(tuple::Point::new(1.0, 0.0, 0.0)),
+            pattern.stripe_at(&tuple::Point::new(1.0, 0.0, 0.0)),
             color::black()
         );
         assert_color_approx_eq!(
-            pattern.stripe_at(tuple::Point::new(-0.1, 0.0, 0.0)),
+            pattern.stripe_at(&tuple::Point::new(-0.1, 0.0, 0.0)),
             color::black()
         );
         assert_color_approx_eq!(
-            pattern.stripe_at(tuple::Point::new(-1.0, 0.0, 0.0)),
+            pattern.stripe_at(&tuple::Point::new(-1.0, 0.0, 0.0)),
             color::black()
         );
         assert_color_approx_eq!(
-            pattern.stripe_at(tuple::Point::new(-1.1, 0.0, 0.0)),
+            pattern.stripe_at(&tuple::Point::new(-1.1, 0.0, 0.0)),
             color::white()
         );
     }

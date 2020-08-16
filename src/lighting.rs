@@ -14,8 +14,15 @@ pub fn lighting(
     let ambient: color::Color;
     let diffuse: color::Color;
     let specular: color::Color;
+
+    let color = if material.pattern.is_some() {
+        material.pattern.as_ref().unwrap().stripe_at(&point)
+    } else {
+        material.color
+    };
+
     // combine the surface color with the light's color/intensity
-    let effective_color = material.color * light.intensity;
+    let effective_color = color * light.intensity;
 
     // find the direction to the light source
     let lightv = tuple::normalize(&(light.position - *point));

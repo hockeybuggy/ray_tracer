@@ -1,4 +1,5 @@
 use crate::color;
+use crate::patterns;
 
 #[derive(Debug, PartialEq)]
 pub struct Material {
@@ -7,6 +8,7 @@ pub struct Material {
     pub diffuse: f64,
     pub specular: f64,
     pub shininess: f64,
+    pub pattern: Option<patterns::StripePattern>,
 }
 
 pub fn material() -> Material {
@@ -16,6 +18,7 @@ pub fn material() -> Material {
         diffuse: 0.9_f64,
         specular: 0.9_f64,
         shininess: 200.0_f64,
+        pattern: None,
     }
 }
 
@@ -26,6 +29,7 @@ mod material_tests {
     use crate::lighting;
     use crate::lights;
     use crate::material;
+    use crate::patterns;
     use crate::tuple;
 
     #[test]
@@ -165,5 +169,27 @@ mod material_tests {
 
         let expected = color::color(0.1, 0.1, 0.1);
         assert_color_approx_eq!(expected, result);
+    }
+
+    #[test]
+    fn test_lighting_with_a_pattern_applied() {
+        let mut material = material::material();
+        material.pattern = Some(patterns::StripePattern::new(color::white(), color::black()));
+        material.ambient = 1.0;
+        material.diffuse = 0.0;
+        material.specular = 0.0;
+        let position1 = tuple::Point::new(0.9, 0.0, 0.0);
+        let position2 = tuple::Point::new(1.1, 0.0, 0.0);
+        let camera = tuple::Vector::new(0.0, 0.0, -1.0);
+        let normal = tuple::Vector::new(0.0, 0.0, -1.0);
+        let light = lights::point_light(
+            tuple::Point::new(0.0, 0.0, -10.0),
+            color::color(1.0, 1.0, 1.0),
+        );
+
+        let result1 = lighting::lighting(&material, &light, &position1, &camera, &normal, false);
+        let result2 = lighting::lighting(&material, &light, &position2, &camera, &normal, false);
+        assert_color_approx_eq!(color::color(1.0, 1.0, 1.0), result1);
+        assert_color_approx_eq!(color::color(0.0, 0.0, 0.0), result2);
     }
 }
