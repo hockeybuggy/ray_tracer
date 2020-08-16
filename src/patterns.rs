@@ -7,6 +7,7 @@ use crate::tuple;
 #[derive(Debug, PartialEq)]
 enum PatternType {
     Stripe,
+    Gradient,
 }
 
 #[derive(Debug, PartialEq)]
@@ -26,12 +27,34 @@ impl Pattern {
             pattern_type: PatternType::Stripe,
         };
     }
+    pub fn gradient(a: color::Color, b: color::Color) -> Pattern {
+        return Pattern {
+            a,
+            b,
+            transform: matrix::Matrix4::IDENTITY,
+            pattern_type: PatternType::Gradient,
+        };
+    }
 
-    pub fn pattern_at(&self, point: &tuple::Point) -> color::Color {
+    pub fn stripe_at(&self, point: &tuple::Point) -> color::Color {
         return if point.x.floor() % 2.0 == 0.0 {
             self.a
         } else {
             self.b
+        };
+    }
+
+    pub fn gradient_at(&self, point: &tuple::Point) -> color::Color {
+        let distance = self.b - self.a;
+        let fraction = point.x - point.x.floor();
+
+        return self.a + distance * fraction;
+    }
+
+    pub fn pattern_at(&self, point: &tuple::Point) -> color::Color {
+        return match self.pattern_type {
+            PatternType::Stripe => self.stripe_at(point),
+            PatternType::Gradient => self.gradient_at(point),
         };
     }
 
@@ -165,6 +188,27 @@ mod patterns_tests {
         assert_color_approx_eq!(
             pattern.pattern_at_object(&object, &tuple::Point::new(2.5, 0.0, 0.0)),
             color::white()
+        );
+    }
+
+    #[test]
+    fn test_a_gradient_linerly_interpolates_between_colors() {
+        let pattern = patterns::Pattern::gradient(color::white(), color::black());
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.0, 0.0, 0.0)),
+            color::white()
+        );
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.25, 0.0, 0.0)),
+            color::color(0.75, 0.75, 0.75)
+        );
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.5, 0.0, 0.0)),
+            color::color(0.5, 0.5, 0.5)
+        );
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.75, 0.0, 0.0)),
+            color::color(0.25, 0.25, 0.25)
         );
     }
 }
