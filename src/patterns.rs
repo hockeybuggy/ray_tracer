@@ -8,6 +8,7 @@ use crate::tuple;
 enum PatternType {
     Stripe,
     Gradient,
+    Ring,
 }
 
 #[derive(Debug, PartialEq)]
@@ -27,12 +28,22 @@ impl Pattern {
             pattern_type: PatternType::Stripe,
         };
     }
+
     pub fn gradient(a: color::Color, b: color::Color) -> Pattern {
         return Pattern {
             a,
             b,
             transform: matrix::Matrix4::IDENTITY,
             pattern_type: PatternType::Gradient,
+        };
+    }
+
+    pub fn ring(a: color::Color, b: color::Color) -> Pattern {
+        return Pattern {
+            a,
+            b,
+            transform: matrix::Matrix4::IDENTITY,
+            pattern_type: PatternType::Ring,
         };
     }
 
@@ -51,10 +62,19 @@ impl Pattern {
         return self.a + distance * fraction;
     }
 
+    pub fn ring_at(&self, point: &tuple::Point) -> color::Color {
+        return if ((point.x * 2.0 + point.z * 2.0).sqrt().floor() as i64) % 2 == 0 {
+            self.a
+        } else {
+            self.b
+        };
+    }
+
     pub fn pattern_at(&self, point: &tuple::Point) -> color::Color {
         return match self.pattern_type {
             PatternType::Stripe => self.stripe_at(point),
             PatternType::Gradient => self.gradient_at(point),
+            PatternType::Ring => self.ring_at(point),
         };
     }
 
@@ -209,6 +229,28 @@ mod patterns_tests {
         assert_color_approx_eq!(
             pattern.pattern_at(&tuple::Point::new(0.75, 0.0, 0.0)),
             color::color(0.25, 0.25, 0.25)
+        );
+    }
+
+    #[test]
+    fn test_a_ring_should_extend_in_both_x_and_z() {
+        let pattern = patterns::Pattern::ring(color::white(), color::black());
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.0, 0.0, 0.0)),
+            color::white()
+        );
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(1.0, 0.0, 0.0)),
+            color::black()
+        );
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.0, 0.0, 1.0)),
+            color::black()
+        );
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.708, 0.0, 0.708)),
+            // 0.708 is more than 2.sqrt() / 2
+            color::black()
         );
     }
 }
