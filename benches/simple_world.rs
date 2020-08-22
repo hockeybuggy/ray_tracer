@@ -18,7 +18,6 @@ mod test_helpers {
         return camera;
     }
 
-
     pub fn create_simple_world_with_planes() -> world::World {
         let mut world = world::world();
 
@@ -84,14 +83,15 @@ mod test_helpers {
 
         return world;
     }
-    }
-
+}
 
 fn simple_world_benchmark(c: &mut Criterion) {
     let world = test_helpers::create_simple_world_with_planes();
     let camera = test_helpers::create_camera();
 
-    c.bench_function("render simple world", |b| b.iter(|| camera.render(&world)));
+    c.bench_function("render simple world", |b| {
+        b.iter(|| camera.render(black_box(&world)))
+    });
 }
 
 criterion_group!(benches, simple_world_benchmark);
