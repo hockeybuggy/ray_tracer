@@ -11,11 +11,42 @@ Quite a bit of it is just me trying to get better at Rust.
 ![My first sphere](images/first_sphere.jpg)
 
 
-## Running
+## Getting started
 
-To get started clone the repository then run:
+Start off by cloning the repo. You'll also need a version of Rust and Cargo
+(consider using `rustup` to install this).
 
-    cargo test
+
+## Running tests
+
+To run the unit tests and the end to end tests
+
+```sh
+cargo test
+```
+
+
+## Running benchmarks
+
+This project contains benchmarks which measure the performance and allow you to
+compare how quickly the ray tracer is able to render scenes.
+
+```sh
+cargo bench
+```
+
+This will output something like:
+
+```
+render simple world     time:   [48.247 ms 48.335 ms 48.427 ms]
+                        change: [-1.7688% -1.3561% -0.9619%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high severe
+```
+
+This will compare a bench mark to the previous results. This allows you to make
+a change that you expect to improve performance and know if it worked on not.
 
 
 ## Possible improvements

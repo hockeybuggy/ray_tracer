@@ -7,3 +7,8 @@ license = "MIT"
 
 [dependencies]
 assert_approx_eq = "1.1.0"
+criterion = "0.3"
+
+[[bench]]
+name = "simple_world"
+harness = false
