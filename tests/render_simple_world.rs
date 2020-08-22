@@ -1,120 +1,197 @@
 extern crate ray_tracer;
 use std::io::{Read, Seek};
 
-use ray_tracer::transformation::Transform;
-use ray_tracer::{camera, color, lights, material, matrix, shape, transformation, tuple, world};
+// use ray_tracer::{camera, color, lights, material, matrix, shape, transformation, tuple, world};
 
-const SCALE: u32 = 1;
+mod test_helpers {
+    const SCALE: u32 = 1;
 
-fn create_simple_world_with_only_spheres() -> world::World {
-    let mut world = world::world();
+    use ray_tracer::transformation::Transform;
+    use ray_tracer::{
+        camera, color, lights, material, matrix, shape, transformation, tuple, world,
+    };
 
-    // Create a floor and add it to the scene
-    {
-        let mut floor = shape::Shape::default_sphere();
-        floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
-        let mut material = material::material();
-        material.color = color::color(1.0, 0.9, 0.9);
-        material.specular = 0.0;
-        floor.material = material;
-        world.shapes.push(floor);
-    }
-
-    // Create a wall and add it to the scene
-    {
-        let mut left_wall = shape::Shape::default_sphere();
-        left_wall.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(10.0, 0.01, 10.0)
-                .rotation_x(std::f64::consts::PI / 2.0)
-                .rotation_y(-std::f64::consts::PI / 4.0)
-                .translation(0.0, 0.0, 5.0),
+    pub fn create_camera() -> camera::Camera {
+        let mut camera = camera::Camera::new(100 * SCALE, 50 * SCALE, std::f64::consts::PI / 3.0);
+        camera.transform = transformation::view_transform(
+            &tuple::Point::new(0.0, 1.5, -5.0),
+            &tuple::Point::new(0.0, 1.0, 0.0),
+            &tuple::Vector::new(0.0, 1.0, 0.0),
         );
-        let mut material = material::material();
-        material.color = color::color(1.0, 0.9, 0.9);
-        material.specular = 0.0;
-        left_wall.material = material;
-        world.shapes.push(left_wall);
+        return camera;
     }
 
-    // Create another wall and add it to the scene
-    {
-        let mut right_wall = shape::Shape::default_sphere();
-        right_wall.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(10.0, 0.01, 10.0)
-                .rotation_x(std::f64::consts::PI / 2.0)
-                .rotation_y(std::f64::consts::PI / 4.0)
-                .translation(0.0, 0.0, 5.0),
-        );
-        let mut material = material::material();
-        material.color = color::color(1.0, 0.9, 0.9);
-        material.specular = 0.0;
-        right_wall.material = material;
-        world.shapes.push(right_wall);
+    pub fn create_simple_world_with_only_spheres() -> world::World {
+        let mut world = world::world();
+
+        // Create a floor and add it to the scene
+        {
+            let mut floor = shape::Shape::default_sphere();
+            floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
+            let mut material = material::material();
+            material.color = color::color(1.0, 0.9, 0.9);
+            material.specular = 0.0;
+            floor.material = material;
+            world.shapes.push(floor);
+        }
+
+        // Create a wall and add it to the scene
+        {
+            let mut left_wall = shape::Shape::default_sphere();
+            left_wall.set_transformation_matrix(
+                matrix::Matrix4::IDENTITY
+                    .scaling(10.0, 0.01, 10.0)
+                    .rotation_x(std::f64::consts::PI / 2.0)
+                    .rotation_y(-std::f64::consts::PI / 4.0)
+                    .translation(0.0, 0.0, 5.0),
+            );
+            let mut material = material::material();
+            material.color = color::color(1.0, 0.9, 0.9);
+            material.specular = 0.0;
+            left_wall.material = material;
+            world.shapes.push(left_wall);
+        }
+
+        // Create another wall and add it to the scene
+        {
+            let mut right_wall = shape::Shape::default_sphere();
+            right_wall.set_transformation_matrix(
+                matrix::Matrix4::IDENTITY
+                    .scaling(10.0, 0.01, 10.0)
+                    .rotation_x(std::f64::consts::PI / 2.0)
+                    .rotation_y(std::f64::consts::PI / 4.0)
+                    .translation(0.0, 0.0, 5.0),
+            );
+            let mut material = material::material();
+            material.color = color::color(1.0, 0.9, 0.9);
+            material.specular = 0.0;
+            right_wall.material = material;
+            world.shapes.push(right_wall);
+        }
+
+        // Add a sphere to the center
+        {
+            let mut middle = shape::Shape::default_sphere();
+            middle.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(-0.5, 1.0, 0.5));
+            let mut material = material::material();
+            material.color = color::color(0.1, 1.0, 0.5);
+            material.diffuse = 0.7;
+            material.specular = 0.3;
+            middle.material = material;
+            world.shapes.push(middle);
+        }
+
+        // Add a small green sphere on the right
+        {
+            let mut right = shape::Shape::default_sphere();
+            right.set_transformation_matrix(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.5, 0.5, 0.5)
+                    .translation(1.5, 0.5, 0.5),
+            );
+            let mut material = material::material();
+            material.color = color::color(0.1, 1.0, 0.5);
+            material.diffuse = 0.7;
+            material.specular = 0.3;
+            right.material = material;
+            world.shapes.push(right);
+        }
+
+        // Add a smaller green sphere on the left
+        {
+            let mut left = shape::Shape::default_sphere();
+            left.set_transformation_matrix(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.3333, 0.3333, 0.3333)
+                    .translation(-1.5, 0.33, -0.75),
+            );
+            let mut material = material::material();
+            material.color = color::color(1.0, 0.8, 0.1);
+            material.diffuse = 0.7;
+            material.specular = 0.3;
+            left.material = material;
+            world.shapes.push(left);
+        }
+
+        // Let there be light
+        let white_point_light =
+            lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
+        world.light = Some(white_point_light);
+
+        return world;
     }
 
-    // Add a sphere to the center
-    {
-        let mut middle = shape::Shape::default_sphere();
-        middle.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(-0.5, 1.0, 0.5));
-        let mut material = material::material();
-        material.color = color::color(0.1, 1.0, 0.5);
-        material.diffuse = 0.7;
-        material.specular = 0.3;
-        middle.material = material;
-        world.shapes.push(middle);
+    pub fn create_simple_world_with_planes() -> world::World {
+        let mut world = world::world();
+
+        // Create a floor and add it to the scene
+        {
+            let mut floor = shape::Shape::default_plane();
+            floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
+            let mut material = material::material();
+            material.color = color::color(1.0, 0.9, 0.9);
+            material.specular = 0.0;
+            floor.material = material;
+            world.shapes.push(floor);
+        }
+
+        // Add a sphere to the center
+        {
+            let mut middle = shape::Shape::default_sphere();
+            middle.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(-0.5, 1.0, 0.5));
+            let mut material = material::material();
+            material.color = color::color(0.1, 1.0, 0.5);
+            material.diffuse = 0.7;
+            material.specular = 0.3;
+            middle.material = material;
+            world.shapes.push(middle);
+        }
+
+        // Add a small green sphere on the right
+        {
+            let mut right = shape::Shape::default_sphere();
+            right.set_transformation_matrix(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.5, 0.5, 0.5)
+                    .translation(1.5, 0.5, 0.5),
+            );
+            let mut material = material::material();
+            material.color = color::color(0.1, 1.0, 0.5);
+            material.diffuse = 0.7;
+            material.specular = 0.3;
+            right.material = material;
+            world.shapes.push(right);
+        }
+
+        // Add a smaller green sphere on the left
+        {
+            let mut left = shape::Shape::default_sphere();
+            left.set_transformation_matrix(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.3333, 0.3333, 0.3333)
+                    .translation(-1.5, 0.33, -0.75),
+            );
+            let mut material = material::material();
+            material.color = color::color(1.0, 0.8, 0.1);
+            material.diffuse = 0.7;
+            material.specular = 0.3;
+            left.material = material;
+            world.shapes.push(left);
+        }
+
+        // Let there be light
+        let white_point_light =
+            lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
+        world.light = Some(white_point_light);
+
+        return world;
     }
-
-    // Add a small green sphere on the right
-    {
-        let mut right = shape::Shape::default_sphere();
-        right.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.5, 0.5, 0.5)
-                .translation(1.5, 0.5, 0.5),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.1, 1.0, 0.5);
-        material.diffuse = 0.7;
-        material.specular = 0.3;
-        right.material = material;
-        world.shapes.push(right);
-    }
-
-    // Add a smaller green sphere on the left
-    {
-        let mut left = shape::Shape::default_sphere();
-        left.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.3333, 0.3333, 0.3333)
-                .translation(-1.5, 0.33, -0.75),
-        );
-        let mut material = material::material();
-        material.color = color::color(1.0, 0.8, 0.1);
-        material.diffuse = 0.7;
-        material.specular = 0.3;
-        left.material = material;
-        world.shapes.push(left);
-    }
-
-    // Let there be light
-    let white_point_light =
-        lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
-    world.light = Some(white_point_light);
-
-    return world;
 }
 
 #[test]
 fn test_simple_world() -> Result<(), std::io::Error> {
-    let world = create_simple_world_with_only_spheres();
-    let mut camera = camera::Camera::new(100 * SCALE, 50 * SCALE, std::f64::consts::PI / 3.0);
-    camera.transform = transformation::view_transform(
-        &tuple::Point::new(0.0, 1.5, -5.0),
-        &tuple::Point::new(0.0, 1.0, 0.0),
-        &tuple::Vector::new(0.0, 1.0, 0.0),
-    );
+    let world = test_helpers::create_simple_world_with_only_spheres();
+    let camera = test_helpers::create_camera();
 
     let canvas = camera.render(&world);
 
@@ -140,82 +217,10 @@ fn test_simple_world() -> Result<(), std::io::Error> {
     return Ok(());
 }
 
-fn create_simple_world_with_planes() -> world::World {
-    let mut world = world::world();
-
-    // Create a floor and add it to the scene
-    {
-        let mut floor = shape::Shape::default_plane();
-        floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
-        let mut material = material::material();
-        material.color = color::color(1.0, 0.9, 0.9);
-        material.specular = 0.0;
-        floor.material = material;
-        world.shapes.push(floor);
-    }
-
-    // Add a sphere to the center
-    {
-        let mut middle = shape::Shape::default_sphere();
-        middle.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(-0.5, 1.0, 0.5));
-        let mut material = material::material();
-        material.color = color::color(0.1, 1.0, 0.5);
-        material.diffuse = 0.7;
-        material.specular = 0.3;
-        middle.material = material;
-        world.shapes.push(middle);
-    }
-
-    // Add a small green sphere on the right
-    {
-        let mut right = shape::Shape::default_sphere();
-        right.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.5, 0.5, 0.5)
-                .translation(1.5, 0.5, 0.5),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.1, 1.0, 0.5);
-        material.diffuse = 0.7;
-        material.specular = 0.3;
-        right.material = material;
-        world.shapes.push(right);
-    }
-
-    // Add a smaller green sphere on the left
-    {
-        let mut left = shape::Shape::default_sphere();
-        left.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.3333, 0.3333, 0.3333)
-                .translation(-1.5, 0.33, -0.75),
-        );
-        let mut material = material::material();
-        material.color = color::color(1.0, 0.8, 0.1);
-        material.diffuse = 0.7;
-        material.specular = 0.3;
-        left.material = material;
-        world.shapes.push(left);
-    }
-
-    // Let there be light
-    let white_point_light =
-        lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
-    world.light = Some(white_point_light);
-
-    return world;
-}
-
 #[test]
 fn test_world_with_planes() -> Result<(), std::io::Error> {
-    let world = create_simple_world_with_planes();
-
-    let mut camera = camera::Camera::new(100 * SCALE, 50 * SCALE, std::f64::consts::PI / 3.0);
-    camera.transform = transformation::view_transform(
-        &tuple::Point::new(0.0, 1.5, -5.0),
-        &tuple::Point::new(0.0, 1.0, 0.0),
-        &tuple::Vector::new(0.0, 1.0, 0.0),
-    );
+    let world = test_helpers::create_simple_world_with_planes();
+    let camera = test_helpers::create_camera();
 
     let canvas = camera.render(&world);
 
