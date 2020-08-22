@@ -6,8 +6,7 @@ use ray_tracer::{camera, color, lights, material, matrix, shape, transformation,
 
 const SCALE: u32 = 1;
 
-#[test]
-fn test_simple_world() -> Result<(), std::io::Error> {
+fn create_simple_world_with_only_spheres() -> world::World {
     let mut world = world::world();
 
     // Create a floor and add it to the scene
@@ -104,6 +103,12 @@ fn test_simple_world() -> Result<(), std::io::Error> {
         lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
     world.light = Some(white_point_light);
 
+    return world;
+}
+
+#[test]
+fn test_simple_world() -> Result<(), std::io::Error> {
+    let world = create_simple_world_with_only_spheres();
     let mut camera = camera::Camera::new(100 * SCALE, 50 * SCALE, std::f64::consts::PI / 3.0);
     camera.transform = transformation::view_transform(
         &tuple::Point::new(0.0, 1.5, -5.0),
@@ -135,8 +140,7 @@ fn test_simple_world() -> Result<(), std::io::Error> {
     return Ok(());
 }
 
-#[test]
-fn test_world_with_planes() -> Result<(), std::io::Error> {
+fn create_simple_world_with_planes() -> world::World {
     let mut world = world::world();
 
     // Create a floor and add it to the scene
@@ -198,6 +202,13 @@ fn test_world_with_planes() -> Result<(), std::io::Error> {
     let white_point_light =
         lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
     world.light = Some(white_point_light);
+
+    return world;
+}
+
+#[test]
+fn test_world_with_planes() -> Result<(), std::io::Error> {
+    let world = create_simple_world_with_planes();
 
     let mut camera = camera::Camera::new(100 * SCALE, 50 * SCALE, std::f64::consts::PI / 3.0);
     camera.transform = transformation::view_transform(
