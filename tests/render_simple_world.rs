@@ -1,7 +1,6 @@
 extern crate ray_tracer;
-use std::io::{Read, Seek};
 
-// use ray_tracer::{camera, color, lights, material, matrix, shape, transformation, tuple, world};
+mod shared_test_helpers;
 
 mod test_helpers {
     const SCALE: u32 = 1;
@@ -195,23 +194,13 @@ fn test_simple_world() -> Result<(), std::io::Error> {
 
     let canvas = camera.render(&world);
 
-    // Write to the output file
     let output_path = "output_simple_world.ppm";
-    // Borrowed from https://stackoverflow.com/a/47956654
-    let mut output_file = std::fs::OpenOptions::new()
-        .create(true)
-        .write(true)
-        .read(true)
-        .open(output_path)?;
-    canvas.canvas_to_ppm(&mut output_file)?;
-    let mut output_contents = String::new();
-    output_file.seek(std::io::SeekFrom::Start(0))?;
-    output_file.read_to_string(&mut output_contents)?;
+    let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
 
     let expected_str = include_str!("fixtures/simple_world_test.ppm");
 
     // TODO consider if this would be better as a line by line check
-    assert!(output_contents.contains(expected_str));
+    assert!(output_ppm_string.contains(expected_str));
 
     std::fs::remove_file(output_path)?;
     return Ok(());
@@ -224,23 +213,13 @@ fn test_world_with_planes() -> Result<(), std::io::Error> {
 
     let canvas = camera.render(&world);
 
-    // Write to the output file
     let output_path = "output_world_with_plane.ppm";
-    // Borrowed from https://stackoverflow.com/a/47956654
-    let mut output_file = std::fs::OpenOptions::new()
-        .create(true)
-        .write(true)
-        .read(true)
-        .open(output_path)?;
-    canvas.canvas_to_ppm(&mut output_file)?;
-    let mut output_contents = String::new();
-    output_file.seek(std::io::SeekFrom::Start(0))?;
-    output_file.read_to_string(&mut output_contents)?;
+    let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
 
     let expected_str = include_str!("fixtures/world_with_plane.ppm");
 
     // TODO consider if this would be better as a line by line check
-    assert!(output_contents.contains(expected_str));
+    assert!(output_ppm_string.contains(expected_str));
 
     std::fs::remove_file(output_path)?;
     return Ok(());

@@ -1,5 +1,6 @@
 extern crate ray_tracer;
-use std::io::{Read, Seek};
+
+mod shared_test_helpers;
 
 use ray_tracer::transformation::Transform;
 use ray_tracer::{
@@ -71,21 +72,12 @@ fn test_checkered_sphere() -> Result<(), std::io::Error> {
 
     // Write to the output file
     let output_path = "checkered_sphere.ppm";
-    // Borrowed from https://stackoverflow.com/a/47956654
-    let mut output_file = std::fs::OpenOptions::new()
-        .create(true)
-        .write(true)
-        .read(true)
-        .open(output_path)?;
-    canvas.canvas_to_ppm(&mut output_file)?;
-    let mut output_contents = String::new();
-    output_file.seek(std::io::SeekFrom::Start(0))?;
-    output_file.read_to_string(&mut output_contents)?;
+    let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
 
     let expected_str = include_str!("fixtures/checkered_sphere.ppm");
 
     // TODO consider if this would be better as a line by line check
-    assert!(output_contents.contains(expected_str));
+    assert!(output_ppm_string.contains(expected_str));
 
     std::fs::remove_file(output_path)?;
     return Ok(());
@@ -154,21 +146,12 @@ fn test_gradient_sphere() -> Result<(), std::io::Error> {
 
     // Write to the output file
     let output_path = "gradient_sphere.ppm";
-    // Borrowed from https://stackoverflow.com/a/47956654
-    let mut output_file = std::fs::OpenOptions::new()
-        .create(true)
-        .write(true)
-        .read(true)
-        .open(output_path)?;
-    canvas.canvas_to_ppm(&mut output_file)?;
-    let mut output_contents = String::new();
-    output_file.seek(std::io::SeekFrom::Start(0))?;
-    output_file.read_to_string(&mut output_contents)?;
+    let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
 
     let expected_str = include_str!("fixtures/gradient_sphere.ppm");
 
     // TODO consider if this would be better as a line by line check
-    assert!(output_contents.contains(expected_str));
+    assert!(output_ppm_string.contains(expected_str));
 
     std::fs::remove_file(output_path)?;
     return Ok(());
@@ -245,21 +228,12 @@ fn test_ring_sphere() -> Result<(), std::io::Error> {
 
     // Write to the output file
     let output_path = "ring_sphere.ppm";
-    // Borrowed from https://stackoverflow.com/a/47956654
-    let mut output_file = std::fs::OpenOptions::new()
-        .create(true)
-        .write(true)
-        .read(true)
-        .open(output_path)?;
-    canvas.canvas_to_ppm(&mut output_file)?;
-    let mut output_contents = String::new();
-    output_file.seek(std::io::SeekFrom::Start(0))?;
-    output_file.read_to_string(&mut output_contents)?;
+    let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
 
     let expected_str = include_str!("fixtures/ring_sphere.ppm");
 
     // TODO consider if this would be better as a line by line check
-    assert!(output_contents.contains(expected_str));
+    assert!(output_ppm_string.contains(expected_str));
 
     std::fs::remove_file(output_path)?;
     return Ok(());
@@ -333,21 +307,12 @@ fn test_stripe_sphere() -> Result<(), std::io::Error> {
 
     // Write to the output file
     let output_path = "stripe_sphere.ppm";
-    // Borrowed from https://stackoverflow.com/a/47956654
-    let mut output_file = std::fs::OpenOptions::new()
-        .create(true)
-        .write(true)
-        .read(true)
-        .open(output_path)?;
-    canvas.canvas_to_ppm(&mut output_file)?;
-    let mut output_contents = String::new();
-    output_file.seek(std::io::SeekFrom::Start(0))?;
-    output_file.read_to_string(&mut output_contents)?;
+    let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
 
     let expected_str = include_str!("fixtures/stripe_sphere.ppm");
 
     // TODO consider if this would be better as a line by line check
-    assert!(output_contents.contains(expected_str));
+    assert!(output_ppm_string.contains(expected_str));
 
     std::fs::remove_file(output_path)?;
     return Ok(());
