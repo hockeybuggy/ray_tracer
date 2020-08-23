@@ -25,6 +25,7 @@ pub struct Computation<'a> {
     pub point: tuple::Point,
     pub eyev: tuple::Vector,
     pub normalv: tuple::Vector,
+    pub reflectv: tuple::Vector,
     pub inside: bool,
     pub over_point: tuple::Point,
 }
@@ -40,12 +41,14 @@ pub fn prepare_computations<'a>(
     let normalv = object.normal_at(point);
     let inside: bool = tuple::dot(&normalv, &eyev) < 0.0;
     let maybe_inverted_normalv = if inside { -normalv } else { normalv };
+    let reflectv = ray.direction.reflect(&maybe_inverted_normalv);
     Computation {
         t,
         object,
         point,
         eyev,
         normalv: maybe_inverted_normalv,
+        reflectv,
         inside,
         over_point: point + maybe_inverted_normalv * EPSILON,
     }
@@ -253,5 +256,24 @@ mod intersection_tests {
         let colour = computations.shade_hit(&world);
 
         assert_color_approx_eq!(colour, color::color(0.90498, 0.90498, 0.90498));
+    }
+
+    #[test]
+    fn test_precompute_the_reflection_vector() {
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 1.0, -1.0),
+            tuple::Vector::new(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+        let shape = shape::Shape::default_plane();
+        let intersection = intersection::intersection(2.0_f64.sqrt(), &shape);
+
+        let computations = intersection::prepare_computations(&intersection, &ray);
+
+        assert_eq!(computations.t, intersection.t);
+        assert_eq!(computations.object, intersection.object);
+        assert_eq!(
+            computations.reflectv,
+            tuple::Vector::new(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0)
+        );
     }
 }

@@ -8,6 +8,7 @@ pub struct Material {
     pub diffuse: f64,
     pub specular: f64,
     pub shininess: f64,
+    pub reflective: f64,
     pub pattern: Option<patterns::Pattern>,
 }
 
@@ -18,6 +19,7 @@ pub fn material() -> Material {
         diffuse: 0.9_f64,
         specular: 0.9_f64,
         shininess: 200.0_f64,
+        reflective: 0.0_f64,
         pattern: None,
     }
 }
@@ -42,6 +44,7 @@ mod material_tests {
         assert_eq!(material.diffuse, 0.9);
         assert_eq!(material.specular, 0.9);
         assert_eq!(material.shininess, 200.0);
+        assert_eq!(material.reflective, 0.0);
     }
 
     ///               ║
