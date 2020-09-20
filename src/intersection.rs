@@ -25,6 +25,7 @@ pub struct Computation<'a> {
     pub point: tuple::Point,
     pub eyev: tuple::Vector,
     pub normalv: tuple::Vector,
+    pub reflectv: tuple::Vector,
     pub inside: bool,
     pub over_point: tuple::Point,
 }
@@ -40,32 +41,37 @@ pub fn prepare_computations<'a>(
     let normalv = object.normal_at(point);
     let inside: bool = tuple::dot(&normalv, &eyev) < 0.0;
     let maybe_inverted_normalv = if inside { -normalv } else { normalv };
+    let reflectv = ray.direction.reflect(&maybe_inverted_normalv);
     Computation {
         t,
         object,
         point,
         eyev,
         normalv: maybe_inverted_normalv,
+        reflectv,
         inside,
         over_point: point + maybe_inverted_normalv * EPSILON,
     }
 }
 
 impl<'a> Computation<'a> {
-    pub fn shade_hit(&self, world: &world::World) -> color::Color {
-        let shadowed = world::is_shadowed(&world, &self.over_point);
-        match &world.light {
-            Some(world_light) => lighting::lighting(
-                &self.object.material,
-                &self.object,
-                world_light,
-                &self.point,
-                &self.eyev,
-                &self.normalv,
-                shadowed,
-            ),
-            None => color::black(),
+    pub fn shade_hit(&self, world: &world::World, remaining: usize) -> color::Color {
+        let has_light = &world.light.is_some();
+        if !has_light {
+            return color::black();
         }
+        let shadowed = world::is_shadowed(&world, &self.over_point);
+        let surface = lighting::lighting(
+            &self.object.material,
+            &self.object,
+            &world.light.as_ref().unwrap(),
+            &self.point,
+            &self.eyev,
+            &self.normalv,
+            shadowed,
+        );
+        let reflected = world.reflected_color(&self, remaining);
+        return surface + reflected;
     }
 }
 
@@ -230,7 +236,7 @@ mod intersection_tests {
         let intersection = intersection::intersection(4.0, &shape);
 
         let computations = intersection::prepare_computations(&intersection, &ray);
-        let colour = computations.shade_hit(&world);
+        let colour = computations.shade_hit(&world, 10);
 
         assert_color_approx_eq!(colour, color::color(0.38066, 0.47583, 0.2855));
     }
@@ -250,8 +256,27 @@ mod intersection_tests {
         let intersection = intersection::intersection(0.5, &shape);
 
         let computations = intersection::prepare_computations(&intersection, &ray);
-        let colour = computations.shade_hit(&world);
+        let colour = computations.shade_hit(&world, 10);
 
         assert_color_approx_eq!(colour, color::color(0.90498, 0.90498, 0.90498));
+    }
+
+    #[test]
+    fn test_precompute_the_reflection_vector() {
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 1.0, -1.0),
+            tuple::Vector::new(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+        let shape = shape::Shape::default_plane();
+        let intersection = intersection::intersection(2.0_f64.sqrt(), &shape);
+
+        let computations = intersection::prepare_computations(&intersection, &ray);
+
+        assert_eq!(computations.t, intersection.t);
+        assert_eq!(computations.object, intersection.object);
+        assert_eq!(
+            computations.reflectv,
+            tuple::Vector::new(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0)
+        );
     }
 }

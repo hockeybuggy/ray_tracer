@@ -21,14 +21,32 @@ pub fn world() -> World {
 }
 
 impl World {
-    pub fn color_at(&self, ray: &ray::Ray) -> color::Color {
+    pub fn color_at(&self, ray: &ray::Ray, remaining: usize) -> color::Color {
         let intersections = ray.intersect_world(&self);
         let hit = ray::hit(&intersections);
         if hit.is_none() {
             return color::black();
         }
         let computations = intersection::prepare_computations(&hit.unwrap(), &ray);
-        return computations.shade_hit(&self);
+        return computations.shade_hit(&self, remaining - 1);
+    }
+
+    pub fn reflected_color(
+        &self,
+        computations: &intersection::Computation,
+        remaining: usize,
+    ) -> color::Color {
+        if remaining == 0 {
+            return color::black();
+        }
+        if computations.object.material.reflective == 0.0 {
+            return color::black();
+        }
+
+        let reflected_ray = ray::ray(computations.over_point, computations.reflectv);
+        let color = self.color_at(&reflected_ray, remaining);
+
+        return color * computations.object.material.reflective;
     }
 }
 
@@ -142,7 +160,7 @@ mod world_tests {
             tuple::Vector::new(0.0, 1.0, 0.0),
         );
 
-        let color = world.color_at(&ray);
+        let color = world.color_at(&ray, 10);
 
         assert_color_approx_eq!(color, color::black());
     }
@@ -155,7 +173,7 @@ mod world_tests {
             tuple::Vector::new(0.0, 0.0, 1.0),
         );
 
-        let color = world.color_at(&ray);
+        let color = world.color_at(&ray, 10);
 
         assert_color_approx_eq!(color, color::color(0.38066, 0.47583, 0.2855));
     }
@@ -174,7 +192,7 @@ mod world_tests {
             tuple::Vector::new(0.0, 0.0, -1.0),
         );
 
-        let color = world.color_at(&ray);
+        let color = world.color_at(&ray, 10);
 
         let inner = world.shapes.get_mut(1);
         assert_color_approx_eq!(color, inner.as_ref().unwrap().material.color);
@@ -230,8 +248,118 @@ mod world_tests {
         let intersection = intersection::intersection(4.0, &world.shapes[1]);
 
         let computations = intersection::prepare_computations(&intersection, &ray);
-        let color = computations.shade_hit(&world);
+        let color = computations.shade_hit(&world, 10);
         let expected_color = color::color(0.1, 0.1, 0.1);
+        assert_color_approx_eq!(color, expected_color);
+    }
+
+    #[test]
+    fn reflected_color_for_a_nonreflective_material() {
+        let mut world = world::default_world();
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, 0.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+        let mut sphere = shape::Shape::default_sphere();
+        sphere.material.ambient = 1.0;
+        world.shapes.push(sphere);
+        let intersection = intersection::intersection(1.0, &world.shapes[2]);
+
+        let computations = intersection::prepare_computations(&intersection, &ray);
+        let color = world.reflected_color(&computations, 10);
+
+        let expected_color = color::color(0.0, 0.0, 0.0);
+        assert_color_approx_eq!(color, expected_color);
+    }
+
+    #[test]
+    fn reflected_color_for_a_reflective_material() {
+        let mut world = world::default_world();
+        let mut plane = shape::Shape::default_plane();
+        plane.material.reflective = 0.5;
+        plane.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, -1.0, 0.0));
+        world.shapes.push(plane);
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -3.0),
+            tuple::Vector::new(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+        let intersection = intersection::intersection(2.0_f64.sqrt(), &world.shapes[2]);
+
+        let computations = intersection::prepare_computations(&intersection, &ray);
+        let color = world.reflected_color(&computations, 10);
+
+        let expected_color = color::color(0.19033, 0.23791, 0.14274);
+        assert_color_approx_eq!(color, expected_color);
+    }
+
+    #[test]
+    fn shade_hit_with_a_reflective_material() {
+        let mut world = world::default_world();
+        let mut plane = shape::Shape::default_plane();
+        plane.material.reflective = 0.5;
+        plane.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, -1.0, 0.0));
+        world.shapes.push(plane);
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -3.0),
+            tuple::Vector::new(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+        let intersection = intersection::intersection(2.0_f64.sqrt(), &world.shapes[2]);
+
+        let computations = intersection::prepare_computations(&intersection, &ray);
+        let color = computations.shade_hit(&world, 10);
+
+        let expected_color = color::color(0.87676, 0.92435, 0.82918);
+        assert_color_approx_eq!(color, expected_color);
+    }
+
+    #[test]
+    fn color_at_with_mutually_reflective_surfaces() {
+        // Prevent two surfaces reflecting at one another from bouncing their rays back and fourth forever.
+        let mut world = world::world();
+        let light_position = tuple::Point::new(0.0, 0.0, -10.0);
+        let light_color = color::color(1.0, 1.0, 1.0);
+        world.light = Some(lights::point_light(light_position, light_color));
+        let mut upper_plane = shape::Shape::default_plane();
+        upper_plane.material.reflective = 1.0;
+        upper_plane
+            .set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, -1.0, 0.0));
+        world.shapes.push(upper_plane);
+        let mut lower_plane = shape::Shape::default_plane();
+        lower_plane.material.reflective = 1.0;
+        lower_plane.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 1.0, 0.0));
+        world.shapes.push(lower_plane);
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, 0.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+        );
+
+        // Without an addtional contraint light will bounce between these two planes indefinitly.
+        // Our assertion is really: does this call terminate.
+        let color = world.color_at(&ray, 10);
+
+        // We don't really care about the color here. See note above.
+        let expected_color = color::color(1.0, 1.0, 1.0);
+        assert_color_approx_eq!(color, expected_color);
+    }
+
+    #[test]
+    fn reflected_color_at_the_maximum_recursive_depth() {
+        let mut world = world::default_world();
+        let mut plane = shape::Shape::default_plane();
+        plane.material.reflective = 0.5;
+        plane.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, -1.0, 0.0));
+        world.shapes.push(plane);
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -3.0),
+            tuple::Vector::new(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+        let intersection = intersection::intersection(2.0_f64.sqrt(), &world.shapes[2]);
+
+        let computations = intersection::prepare_computations(&intersection, &ray);
+        // Note that there are zero remaing light bounces
+        let color = world.reflected_color(&computations, 0);
+
+        let expected_color = color::color(0.0, 0.0, 0.0);
         assert_color_approx_eq!(color, expected_color);
     }
 }
