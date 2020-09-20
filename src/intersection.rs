@@ -56,19 +56,20 @@ pub fn prepare_computations<'a>(
 
 impl<'a> Computation<'a> {
     pub fn shade_hit(&self, world: &world::World) -> color::Color {
-        let shadowed = world::is_shadowed(&world, &self.over_point);
-        match &world.light {
-            Some(world_light) => lighting::lighting(
-                &self.object.material,
-                &self.object,
-                world_light,
-                &self.point,
-                &self.eyev,
-                &self.normalv,
-                shadowed,
-            ),
-            None => color::black(),
+        let has_light = &world.light.is_some();
+        if !has_light {
+            return color::black();
         }
+        let shadowed = world::is_shadowed(&world, &self.over_point);
+        return lighting::lighting(
+            &self.object.material,
+            &self.object,
+            &world.light.as_ref().unwrap(),
+            &self.point,
+            &self.eyev,
+            &self.normalv,
+            shadowed,
+        );
     }
 }
 

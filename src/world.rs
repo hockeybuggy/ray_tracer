@@ -284,4 +284,24 @@ mod world_tests {
         let expected_color = color::color(0.19033, 0.23791, 0.14274);
         assert_color_approx_eq!(color, expected_color);
     }
+
+    #[test]
+    fn shade_hit_with_a_reflective_material() {
+        let mut world = world::default_world();
+        let mut plane = shape::Shape::default_plane();
+        plane.material.reflective = 0.5;
+        plane.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, -1.0, 0.0));
+        world.shapes.push(plane);
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -3.0),
+            tuple::Vector::new(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+        let intersection = intersection::intersection(2.0_f64.sqrt(), &world.shapes[2]);
+
+        let computations = intersection::prepare_computations(&intersection, &ray);
+        let color = computations.shade_hit(&world);
+
+        let expected_color = color::color(0.87677, 0.92436, 0.82918);
+        assert_color_approx_eq!(color, expected_color);
+    }
 }
