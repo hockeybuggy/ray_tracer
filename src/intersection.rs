@@ -55,13 +55,13 @@ pub fn prepare_computations<'a>(
 }
 
 impl<'a> Computation<'a> {
-    pub fn shade_hit(&self, world: &world::World) -> color::Color {
+    pub fn shade_hit(&self, world: &world::World, remaining: usize) -> color::Color {
         let has_light = &world.light.is_some();
         if !has_light {
             return color::black();
         }
         let shadowed = world::is_shadowed(&world, &self.over_point);
-        return lighting::lighting(
+        let surface = lighting::lighting(
             &self.object.material,
             &self.object,
             &world.light.as_ref().unwrap(),
@@ -70,6 +70,8 @@ impl<'a> Computation<'a> {
             &self.normalv,
             shadowed,
         );
+        let reflected = world.reflected_color(&self, remaining);
+        return surface + reflected;
     }
 }
 
@@ -234,7 +236,7 @@ mod intersection_tests {
         let intersection = intersection::intersection(4.0, &shape);
 
         let computations = intersection::prepare_computations(&intersection, &ray);
-        let colour = computations.shade_hit(&world);
+        let colour = computations.shade_hit(&world, 10);
 
         assert_color_approx_eq!(colour, color::color(0.38066, 0.47583, 0.2855));
     }
@@ -254,7 +256,7 @@ mod intersection_tests {
         let intersection = intersection::intersection(0.5, &shape);
 
         let computations = intersection::prepare_computations(&intersection, &ray);
-        let colour = computations.shade_hit(&world);
+        let colour = computations.shade_hit(&world, 10);
 
         assert_color_approx_eq!(colour, color::color(0.90498, 0.90498, 0.90498));
     }
