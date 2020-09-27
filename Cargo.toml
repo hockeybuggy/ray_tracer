@@ -8,6 +8,7 @@ license = "MIT"
 [dependencies]
 assert_approx_eq = "1.1.0"
 criterion = "0.3"
+image = "0.23.10"
 
 [[bench]]
 name = "simple_world"

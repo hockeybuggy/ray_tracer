@@ -34,15 +34,16 @@ fn test_simple_circle_test() -> Result<(), std::io::Error> {
         }
     }
 
-    // Write to the output file
-    let output_path = "output_simple_circle.ppm";
-    let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
+    let expected_image =
+        shared_test_helpers::read_image_from_fixture_file("simple_circle_test").unwrap();
 
-    let expected_str = include_str!("fixtures/simple_circle_test.ppm");
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(&canvas, "simple_circle_test.png").unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `simple_circle_test.png`."
+        );
+    }
 
-    // TODO consider if this would be better as a line by line check
-    assert!(output_ppm_string.contains(expected_str));
-
-    std::fs::remove_file(output_path)?;
     return Ok(());
 }

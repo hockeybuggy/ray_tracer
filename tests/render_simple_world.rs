@@ -245,15 +245,15 @@ fn test_simple_world() -> Result<(), std::io::Error> {
 
     let canvas = camera.render(&world);
 
-    let output_path = "output_simple_world.ppm";
-    let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
+    let expected_image = shared_test_helpers::read_image_from_fixture_file("simple_world").unwrap();
 
-    let expected_str = include_str!("fixtures/simple_world_test.ppm");
-
-    // TODO consider if this would be better as a line by line check
-    assert!(output_ppm_string.contains(expected_str));
-
-    std::fs::remove_file(output_path)?;
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(&canvas, "simple_world.png").unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `simple_world.png`."
+        );
+    }
     return Ok(());
 }
 
@@ -264,15 +264,16 @@ fn test_world_with_planes() -> Result<(), std::io::Error> {
 
     let canvas = camera.render(&world);
 
-    let output_path = "output_world_with_plane.ppm";
-    let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
+    let expected_image =
+        shared_test_helpers::read_image_from_fixture_file("world_with_plane").unwrap();
 
-    let expected_str = include_str!("fixtures/world_with_plane.ppm");
-
-    // TODO consider if this would be better as a line by line check
-    assert!(output_ppm_string.contains(expected_str));
-
-    std::fs::remove_file(output_path)?;
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(&canvas, "world_with_plane.png").unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `world_with_plane.png`."
+        );
+    }
     return Ok(());
 }
 
@@ -283,15 +284,22 @@ fn test_world_with_non_reflective_checkered_floor() -> Result<(), std::io::Error
 
     let canvas = camera.render(&world);
 
-    let output_path = "output_world_with_non_reflective_checkered_floor.ppm";
-    let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
+    let expected_image = shared_test_helpers::read_image_from_fixture_file(
+        "world_with_non_reflective_checkered_floor",
+    )
+    .unwrap();
 
-    let expected_str = include_str!("fixtures/world_with_non_reflective_checkered_floor.ppm");
-
-    // TODO consider if this would be better as a line by line check
-    assert!(output_ppm_string.contains(expected_str));
-
-    std::fs::remove_file(output_path)?;
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(
+            &canvas,
+            "world_with_non_reflective_checkered_floor.png",
+        )
+        .unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `world_with_non_reflective_checkered_floor.png`."
+        );
+    }
     return Ok(());
 }
 
@@ -302,14 +310,21 @@ fn test_world_with_reflective_checkered_floor() -> Result<(), std::io::Error> {
 
     let canvas = camera.render(&world);
 
-    let output_path = "output_world_with_reflective_checkered_floor.ppm";
-    let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
+    let expected_image =
+        shared_test_helpers::read_image_from_fixture_file("world_with_reflective_checkered_floor")
+            .unwrap();
 
-    let expected_str = include_str!("fixtures/world_with_reflective_checkered_floor.ppm");
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(
+            &canvas,
+            "world_with_reflective_checkered_floor.png",
+        )
+        .unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `world_with_reflective_checkered_floor.png`."
+        );
+    }
 
-    // TODO consider if this would be better as a line by line check
-    assert!(output_ppm_string.contains(expected_str));
-
-    std::fs::remove_file(output_path)?;
     return Ok(());
 }

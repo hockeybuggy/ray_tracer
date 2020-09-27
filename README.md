@@ -19,11 +19,17 @@ Start off by cloning the repo. You'll also need a version of Rust and Cargo
 
 ## Running tests
 
-To run the unit tests and the end to end tests
+To run the unit tests and the end to end tests.
 
 ```sh
 cargo test
 ```
+
+If one of the end to end tests produces a different result from the reference
+image in the `tests/fixtures` directory the result will be written into the
+root of the project directory. The mechanism can be use for rendering higher
+resolution version of the scenes in the tests by changing the `SCALE` constant
+at the top of the test then running the test.
 
 
 ## Running benchmarks
@@ -52,7 +58,5 @@ a change that you expect to improve performance and know if it worked on not.
 ## Possible improvements
 
 - Add multiple light sources.
-- Update the test that write files to use tempfiles.
-- Use a more compact (and more supported format than PPM).
 - Builder interface for worlds.
 - Builder interface for shapes.
