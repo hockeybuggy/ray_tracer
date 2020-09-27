@@ -73,6 +73,7 @@ fn test_checkered_sphere() -> Result<(), std::io::Error> {
     // Write to the output file
     let output_path = "checkered_sphere.ppm";
     let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
+    shared_test_helpers::write_image_to_file(&canvas, "checkered_sphere.png").unwrap();
 
     let expected_str = include_str!("fixtures/checkered_sphere.ppm");
 
@@ -147,6 +148,8 @@ fn test_gradient_sphere() -> Result<(), std::io::Error> {
     // Write to the output file
     let output_path = "gradient_sphere.ppm";
     let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
+
+    shared_test_helpers::write_image_to_file(&canvas, "gradient_sphere.png").unwrap();
 
     let expected_str = include_str!("fixtures/gradient_sphere.ppm");
 
@@ -229,6 +232,7 @@ fn test_ring_sphere() -> Result<(), std::io::Error> {
     // Write to the output file
     let output_path = "ring_sphere.ppm";
     let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
+    shared_test_helpers::write_image_to_file(&canvas, "ring_sphere.png").unwrap();
 
     let expected_str = include_str!("fixtures/ring_sphere.ppm");
 
@@ -308,6 +312,7 @@ fn test_stripe_sphere() -> Result<(), std::io::Error> {
     // Write to the output file
     let output_path = "stripe_sphere.ppm";
     let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
+    shared_test_helpers::write_image_to_file(&canvas, "stripe_sphere.png").unwrap();
 
     let expected_str = include_str!("fixtures/stripe_sphere.ppm");
 

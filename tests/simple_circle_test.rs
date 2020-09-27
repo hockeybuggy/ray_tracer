@@ -37,6 +37,7 @@ fn test_simple_circle_test() -> Result<(), std::io::Error> {
     // Write to the output file
     let output_path = "output_simple_circle.ppm";
     let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
+    shared_test_helpers::write_image_to_file(&canvas, "simple_circle_test.png").unwrap();
 
     let expected_str = include_str!("fixtures/simple_circle_test.ppm");
 
