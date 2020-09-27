@@ -70,17 +70,16 @@ fn test_checkered_sphere() -> Result<(), std::io::Error> {
 
     let canvas = camera.render(&world);
 
-    // Write to the output file
-    let output_path = "checkered_sphere.ppm";
-    let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
-    shared_test_helpers::write_image_to_file(&canvas, "checkered_sphere.png").unwrap();
+    let expected_image =
+        shared_test_helpers::read_image_from_fixture_file("checkered_sphere").unwrap();
 
-    let expected_str = include_str!("fixtures/checkered_sphere.ppm");
-
-    // TODO consider if this would be better as a line by line check
-    assert!(output_ppm_string.contains(expected_str));
-
-    std::fs::remove_file(output_path)?;
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(&canvas, "checkered_sphere.png").unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `checkered_sphere.png`."
+        );
+    }
     return Ok(());
 }
 
@@ -145,18 +144,16 @@ fn test_gradient_sphere() -> Result<(), std::io::Error> {
 
     let canvas = camera.render(&world);
 
-    // Write to the output file
-    let output_path = "gradient_sphere.ppm";
-    let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
+    let expected_image =
+        shared_test_helpers::read_image_from_fixture_file("gradient_sphere").unwrap();
 
-    shared_test_helpers::write_image_to_file(&canvas, "gradient_sphere.png").unwrap();
-
-    let expected_str = include_str!("fixtures/gradient_sphere.ppm");
-
-    // TODO consider if this would be better as a line by line check
-    assert!(output_ppm_string.contains(expected_str));
-
-    std::fs::remove_file(output_path)?;
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(&canvas, "gradient_sphere.png").unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `gradient_sphere.png`."
+        );
+    }
     return Ok(());
 }
 
@@ -229,17 +226,15 @@ fn test_ring_sphere() -> Result<(), std::io::Error> {
 
     let canvas = camera.render(&world);
 
-    // Write to the output file
-    let output_path = "ring_sphere.ppm";
-    let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
-    shared_test_helpers::write_image_to_file(&canvas, "ring_sphere.png").unwrap();
+    let expected_image = shared_test_helpers::read_image_from_fixture_file("ring_sphere").unwrap();
 
-    let expected_str = include_str!("fixtures/ring_sphere.ppm");
-
-    // TODO consider if this would be better as a line by line check
-    assert!(output_ppm_string.contains(expected_str));
-
-    std::fs::remove_file(output_path)?;
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(&canvas, "ring_sphere.png").unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `ring_sphere.png`."
+        );
+    }
     return Ok(());
 }
 
@@ -309,16 +304,15 @@ fn test_stripe_sphere() -> Result<(), std::io::Error> {
 
     let canvas = camera.render(&world);
 
-    // Write to the output file
-    let output_path = "stripe_sphere.ppm";
-    let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
-    shared_test_helpers::write_image_to_file(&canvas, "stripe_sphere.png").unwrap();
+    let expected_image =
+        shared_test_helpers::read_image_from_fixture_file("stripe_sphere").unwrap();
 
-    let expected_str = include_str!("fixtures/stripe_sphere.ppm");
-
-    // TODO consider if this would be better as a line by line check
-    assert!(output_ppm_string.contains(expected_str));
-
-    std::fs::remove_file(output_path)?;
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(&canvas, "stripe_sphere.png").unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `stripe_sphere.png`."
+        );
+    }
     return Ok(());
 }
