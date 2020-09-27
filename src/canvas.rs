@@ -1,8 +1,6 @@
 use crate::color;
 
 use image::{ImageBuffer, RgbImage};
-use std::fs::File;
-use std::io::{BufWriter, Write};
 
 pub struct Canvas {
     pub width: u32,
@@ -55,57 +53,12 @@ impl Canvas {
 
         return img;
     }
-
-    pub fn canvas_to_ppm(&self, out_f: &mut File) -> Result<(), std::io::Error> {
-        let mut output = BufWriter::new(out_f);
-        write!(output, "P3\n")?;
-        write!(output, "{} {}\n", self.width, self.height)?;
-        write!(output, "255\n")?;
-
-        let clamp = |x: f64| 255.0_f64.min(x * 255.0).max(0.0);
-        for y in 0..self.height {
-            let mut row_width = 0;
-            for x in 0..self.width {
-                let c = self.pixel_at(x, y);
-
-                let red = format!("{:.*} ", 0, clamp(c.r));
-                row_width = row_width + red.len();
-                if row_width > 70 {
-                    row_width = 0;
-                    output.write(b"\n")?;
-                }
-                output.write(&red.into_bytes())?;
-
-                let green = format!("{:.*} ", 0, clamp(c.g));
-                row_width = row_width + green.len();
-                if row_width > 70 {
-                    row_width = 0;
-                    output.write(b"\n")?;
-                }
-                output.write(&green.into_bytes())?;
-
-                let blue = format!("{:.*} ", 0, clamp(c.b));
-                row_width = row_width + blue.len();
-                if row_width > 70 {
-                    row_width = 0;
-                    output.write(b"\n")?;
-                }
-                output.write(&blue.into_bytes())?;
-            }
-            write!(output, "\n")?;
-        }
-
-        Ok(())
-    }
 }
 
 #[cfg(test)]
 mod canvas_tests {
     use crate::canvas;
     use crate::color;
-
-    use std::fs::{remove_file, File};
-    use std::io::Read;
 
     #[test]
     fn test_canvas_constructor_sets_height_and_width() {
@@ -135,84 +88,6 @@ mod canvas_tests {
 
         let set_value: &color::Color = canvas1.pixel_at(2, 3);
         assert_eq!(&color::color(1.0, 0.0, 0.0), set_value);
-    }
-
-    #[test]
-    fn test_canvas_to_ppm_writes_the_header() -> Result<(), std::io::Error> {
-        let canvas1 = canvas::canvas(5, 3);
-        let path = "output1.ppm";
-
-        let mut output = File::create(path)?;
-
-        canvas1.canvas_to_ppm(&mut output)?;
-
-        let mut input = File::open(path)?;
-        let mut contents = String::new();
-        input.read_to_string(&mut contents)?;
-        let expected = "\
-P3
-5 3
-255
-";
-        assert!(contents.contains(expected));
-
-        remove_file(path)?;
-        Ok(())
-    }
-
-    #[test]
-    fn test_canvas_to_ppm_writes_pixel_data() -> Result<(), std::io::Error> {
-        let mut canvas1 = canvas::canvas(5, 3);
-        let color1 = color::color(1.5, 0.0, 0.0);
-        canvas1.write_pixel(0, 0, color1);
-        let color2 = color::color(0.0, 0.5, 0.0);
-        canvas1.write_pixel(2, 1, color2);
-        let color3 = color::color(-0.5, 0.0, 1.0);
-        canvas1.write_pixel(4, 2, color3);
-        let path = "output2.ppm";
-        let mut output = File::create(path)?;
-
-        canvas1.canvas_to_ppm(&mut output)?;
-
-        let mut input = File::open(path)?;
-        let mut contents = String::new();
-        input.read_to_string(&mut contents)?;
-        let expected = "\
-255 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
-0 0 0 0 0 0 0 128 0 0 0 0 0 0 0 
-0 0 0 0 0 0 0 0 0 0 0 0 0 0 255 
-";
-        println!("{}", contents);
-        assert!(contents.contains(expected));
-        remove_file(path)?;
-        Ok(())
-    }
-
-    #[test]
-    fn test_canvas_to_ppm_splits_long_lines_in_ppm_files() -> Result<(), std::io::Error> {
-        let mut canvas1 = canvas::canvas(10, 2);
-        let path = "output3.ppm";
-        let mut output = File::create(path)?;
-        for y in 0..canvas1.height {
-            for x in 0..canvas1.width {
-                canvas1.write_pixel(x, y, color::color(1.0, 0.8, 0.6));
-            }
-        }
-
-        canvas1.canvas_to_ppm(&mut output)?;
-
-        let mut input = File::open(path)?;
-        let mut contents = String::new();
-        input.read_to_string(&mut contents)?;
-        let expected = "\
-255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204 
-153 255 204 153 255 204 153 255 204 153 255 204 153 
-255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204 
-153 255 204 153 255 204 153 255 204 153 255 204 153 ";
-        println!("{}", contents);
-        assert!(contents.contains(expected));
-        remove_file(path)?;
-        Ok(())
     }
 
     #[test]
