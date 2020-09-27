@@ -60,7 +60,7 @@ fn test_simple_sphere_test() -> Result<(), std::io::Error> {
     // Write to the output file
     let output_path = "output_simple_sphere.ppm";
     let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
-    shared_test_helpers::write_image_to_file(&canvas, "output_simple_sphere.png").unwrap();
+    shared_test_helpers::write_image_to_file(&canvas, "simple_sphere.png").unwrap();
 
     let expected_str = include_str!("fixtures/simple_sphere_test.ppm");
 
@@ -131,7 +131,7 @@ fn test_translated_sphere_test() -> Result<(), std::io::Error> {
     // Write to the output file
     let output_path = "output_translated_sphere.ppm";
     let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
-    shared_test_helpers::write_image_to_file(&canvas, "output_translated_sphere.png").unwrap();
+    shared_test_helpers::write_image_to_file(&canvas, "translated_sphere.png").unwrap();
 
     let expected_str = include_str!("fixtures/translated_sphere_test.ppm");
 

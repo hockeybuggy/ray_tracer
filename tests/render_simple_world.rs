@@ -267,7 +267,7 @@ fn test_world_with_planes() -> Result<(), std::io::Error> {
 
     let output_path = "output_world_with_plane.ppm";
     let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
-    shared_test_helpers::write_image_to_file(&canvas, "output_world_with_plane.png").unwrap();
+    shared_test_helpers::write_image_to_file(&canvas, "world_with_plane.png").unwrap();
 
     let expected_str = include_str!("fixtures/world_with_plane.ppm");
 
@@ -289,7 +289,7 @@ fn test_world_with_non_reflective_checkered_floor() -> Result<(), std::io::Error
     let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
     shared_test_helpers::write_image_to_file(
         &canvas,
-        "output_world_with_non_reflective_checkered_floor.png",
+        "world_with_non_reflective_checkered_floor.png",
     )
     .unwrap();
 
@@ -311,11 +311,8 @@ fn test_world_with_reflective_checkered_floor() -> Result<(), std::io::Error> {
 
     let output_path = "output_world_with_reflective_checkered_floor.ppm";
     let output_ppm_string = shared_test_helpers::get_ppm_string_via_file(&canvas, output_path);
-    shared_test_helpers::write_image_to_file(
-        &canvas,
-        "output_world_with_reflective_checkered_floor.png",
-    )
-    .unwrap();
+    shared_test_helpers::write_image_to_file(&canvas, "world_with_reflective_checkered_floor.png")
+        .unwrap();
 
     let expected_str = include_str!("fixtures/world_with_reflective_checkered_floor.ppm");
 
