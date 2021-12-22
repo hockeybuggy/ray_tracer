@@ -57,6 +57,6 @@ a change that you expect to improve performance and know if it worked on not.
 
 ## Possible improvements
 
-- Add multiple light sources.
-- Builder interface for worlds.
+- Add multiple light sources (note for this on 138 of the book).
 - Builder interface for shapes.
+- Update setting of transformation matrices

@@ -31,21 +31,21 @@ mod test_helpers {
     }
 
     pub fn create_simple_world_with_only_spheres() -> world::World {
-        let mut world = world::world();
+        let mut builder = world::WorldBuilder::new();
 
         // Create a floor and add it to the scene
-        {
+        builder.add_shape({
             let mut floor = shape::Shape::default_sphere();
             floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
             let mut material = material::material();
             material.color = color::color(1.0, 0.9, 0.9);
             material.specular = 0.0;
             floor.material = material;
-            world.shapes.push(floor);
-        }
+            floor
+        });
 
         // Create a wall and add it to the scene
-        {
+        builder.add_shape({
             let mut left_wall = shape::Shape::default_sphere();
             left_wall.set_transformation_matrix(
                 matrix::Matrix4::IDENTITY
@@ -58,11 +58,11 @@ mod test_helpers {
             material.color = color::color(1.0, 0.9, 0.9);
             material.specular = 0.0;
             left_wall.material = material;
-            world.shapes.push(left_wall);
-        }
+            left_wall
+        });
 
         // Create another wall and add it to the scene
-        {
+        builder.add_shape({
             let mut right_wall = shape::Shape::default_sphere();
             right_wall.set_transformation_matrix(
                 matrix::Matrix4::IDENTITY
@@ -75,11 +75,11 @@ mod test_helpers {
             material.color = color::color(1.0, 0.9, 0.9);
             material.specular = 0.0;
             right_wall.material = material;
-            world.shapes.push(right_wall);
-        }
+            right_wall
+        });
 
         // Add a sphere to the center
-        {
+        builder.add_shape({
             let mut middle = shape::Shape::default_sphere();
             middle.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(-0.5, 1.0, 0.5));
             let mut material = material::material();
@@ -87,11 +87,11 @@ mod test_helpers {
             material.diffuse = 0.7;
             material.specular = 0.3;
             middle.material = material;
-            world.shapes.push(middle);
-        }
+            middle
+        });
 
         // Add a small green sphere on the right
-        {
+        builder.add_shape({
             let mut right = shape::Shape::default_sphere();
             right.set_transformation_matrix(
                 matrix::Matrix4::IDENTITY
@@ -103,11 +103,11 @@ mod test_helpers {
             material.diffuse = 0.7;
             material.specular = 0.3;
             right.material = material;
-            world.shapes.push(right);
-        }
+            right
+        });
 
         // Add a smaller green sphere on the left
-        {
+        builder.add_shape({
             let mut left = shape::Shape::default_sphere();
             left.set_transformation_matrix(
                 matrix::Matrix4::IDENTITY
@@ -119,33 +119,34 @@ mod test_helpers {
             material.diffuse = 0.7;
             material.specular = 0.3;
             left.material = material;
-            world.shapes.push(left);
-        }
+            left
+        });
 
         // Let there be light
-        let white_point_light =
-            lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
-        world.light = Some(white_point_light);
+        builder.add_light_source(lights::point_light(
+            tuple::Point::new(-10.0, 10.0, -10.0),
+            color::white(),
+        ));
 
-        return world;
+        return builder.world;
     }
 
     pub fn create_simple_world_with_planes() -> world::World {
-        let mut world = world::world();
+        let mut builder = world::WorldBuilder::new();
 
         // Create a floor and add it to the scene
-        {
+        builder.add_shape({
             let mut floor = shape::Shape::default_plane();
             floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
             let mut material = material::material();
             material.color = color::color(1.0, 0.9, 0.9);
             material.specular = 0.0;
             floor.material = material;
-            world.shapes.push(floor);
-        }
+            floor
+        });
 
         // Add a sphere to the center
-        {
+        builder.add_shape({
             let mut middle = shape::Shape::default_sphere();
             middle.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(-0.5, 1.0, 0.5));
             let mut material = material::material();
@@ -153,11 +154,11 @@ mod test_helpers {
             material.diffuse = 0.7;
             material.specular = 0.3;
             middle.material = material;
-            world.shapes.push(middle);
-        }
+            middle
+        });
 
         // Add a small green sphere on the right
-        {
+        builder.add_shape({
             let mut right = shape::Shape::default_sphere();
             right.set_transformation_matrix(
                 matrix::Matrix4::IDENTITY
@@ -169,11 +170,11 @@ mod test_helpers {
             material.diffuse = 0.7;
             material.specular = 0.3;
             right.material = material;
-            world.shapes.push(right);
-        }
+            right
+        });
 
         // Add a smaller green sphere on the left
-        {
+        builder.add_shape({
             let mut left = shape::Shape::default_sphere();
             left.set_transformation_matrix(
                 matrix::Matrix4::IDENTITY
@@ -185,22 +186,23 @@ mod test_helpers {
             material.diffuse = 0.7;
             material.specular = 0.3;
             left.material = material;
-            world.shapes.push(left);
-        }
+            left
+        });
 
         // Let there be light
-        let white_point_light =
-            lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
-        world.light = Some(white_point_light);
+        builder.add_light_source(lights::point_light(
+            tuple::Point::new(-10.0, 10.0, -10.0),
+            color::white(),
+        ));
 
-        return world;
+        return builder.world;
     }
 
     pub fn create_checker_floor_world(reflective_floor: bool) -> world::World {
-        let mut world = world::world();
+        let mut builder = world::WorldBuilder::new();
 
         // Create a floor and add it to the scene
-        {
+        builder.add_shape({
             let mut floor = shape::Shape::default_plane();
             floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
 
@@ -214,11 +216,11 @@ mod test_helpers {
             pattern.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(0.1, 0.1, 0.1));
             material.pattern = Some(pattern);
             floor.material = material;
-            world.shapes.push(floor);
-        }
+            floor
+        });
 
         // Add a sphere to the center
-        {
+        builder.add_shape({
             let mut middle = shape::Shape::default_sphere();
             middle.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(-0.5, 1.0, 0.5));
             let mut material = material::material();
@@ -226,15 +228,16 @@ mod test_helpers {
             material.diffuse = 0.7;
             material.specular = 0.3;
             middle.material = material;
-            world.shapes.push(middle);
-        }
+            middle
+        });
 
         // Let there be light
-        let white_point_light =
-            lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
-        world.light = Some(white_point_light);
+        builder.add_light_source(lights::point_light(
+            tuple::Point::new(-10.0, 10.0, -10.0),
+            color::white(),
+        ));
 
-        return world;
+        return builder.world;
     }
 }
 

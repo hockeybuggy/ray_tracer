@@ -13,13 +13,6 @@ pub struct World {
     pub shapes: Vec<shape::Shape>,
 }
 
-pub fn world() -> World {
-    World {
-        light: None,
-        shapes: Vec::new(),
-    }
-}
-
 impl World {
     pub fn color_at(&self, ray: &ray::Ray, remaining: usize) -> color::Color {
         let intersections = ray.intersect_world(&self);
@@ -82,6 +75,30 @@ pub fn is_shadowed(world: &World, point: &tuple::Point) -> bool {
     false
 }
 
+pub struct WorldBuilder {
+    pub world: World,
+}
+
+impl WorldBuilder {
+    pub fn new() -> Self {
+        let world = World {
+            light: None,
+            shapes: Vec::new(),
+        };
+        WorldBuilder { world }
+    }
+
+    pub fn add_shape(&mut self, new_shape: shape::Shape) -> &Self {
+        self.world.shapes.push(new_shape);
+        return self;
+    }
+
+    pub fn add_light_source(&mut self, new_light: lights::Light) -> &Self {
+        self.world.light = Some(new_light);
+        return self;
+    }
+}
+
 #[cfg(test)]
 mod world_tests {
     use crate::assert_color_approx_eq;
@@ -97,7 +114,7 @@ mod world_tests {
 
     #[test]
     fn empty_world() {
-        let world = world::world();
+        let world = world::WorldBuilder::new().world;
 
         assert_eq!(world.light.is_some(), false);
         assert_eq!(world.shapes.len(), 0);
@@ -232,15 +249,16 @@ mod world_tests {
 
     #[test]
     fn shade_hit_is_given_an_intersection_in_shadow() {
-        let mut world = world::world();
+        let mut builder = world::WorldBuilder::new();
         let light_position = tuple::Point::new(0.0, 0.0, -10.0);
         let light_color = color::color(1.0, 1.0, 1.0);
-        world.light = Some(lights::point_light(light_position, light_color));
+        builder.add_light_source(lights::point_light(light_position, light_color));
         let sphere1 = shape::Shape::default_sphere();
-        world.shapes.push(sphere1);
+        builder.add_shape(sphere1);
         let mut sphere2 = shape::Shape::default_sphere();
         sphere2.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 0.0, 10.0));
-        world.shapes.push(sphere2);
+        builder.add_shape(sphere2);
+        let world = builder.world;
         let ray = ray::ray(
             tuple::Point::new(0.0, 0.0, 5.0),
             tuple::Vector::new(0.0, 0.0, 1.0),
@@ -315,7 +333,7 @@ mod world_tests {
     #[test]
     fn color_at_with_mutually_reflective_surfaces() {
         // Prevent two surfaces reflecting at one another from bouncing their rays back and fourth forever.
-        let mut world = world::world();
+        let mut world = world::WorldBuilder::new().world;
         let light_position = tuple::Point::new(0.0, 0.0, -10.0);
         let light_color = color::color(1.0, 1.0, 1.0);
         world.light = Some(lights::point_light(light_position, light_color));

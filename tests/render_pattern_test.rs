@@ -11,21 +11,21 @@ const SCALE: u32 = 1;
 
 #[test]
 fn test_checkered_sphere() -> Result<(), std::io::Error> {
-    let mut world = world::world();
+    let mut builder = world::WorldBuilder::new();
 
     // Create a floor and add it to the scene
-    {
+    builder.add_shape({
         let mut floor = shape::Shape::default_sphere();
         floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
         let mut material = material::material();
         material.color = color::color(1.0, 0.9, 0.9);
         material.specular = 0.0;
         floor.material = material;
-        world.shapes.push(floor);
-    }
+        floor
+    });
 
     // Add a sphere to the left
-    {
+    builder.add_shape({
         let mut left = shape::Shape::default_sphere();
         left.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(-1.5, 1.0, 0.5));
         let pattern = patterns::Pattern::checkers(color::black(), color::white());
@@ -35,11 +35,11 @@ fn test_checkered_sphere() -> Result<(), std::io::Error> {
         material.specular = 0.3;
         material.pattern = Some(pattern);
         left.material = material;
-        world.shapes.push(left);
-    }
+        left
+    });
 
     // Add a sphere to the right
-    {
+    builder.add_shape({
         let mut right = shape::Shape::default_sphere();
         right.set_transformation_matrix(
             matrix::Matrix4::IDENTITY
@@ -53,13 +53,14 @@ fn test_checkered_sphere() -> Result<(), std::io::Error> {
         material.specular = 0.3;
         material.pattern = Some(pattern);
         right.material = material;
-        world.shapes.push(right);
-    }
+        right
+    });
 
     // Let there be light
-    let white_point_light =
-        lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
-    world.light = Some(white_point_light);
+    builder.add_light_source(lights::point_light(
+        tuple::Point::new(-10.0, 10.0, -10.0),
+        color::white(),
+    ));
 
     let mut camera = camera::Camera::new(100 * SCALE, 50 * SCALE, std::f64::consts::PI / 3.0);
     camera.transform = transformation::view_transform(
@@ -68,7 +69,7 @@ fn test_checkered_sphere() -> Result<(), std::io::Error> {
         &tuple::Vector::new(0.0, 1.0, 0.0),
     );
 
-    let canvas = camera.render(&world);
+    let canvas = camera.render(&builder.world);
 
     let expected_image =
         shared_test_helpers::read_image_from_fixture_file("checkered_sphere").unwrap();
@@ -85,21 +86,21 @@ fn test_checkered_sphere() -> Result<(), std::io::Error> {
 
 #[test]
 fn test_gradient_sphere() -> Result<(), std::io::Error> {
-    let mut world = world::world();
+    let mut builder = world::WorldBuilder::new();
 
     // Create a floor and add it to the scene
-    {
+    builder.add_shape({
         let mut floor = shape::Shape::default_sphere();
         floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
         let mut material = material::material();
         material.color = color::color(1.0, 0.9, 0.9);
         material.specular = 0.0;
         floor.material = material;
-        world.shapes.push(floor);
-    }
+        floor
+    });
 
     // Add a sphere to the left
-    {
+    builder.add_shape({
         let mut left = shape::Shape::default_sphere();
         left.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(-1.5, 1.0, 0.5));
         let pattern = patterns::Pattern::gradient(color::black(), color::white());
@@ -109,11 +110,11 @@ fn test_gradient_sphere() -> Result<(), std::io::Error> {
         material.specular = 0.3;
         material.pattern = Some(pattern);
         left.material = material;
-        world.shapes.push(left);
-    }
+        left
+    });
 
     // Add a sphere to the right
-    {
+    builder.add_shape({
         let mut right = shape::Shape::default_sphere();
         right.set_transformation_matrix(
             matrix::Matrix4::IDENTITY
@@ -127,13 +128,14 @@ fn test_gradient_sphere() -> Result<(), std::io::Error> {
         material.specular = 0.3;
         material.pattern = Some(pattern);
         right.material = material;
-        world.shapes.push(right);
-    }
+        right
+    });
 
     // Let there be light
-    let white_point_light =
-        lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
-    world.light = Some(white_point_light);
+    builder.add_light_source(lights::point_light(
+        tuple::Point::new(-10.0, 10.0, -10.0),
+        color::white(),
+    ));
 
     let mut camera = camera::Camera::new(100 * SCALE, 50 * SCALE, std::f64::consts::PI / 3.0);
     camera.transform = transformation::view_transform(
@@ -142,7 +144,7 @@ fn test_gradient_sphere() -> Result<(), std::io::Error> {
         &tuple::Vector::new(0.0, 1.0, 0.0),
     );
 
-    let canvas = camera.render(&world);
+    let canvas = camera.render(&builder.world);
 
     let expected_image =
         shared_test_helpers::read_image_from_fixture_file("gradient_sphere").unwrap();
@@ -159,21 +161,21 @@ fn test_gradient_sphere() -> Result<(), std::io::Error> {
 
 #[test]
 fn test_ring_sphere() -> Result<(), std::io::Error> {
-    let mut world = world::world();
+    let mut builder = world::WorldBuilder::new();
 
     // Create a floor and add it to the scene
-    {
+    builder.add_shape({
         let mut floor = shape::Shape::default_sphere();
         floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
         let mut material = material::material();
         material.color = color::color(1.0, 0.9, 0.9);
         material.specular = 0.0;
         floor.material = material;
-        world.shapes.push(floor);
-    }
+        floor
+    });
 
     // Add a sphere to the left
-    {
+    builder.add_shape({
         let mut left = shape::Shape::default_sphere();
         left.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(-1.5, 1.0, 0.5));
         let mut pattern = patterns::Pattern::ring(color::black(), color::white());
@@ -188,11 +190,11 @@ fn test_ring_sphere() -> Result<(), std::io::Error> {
         material.specular = 0.3;
         material.pattern = Some(pattern);
         left.material = material;
-        world.shapes.push(left);
-    }
+        left
+    });
 
     // Add a sphere to the right
-    {
+    builder.add_shape({
         let mut right = shape::Shape::default_sphere();
         right.set_transformation_matrix(
             matrix::Matrix4::IDENTITY
@@ -209,13 +211,14 @@ fn test_ring_sphere() -> Result<(), std::io::Error> {
         material.specular = 0.3;
         material.pattern = Some(pattern);
         right.material = material;
-        world.shapes.push(right);
-    }
+        right
+    });
 
     // Let there be light
-    let white_point_light =
-        lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
-    world.light = Some(white_point_light);
+    builder.add_light_source(lights::point_light(
+        tuple::Point::new(-10.0, 10.0, -10.0),
+        color::white(),
+    ));
 
     let mut camera = camera::Camera::new(100 * SCALE, 50 * SCALE, std::f64::consts::PI / 3.0);
     camera.transform = transformation::view_transform(
@@ -224,7 +227,7 @@ fn test_ring_sphere() -> Result<(), std::io::Error> {
         &tuple::Vector::new(0.0, 1.0, 0.0),
     );
 
-    let canvas = camera.render(&world);
+    let canvas = camera.render(&builder.world);
 
     let expected_image = shared_test_helpers::read_image_from_fixture_file("ring_sphere").unwrap();
 
@@ -240,21 +243,21 @@ fn test_ring_sphere() -> Result<(), std::io::Error> {
 
 #[test]
 fn test_stripe_sphere() -> Result<(), std::io::Error> {
-    let mut world = world::world();
+    let mut builder = world::WorldBuilder::new();
 
     // Create a floor and add it to the scene
-    {
+    builder.add_shape({
         let mut floor = shape::Shape::default_sphere();
         floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
         let mut material = material::material();
         material.color = color::color(1.0, 0.9, 0.9);
         material.specular = 0.0;
         floor.material = material;
-        world.shapes.push(floor);
-    }
+        floor
+    });
 
     // Add a sphere to the left
-    {
+    builder.add_shape({
         let mut left = shape::Shape::default_sphere();
         left.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(-1.5, 1.0, 0.5));
         let mut pattern = patterns::Pattern::stripe(color::black(), color::white());
@@ -269,11 +272,11 @@ fn test_stripe_sphere() -> Result<(), std::io::Error> {
         material.specular = 0.3;
         material.pattern = Some(pattern);
         left.material = material;
-        world.shapes.push(left);
-    }
+        left
+    });
 
     // Add a sphere to the right
-    {
+    builder.add_shape({
         let mut right = shape::Shape::default_sphere();
         right.set_transformation_matrix(
             matrix::Matrix4::IDENTITY
@@ -287,13 +290,14 @@ fn test_stripe_sphere() -> Result<(), std::io::Error> {
         material.specular = 0.3;
         material.pattern = Some(pattern);
         right.material = material;
-        world.shapes.push(right);
-    }
+        right
+    });
 
     // Let there be light
-    let white_point_light =
-        lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
-    world.light = Some(white_point_light);
+    builder.add_light_source(lights::point_light(
+        tuple::Point::new(-10.0, 10.0, -10.0),
+        color::white(),
+    ));
 
     let mut camera = camera::Camera::new(100 * SCALE, 50 * SCALE, std::f64::consts::PI / 3.0);
     camera.transform = transformation::view_transform(
@@ -302,7 +306,7 @@ fn test_stripe_sphere() -> Result<(), std::io::Error> {
         &tuple::Vector::new(0.0, 1.0, 0.0),
     );
 
-    let canvas = camera.render(&world);
+    let canvas = camera.render(&builder.world);
 
     let expected_image =
         shared_test_helpers::read_image_from_fixture_file("stripe_sphere").unwrap();

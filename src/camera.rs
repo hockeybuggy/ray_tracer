@@ -183,9 +183,9 @@ mod camera_tests {
         use crate::material;
         use crate::shape;
 
-        let mut world = world::world();
+        let mut builder = world::WorldBuilder::new();
         // Add  big sphere to the center so that the whole image is full of something
-        {
+        builder.add_shape({
             let mut big_guy = shape::Shape::default_sphere();
             big_guy.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(5.0, 5.0, 5.0));
             let mut material = material::material();
@@ -193,12 +193,13 @@ mod camera_tests {
             material.diffuse = 0.7;
             material.specular = 0.3;
             big_guy.material = material;
-            world.shapes.push(big_guy);
-        }
+            big_guy
+        });
         // Let there be light
-        let white_point_light =
-            lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
-        world.light = Some(white_point_light);
+        builder.add_light_source(lights::point_light(
+            tuple::Point::new(-10.0, 10.0, -10.0),
+            color::white(),
+        ));
 
         let mut camera = camera::Camera::new(11, 11, std::f64::consts::PI / 2.0);
         let from = tuple::Point::new(0.0, 0.0, -5.0);
@@ -206,7 +207,7 @@ mod camera_tests {
         let up = tuple::Vector::new(0.0, 1.0, 0.0);
         camera.transform = transformation::view_transform(&from, &to, &up);
 
-        let image = camera.render(&world);
+        let image = camera.render(&builder.world);
 
         // Check the corners
         assert_color_approx_eq!(
