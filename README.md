@@ -32,6 +32,178 @@ resolution version of the scenes in the tests by changing the `SCALE` constant
 at the top of the test then running the test.
 
 
+## Gallery
+
+These are some of the scenes the ray tracer can render. The size of these
+images are small because these images are used as fixtures that tests use to
+compare to the results they generate and smaller images are faster to render.
+
+### The basics
+
+<table>
+  <tr>
+    <th>
+      <p>Name</p>
+      <img width="300" height="1" />
+    </th>
+    <th>
+      <p>Image</p>
+    </th>
+  <tr>
+  <tr>
+    <td>Simple Circle</td>
+    <td>
+      <img src="tests/fixtures/simple_circle_test.png"
+           alt="A black and white sphere with a checkered pattern"
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Simple Sphere</td>
+    <td>
+      <img src="tests/fixtures/simple_sphere.png"
+           alt="A pink sphere on a black background. The sphere is shiny and fades to dark."
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Translated Sphere</td>
+    <td>
+      <img src="tests/fixtures/translated_sphere.png"
+           alt="A pink sphere with a translated pattern"
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+</table>
+
+
+### Patterns
+
+<table>
+  <tr>
+    <th>
+      <p>Name</p>
+      <img width="300" height="1" />
+    </th>
+    <th>
+      <p>Image</p>
+    </th>
+  </tr>
+
+  <tr>
+    <td>Checkered Sphere</td>
+    <td>
+      <img src="tests/fixtures/checkered_sphere.png"
+           alt="A black and white sphere with a checkered pattern"
+           width="100px"
+           height="50px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Gradient Sphere</td>
+    <td>
+      <img src="tests/fixtures/gradient_sphere.png"
+           alt="A black and white sphere with a gradient pattern"
+           width="100px"
+           height="50px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Ring Sphere</td>
+    <td>
+      <img src="tests/fixtures/ring_sphere.png"
+           alt="A black and white sphere with a ring pattern"
+           width="100px"
+           height="50px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Stripe Sphere</td>
+    <td>
+      <img src="tests/fixtures/stripe_sphere.png"
+           alt="A black and white sphere with a stripe pattern"
+           width="100px"
+           height="50px"
+           >
+    </td>
+  </tr>
+</table>
+
+### Worlds
+
+<table>
+  <tr>
+    <th>
+      <p>Name</p>
+      <img width="300" height="1" />
+    </th>
+    <th>
+      <p>Image</p>
+    </th>
+  </tr>
+
+  <tr>
+    <td>World floor</td>
+    <td>
+      <img src="tests/fixtures/world_with_plane.png"
+           alt="A scene of three spheres on a beige plane. The spheres are various sizes and colours."
+           width="100px"
+           height="50px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Simple World</td>
+    <td>
+      <img src="tests/fixtures/simple_world.png"
+           alt="A scene of three spheres in a beige corner of what could be a room. The spheres are various sizes and colours."
+           width="100px"
+           height="50px"
+           >
+    </td>
+  </tr>
+
+
+  <tr>
+    <td>World with non reflective checkered floor</td>
+    <td>
+      <img src="tests/fixtures/world_with_non_reflective_checkered_floor.png"
+           alt="A world with green sphere sitting on a matte checkered floor."
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>World with reflective checkered floor</td>
+    <td>
+      <img src="tests/fixtures/world_with_reflective_checkered_floor.png"
+           alt="A world with green sphere sitting on a reflective checkered floor."
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
+</table>
+
+
 ## Running benchmarks
 
 This project contains benchmarks which measure the performance and allow you to
@@ -60,3 +232,5 @@ a change that you expect to improve performance and know if it worked on not.
 - Add multiple light sources (note for this on 138 of the book).
 - Builder interface for shapes.
 - Update setting of transformation matrices
+- Add a file input method for world description
+- Create animated gifs
