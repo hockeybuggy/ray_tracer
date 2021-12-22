@@ -1,0 +1,14 @@
+name: Check Gallery completeness
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Check that all of the fixtures images are included in the gallery
+      run: ./scripts/check_gallery.sh
