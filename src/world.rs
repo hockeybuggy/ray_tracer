@@ -20,7 +20,8 @@ impl World {
         if hit.is_none() {
             return color::black();
         }
-        let computations = intersection::prepare_computations(&hit.unwrap(), &ray);
+        let xs: Vec<&intersection::Intersection> = intersections.iter().collect();
+        let computations = intersection::prepare_computations(&hit.unwrap(), &ray, &xs);
         return computations.shade_hit(&self, remaining - 1);
     }
 
@@ -265,7 +266,8 @@ mod world_tests {
         );
         let intersection = intersection::intersection(4.0, &world.shapes[1]);
 
-        let computations = intersection::prepare_computations(&intersection, &ray);
+        let computations =
+            intersection::prepare_computations(&intersection, &ray, &vec![&intersection]);
         let color = computations.shade_hit(&world, 10);
         let expected_color = color::color(0.1, 0.1, 0.1);
         assert_color_approx_eq!(color, expected_color);
@@ -283,7 +285,8 @@ mod world_tests {
         world.shapes.push(sphere);
         let intersection = intersection::intersection(1.0, &world.shapes[2]);
 
-        let computations = intersection::prepare_computations(&intersection, &ray);
+        let computations =
+            intersection::prepare_computations(&intersection, &ray, &vec![&intersection]);
         let color = world.reflected_color(&computations, 10);
 
         let expected_color = color::color(0.0, 0.0, 0.0);
@@ -303,7 +306,8 @@ mod world_tests {
         );
         let intersection = intersection::intersection(2.0_f64.sqrt(), &world.shapes[2]);
 
-        let computations = intersection::prepare_computations(&intersection, &ray);
+        let computations =
+            intersection::prepare_computations(&intersection, &ray, &vec![&intersection]);
         let color = world.reflected_color(&computations, 10);
 
         let expected_color = color::color(0.19033, 0.23791, 0.14274);
@@ -323,7 +327,8 @@ mod world_tests {
         );
         let intersection = intersection::intersection(2.0_f64.sqrt(), &world.shapes[2]);
 
-        let computations = intersection::prepare_computations(&intersection, &ray);
+        let computations =
+            intersection::prepare_computations(&intersection, &ray, &vec![&intersection]);
         let color = computations.shade_hit(&world, 10);
 
         let expected_color = color::color(0.87676, 0.92435, 0.82918);
@@ -373,7 +378,8 @@ mod world_tests {
         );
         let intersection = intersection::intersection(2.0_f64.sqrt(), &world.shapes[2]);
 
-        let computations = intersection::prepare_computations(&intersection, &ray);
+        let computations =
+            intersection::prepare_computations(&intersection, &ray, &vec![&intersection]);
         // Note that there are zero remaing light bounces
         let color = world.reflected_color(&computations, 0);
 

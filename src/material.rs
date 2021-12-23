@@ -8,7 +8,9 @@ pub struct Material {
     pub diffuse: f64,
     pub specular: f64,
     pub shininess: f64,
+    pub transparency: f64,
     pub reflective: f64,
+    pub refractive_index: f64,
     pub pattern: Option<patterns::Pattern>,
 }
 
@@ -19,9 +21,18 @@ pub fn material() -> Material {
         diffuse: 0.9_f64,
         specular: 0.9_f64,
         shininess: 200.0_f64,
+        transparency: 0.0_f64,
         reflective: 0.0_f64,
+        refractive_index: 1.0_f64,
         pattern: None,
     }
+}
+
+pub fn glass() -> Material {
+    let mut material = material();
+    material.transparency = 1.0;
+    material.refractive_index = 1.5;
+    return material;
 }
 
 #[cfg(test)]
@@ -218,5 +229,19 @@ mod material_tests {
         );
         assert_color_approx_eq!(color::color(1.0, 1.0, 1.0), result1);
         assert_color_approx_eq!(color::color(0.0, 0.0, 0.0), result2);
+    }
+
+    #[test]
+    fn test_transparency_and_refactive_index_for_the_default_material() {
+        let material = material::material();
+        assert_eq!(material.transparency, 0.0);
+        assert_eq!(material.refractive_index, 1.0);
+    }
+
+    #[test]
+    fn test_transparency_and_refactive_index_for_glass_material() {
+        let material = material::glass();
+        assert_eq!(material.transparency, 1.0);
+        assert_eq!(material.refractive_index, 1.5);
     }
 }

@@ -37,6 +37,14 @@ impl Shape {
         };
     }
 
+    pub fn glass_sphere() -> Shape {
+        return Shape {
+            transform: matrix::Matrix4::IDENTITY,
+            material: material::glass(),
+            shape_type: ShapeType::Sphere,
+        };
+    }
+
     pub fn transformation_matrix(&self) -> &matrix::Matrix4 {
         &self.transform
     }

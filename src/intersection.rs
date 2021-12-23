@@ -28,11 +28,16 @@ pub struct Computation<'a> {
     pub reflectv: tuple::Vector,
     pub inside: bool,
     pub over_point: tuple::Point,
+
+    // refactive indices of either side of the ray-object intersection
+    pub n1: f64,
+    pub n2: f64,
 }
 
 pub fn prepare_computations<'a>(
     intersection: &Intersection<'a>,
     ray: &ray::Ray,
+    intersections: &Vec<&Intersection<'a>>,
 ) -> Computation<'a> {
     let t = intersection.t;
     let object = intersection.object;
@@ -51,6 +56,8 @@ pub fn prepare_computations<'a>(
         reflectv,
         inside,
         over_point: point + maybe_inverted_normalv * EPSILON,
+        n1: 1.0_f64,
+        n2: 1.0_f64,
     }
 }
 
@@ -81,8 +88,10 @@ mod intersection_tests {
     use crate::color;
     use crate::intersection;
     use crate::lights;
+    use crate::matrix;
     use crate::ray;
     use crate::shape;
+    use crate::transformation::Transform;
     use crate::tuple;
     use crate::world;
 
@@ -184,7 +193,8 @@ mod intersection_tests {
         let shape = shape::Shape::default_sphere();
         let intersection = intersection::intersection(4.0, &shape);
 
-        let computations = intersection::prepare_computations(&intersection, &ray);
+        let computations =
+            intersection::prepare_computations(&intersection, &ray, &vec![&intersection]);
 
         assert_eq!(computations.t, intersection.t);
         assert_eq!(computations.object, intersection.object);
@@ -202,7 +212,8 @@ mod intersection_tests {
         let shape = shape::Shape::default_sphere();
         let intersection = intersection::intersection(4.0, &shape);
 
-        let computations = intersection::prepare_computations(&intersection, &ray);
+        let computations =
+            intersection::prepare_computations(&intersection, &ray, &vec![&intersection]);
 
         assert_eq!(computations.inside, false);
     }
@@ -216,7 +227,8 @@ mod intersection_tests {
         let shape = shape::Shape::default_sphere();
         let intersection = intersection::intersection(1.0, &shape);
 
-        let computations = intersection::prepare_computations(&intersection, &ray);
+        let computations =
+            intersection::prepare_computations(&intersection, &ray, &vec![&intersection]);
 
         assert_eq!(computations.point, tuple::Point::new(0.0, 0.0, 1.0));
         assert_eq!(computations.eyev, tuple::Vector::new(0.0, 0.0, -1.0));
@@ -235,7 +247,8 @@ mod intersection_tests {
         let shape = &world.shapes[0];
         let intersection = intersection::intersection(4.0, &shape);
 
-        let computations = intersection::prepare_computations(&intersection, &ray);
+        let computations =
+            intersection::prepare_computations(&intersection, &ray, &vec![&intersection]);
         let colour = computations.shade_hit(&world, 10);
 
         assert_color_approx_eq!(colour, color::color(0.38066, 0.47583, 0.2855));
@@ -255,7 +268,8 @@ mod intersection_tests {
         let shape = &world.shapes[1];
         let intersection = intersection::intersection(0.5, &shape);
 
-        let computations = intersection::prepare_computations(&intersection, &ray);
+        let computations =
+            intersection::prepare_computations(&intersection, &ray, &vec![&intersection]);
         let colour = computations.shade_hit(&world, 10);
 
         assert_color_approx_eq!(colour, color::color(0.90498, 0.90498, 0.90498));
@@ -270,7 +284,8 @@ mod intersection_tests {
         let shape = shape::Shape::default_plane();
         let intersection = intersection::intersection(2.0_f64.sqrt(), &shape);
 
-        let computations = intersection::prepare_computations(&intersection, &ray);
+        let computations =
+            intersection::prepare_computations(&intersection, &ray, &vec![&intersection]);
 
         assert_eq!(computations.t, intersection.t);
         assert_eq!(computations.object, intersection.object);
@@ -278,5 +293,71 @@ mod intersection_tests {
             computations.reflectv,
             tuple::Vector::new(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0)
         );
+    }
+
+    // There is a diagram for this test on page 205. A, B, and C are glass spheres and a ray is
+    // cast through the center of all three. B and C are contained within A and overlap each other
+    // slightly. There are 5 points of refraction along the ray enumerated 0 through 5:
+    //   0. The ray entering A
+    //   1. The ray within A entering B
+    //   2. The ray within A and B entering C
+    //   3. The ray within A and C exiting B
+    //   4. The ray within A exiting C
+    //   5. The ray exiting A
+    #[test]
+    fn test_finding_n1_and_n2_at_various_locations() {
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -4.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+        let mut sphere_a = shape::Shape::glass_sphere();
+        sphere_a.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(2.0, 2.0, 2.0));
+        sphere_a.material.refractive_index = 1.5;
+        let mut sphere_b = shape::Shape::glass_sphere();
+        sphere_b.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 0.0, -0.25));
+        sphere_b.material.refractive_index = 2.0;
+        let mut sphere_c = shape::Shape::glass_sphere();
+        sphere_c.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 0.0, 0.25));
+        sphere_c.material.refractive_index = 2.5;
+        let intersections = vec![
+            intersection::intersection(2.0, &sphere_a),
+            intersection::intersection(2.75, &sphere_b),
+            intersection::intersection(3.25, &sphere_c),
+            intersection::intersection(4.75, &sphere_b),
+            intersection::intersection(5.25, &sphere_c),
+            intersection::intersection(6.0, &sphere_a),
+        ];
+        let xs: Vec<&intersection::Intersection> = intersections.iter().collect();
+
+        //   0. The ray entering A
+        let computations_intersection_0 =
+            intersection::prepare_computations(&intersections[0], &ray, &xs);
+        assert_eq!(computations_intersection_0.n1, 1.0);
+        assert_eq!(computations_intersection_0.n2, 1.5);
+        //   1. The ray within A entering B
+        let computations_intersection_1 =
+            intersection::prepare_computations(&intersections[0], &ray, &xs);
+        assert_eq!(computations_intersection_1.n1, 1.5);
+        assert_eq!(computations_intersection_1.n2, 2.0);
+        //   2. The ray within A and B entering C
+        let computations_intersection_2 =
+            intersection::prepare_computations(&intersections[0], &ray, &xs);
+        assert_eq!(computations_intersection_2.n1, 2.0);
+        assert_eq!(computations_intersection_2.n2, 2.5);
+        //   3. The ray within A and C exiting B
+        let computations_intersection_3 =
+            intersection::prepare_computations(&intersections[0], &ray, &xs);
+        assert_eq!(computations_intersection_3.n1, 2.5);
+        assert_eq!(computations_intersection_3.n2, 2.5);
+        //   4. The ray within A exiting C
+        let computations_intersection_4 =
+            intersection::prepare_computations(&intersections[0], &ray, &xs);
+        assert_eq!(computations_intersection_4.n1, 2.5);
+        assert_eq!(computations_intersection_4.n2, 1.5);
+        //   5. The ray exiting A
+        let computations_intersection_5 =
+            intersection::prepare_computations(&intersections[0], &ray, &xs);
+        assert_eq!(computations_intersection_5.n1, 1.5);
+        assert_eq!(computations_intersection_5.n2, 1.0);
     }
 }
