@@ -35,18 +35,47 @@ pub struct Computation<'a> {
 }
 
 pub fn prepare_computations<'a>(
-    intersection: &Intersection<'a>,
+    hit: &Intersection<'a>,
     ray: &ray::Ray,
     intersections: &Vec<&Intersection<'a>>,
 ) -> Computation<'a> {
-    let t = intersection.t;
-    let object = intersection.object;
+    let t = hit.t;
+    let object = hit.object;
     let point = ray.position(t);
     let eyev = -ray.direction;
     let normalv = object.normal_at(point);
     let inside: bool = tuple::dot(&normalv, &eyev) < 0.0;
     let maybe_inverted_normalv = if inside { -normalv } else { normalv };
     let reflectv = ray.direction.reflect(&maybe_inverted_normalv);
+
+    let mut containers: Vec<&shape::Shape> = vec![];
+    let mut n1 = 1.0_f64;
+    let mut n2 = 1.0_f64;
+    for i in intersections.iter() {
+        if i == &hit {
+            if containers.is_empty() {
+                n1 = 1.0;
+            } else {
+                n1 = containers.last().unwrap().material.refractive_index;
+            }
+        }
+
+        let index_of_hit_object = containers.iter().position(|&x| x == i.object);
+        if index_of_hit_object.is_some() {
+            containers.remove(index_of_hit_object.unwrap());
+        } else {
+            containers.push(i.object);
+        }
+
+        if i == &hit {
+            if containers.is_empty() {
+                n2 = 1.0;
+            } else {
+                n2 = containers.last().unwrap().material.refractive_index;
+            }
+        }
+    }
+
     Computation {
         t,
         object,
@@ -56,8 +85,8 @@ pub fn prepare_computations<'a>(
         reflectv,
         inside,
         over_point: point + maybe_inverted_normalv * EPSILON,
-        n1: 1.0_f64,
-        n2: 1.0_f64,
+        n1,
+        n2,
     }
 }
 
@@ -336,27 +365,27 @@ mod intersection_tests {
         assert_eq!(computations_intersection_0.n2, 1.5);
         //   1. The ray within A entering B
         let computations_intersection_1 =
-            intersection::prepare_computations(&intersections[0], &ray, &xs);
+            intersection::prepare_computations(&intersections[1], &ray, &xs);
         assert_eq!(computations_intersection_1.n1, 1.5);
         assert_eq!(computations_intersection_1.n2, 2.0);
         //   2. The ray within A and B entering C
         let computations_intersection_2 =
-            intersection::prepare_computations(&intersections[0], &ray, &xs);
+            intersection::prepare_computations(&intersections[2], &ray, &xs);
         assert_eq!(computations_intersection_2.n1, 2.0);
         assert_eq!(computations_intersection_2.n2, 2.5);
         //   3. The ray within A and C exiting B
         let computations_intersection_3 =
-            intersection::prepare_computations(&intersections[0], &ray, &xs);
+            intersection::prepare_computations(&intersections[3], &ray, &xs);
         assert_eq!(computations_intersection_3.n1, 2.5);
         assert_eq!(computations_intersection_3.n2, 2.5);
         //   4. The ray within A exiting C
         let computations_intersection_4 =
-            intersection::prepare_computations(&intersections[0], &ray, &xs);
+            intersection::prepare_computations(&intersections[4], &ray, &xs);
         assert_eq!(computations_intersection_4.n1, 2.5);
         assert_eq!(computations_intersection_4.n2, 1.5);
         //   5. The ray exiting A
         let computations_intersection_5 =
-            intersection::prepare_computations(&intersections[0], &ray, &xs);
+            intersection::prepare_computations(&intersections[5], &ray, &xs);
         assert_eq!(computations_intersection_5.n1, 1.5);
         assert_eq!(computations_intersection_5.n2, 1.0);
     }
