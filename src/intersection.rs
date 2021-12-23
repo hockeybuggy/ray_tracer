@@ -28,6 +28,7 @@ pub struct Computation<'a> {
     pub reflectv: tuple::Vector,
     pub inside: bool,
     pub over_point: tuple::Point,
+    pub under_point: tuple::Point,
 
     // refactive indices of either side of the ray-object intersection
     pub n1: f64,
@@ -85,6 +86,7 @@ pub fn prepare_computations<'a>(
         reflectv,
         inside,
         over_point: point + maybe_inverted_normalv * EPSILON,
+        under_point: point - maybe_inverted_normalv * EPSILON,
         n1,
         n2,
     }
@@ -388,5 +390,23 @@ mod intersection_tests {
             intersection::prepare_computations(&intersections[5], &ray, &xs);
         assert_eq!(computations_intersection_5.n1, 1.5);
         assert_eq!(computations_intersection_5.n2, 1.0);
+    }
+
+    #[test]
+    fn test_the_under_point_is_offset_below_the_surface() {
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+        let mut sphere_a = shape::Shape::glass_sphere();
+        sphere_a.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 0.0, 1.0));
+        let intersections = vec![intersection::intersection(5.0, &sphere_a)];
+        let xs: Vec<&intersection::Intersection> = intersections.iter().collect();
+
+        let computations_intersection =
+            intersection::prepare_computations(&intersections[0], &ray, &xs);
+
+        assert!(computations_intersection.under_point.z > intersection::EPSILON / 2.0);
+        assert!(computations_intersection.point.z < computations_intersection.under_point.z);
     }
 }
