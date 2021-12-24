@@ -224,7 +224,6 @@ mod patterns_tests {
         let object = shape::Shape::default_sphere();
         let mut pattern = patterns::Pattern::stripe(color::white(), color::black());
         pattern.transform = pattern.transform.scaling(2.0, 2.0, 2.0);
-        dbg!(pattern.transform);
 
         assert_color_approx_eq!(
             pattern.pattern_at_object(&object, &tuple::Point::new(1.5, 0.0, 0.0)),

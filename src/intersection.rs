@@ -110,8 +110,34 @@ impl<'a> Computation<'a> {
         );
         let reflected = world.reflected_color(&self, remaining);
         let refracted = world.refracted_color(&self, remaining);
-        // dbg!(surface, reflected, refracted);
+
+        if self.object.material.reflective > 0.0 && self.object.material.transparency > 0.0 {
+            let reflectance = self.reflectance();
+            return surface + reflected + refracted * refracted * (1.0 - reflectance);
+        }
+
         return surface + reflected + refracted;
+    }
+
+    pub fn reflectance(&self) -> f64 {
+        let mut cos = tuple::dot(&self.eyev, &self.normalv);
+
+        // Check for total internal reflection
+        if self.n1 > self.n2 {
+            let n_ratio = self.n1 / self.n2;
+            let sin2_t = n_ratio.powf(2.0) * (1.0 - cos.powf(2.0));
+            if sin2_t > 1.0 {
+                return 1.0;
+            }
+
+            let cos_t = (1.0 - sin2_t).sqrt();
+
+            // When n1 > n2 use cos(theta_t)
+            cos = cos_t
+        }
+
+        let r0 = ((self.n1 - self.n2) / (self.n1 + self.n2)).powf(2.0);
+        return r0 + (1.0 - r0) * (1.0 - cos).powf(5.0);
     }
 }
 
@@ -127,6 +153,8 @@ mod intersection_tests {
     use crate::transformation::Transform;
     use crate::tuple;
     use crate::world;
+
+    use assert_approx_eq::assert_approx_eq;
 
     #[test]
     fn test_intersection_encapsulates_t_and_object() {
@@ -410,5 +438,62 @@ mod intersection_tests {
 
         assert!(computations_intersection.under_point.z > intersection::EPSILON / 2.0);
         assert!(computations_intersection.point.z < computations_intersection.under_point.z);
+    }
+
+    #[test]
+    fn test_the_schlick_approximation_under_total_internal_reflection() {
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, 2.0_f64.sqrt() / 2.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+        );
+        let sphere = shape::Shape::glass_sphere();
+        let intersections = vec![
+            intersection::intersection(-2.0_f64.sqrt() / 2.0, &sphere),
+            intersection::intersection(2.0_f64.sqrt() / 2.0, &sphere),
+        ];
+        let xs: Vec<&intersection::Intersection> = intersections.iter().collect();
+        let computations_intersection =
+            intersection::prepare_computations(&intersections[1], &ray, &xs);
+
+        let reflectance = computations_intersection.reflectance();
+
+        assert_eq!(reflectance, 1.0);
+    }
+
+    #[test]
+    fn test_the_schlick_approximation_with_a_perpendicular_viewing_angle() {
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, 0.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+        );
+        let sphere = shape::Shape::glass_sphere();
+        let intersections = vec![
+            intersection::intersection(-1.0, &sphere),
+            intersection::intersection(1.0, &sphere),
+        ];
+        let xs: Vec<&intersection::Intersection> = intersections.iter().collect();
+        let computations_intersection =
+            intersection::prepare_computations(&intersections[1], &ray, &xs);
+
+        let reflectance = computations_intersection.reflectance();
+
+        assert_approx_eq!(reflectance, 0.04);
+    }
+
+    #[test]
+    fn test_the_schlick_approximation_with_a_small_angle_and_n2_gt_n1() {
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.99, -2.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+        let sphere = shape::Shape::glass_sphere();
+        let intersections = vec![intersection::intersection(1.8589, &sphere)];
+        let xs: Vec<&intersection::Intersection> = intersections.iter().collect();
+        let computations_intersection =
+            intersection::prepare_computations(&intersections[0], &ray, &xs);
+
+        let reflectance = computations_intersection.reflectance();
+
+        assert_approx_eq!(reflectance, 0.48873);
     }
 }
