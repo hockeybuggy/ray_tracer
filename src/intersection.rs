@@ -109,7 +109,9 @@ impl<'a> Computation<'a> {
             shadowed,
         );
         let reflected = world.reflected_color(&self, remaining);
-        return surface + reflected;
+        let refracted = world.refracted_color(&self, remaining);
+        // dbg!(surface, reflected, refracted);
+        return surface + reflected + refracted;
     }
 }
 

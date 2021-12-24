@@ -10,6 +10,7 @@ enum PatternType {
     Gradient,
     Ring,
     Checkers,
+    TestPattern,
 }
 
 #[derive(Debug, PartialEq)]
@@ -21,6 +22,15 @@ pub struct Pattern {
 }
 
 impl Pattern {
+    pub fn test_pattern() -> Pattern {
+        return Pattern {
+            a: color::black(),
+            b: color::black(),
+            transform: matrix::Matrix4::IDENTITY,
+            pattern_type: PatternType::TestPattern,
+        };
+    }
+
     pub fn stripe(a: color::Color, b: color::Color) -> Pattern {
         return Pattern {
             a,
@@ -94,6 +104,7 @@ impl Pattern {
             PatternType::Gradient => self.gradient_at(point),
             PatternType::Ring => self.ring_at(point),
             PatternType::Checkers => self.checkers_at(point),
+            PatternType::TestPattern => color::color(point.x, point.y, point.z),
         };
     }
 
@@ -325,6 +336,43 @@ mod patterns_tests {
         assert_color_approx_eq!(
             pattern.pattern_at(&tuple::Point::new(0.0, 0.0, 1.01)),
             color::black()
+        );
+    }
+
+    #[test]
+    fn test_a_pattern_with_object_transformation() {
+        let mut object = shape::Shape::default_sphere();
+        object.transform = object.transform.scaling(2.0, 2.0, 2.0);
+        let pattern = patterns::Pattern::test_pattern();
+
+        assert_color_approx_eq!(
+            pattern.pattern_at_object(&object, &tuple::Point::new(2.0, 3.0, 4.0)),
+            color::color(1.0, 1.5, 2.0)
+        );
+    }
+
+    #[test]
+    fn test_a_pattern_with_pattern_transformation() {
+        let object = shape::Shape::default_sphere();
+        let mut pattern = patterns::Pattern::test_pattern();
+        pattern.transform = pattern.transform.scaling(2.0, 2.0, 2.0);
+
+        assert_color_approx_eq!(
+            pattern.pattern_at_object(&object, &tuple::Point::new(2.0, 3.0, 4.0)),
+            color::color(1.0, 1.5, 2.0)
+        );
+    }
+
+    #[test]
+    fn test_a_pattern_with_both_object_and_pattern_transformation() {
+        let mut object = shape::Shape::default_sphere();
+        object.transform = object.transform.scaling(2.0, 2.0, 2.0);
+        let mut pattern = patterns::Pattern::test_pattern();
+        pattern.transform = pattern.transform.translation(0.5, 1.0, 1.5);
+
+        assert_color_approx_eq!(
+            pattern.pattern_at_object(&object, &tuple::Point::new(2.5, 3.0, 3.5)),
+            color::color(0.75, 0.5, 0.25)
         );
     }
 }
