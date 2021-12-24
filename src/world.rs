@@ -42,6 +42,30 @@ impl World {
 
         return color * computations.object.material.reflective;
     }
+
+    pub fn refracted_color(
+        &self,
+        computations: &intersection::Computation,
+        remaining: usize,
+    ) -> color::Color {
+        if remaining == 0 {
+            return color::black();
+        }
+        if computations.object.material.transparency == 0.0 {
+            return color::black();
+        }
+        // Ratio of first refraction index to the second
+        let n_ratio = computations.n1 / computations.n2;
+        // This is "Snell's law".
+        let cos_i = tuple::dot(&computations.eyev, &computations.normalv);
+        let sin2_t = n_ratio.powf(2.0) * (1.0 - cos_i.powf(2.0));
+
+        if sin2_t > 1.0 {
+            return color::black();
+        }
+
+        return color::white();
+    }
 }
 
 pub fn default_world() -> World {
@@ -380,8 +404,103 @@ mod world_tests {
 
         let computations =
             intersection::prepare_computations(&intersection, &ray, &vec![&intersection]);
-        // Note that there are zero remaing light bounces
+        // Note that there are zero remaining light bounces
         let color = world.reflected_color(&computations, 0);
+
+        let expected_color = color::color(0.0, 0.0, 0.0);
+        assert_color_approx_eq!(color, expected_color);
+    }
+
+    #[test]
+    fn refracted_color_with_an_opaque_surface() {
+        let mut builder = world::WorldBuilder::new();
+        builder.add_light_source(lights::point_light(
+            tuple::Point::new(-10.0, 10.0, -10.0),
+            color::white(),
+        ));
+        builder.add_shape({
+            let mut sphere = shape::Shape::default_sphere();
+            sphere.material.transparency = 0.0;
+            sphere
+        });
+        let world = builder.world;
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+        let intersections = vec![
+            intersection::intersection(4.0, &world.shapes[0]),
+            intersection::intersection(6.0, &world.shapes[0]),
+        ];
+        let xs: Vec<&intersection::Intersection> = intersections.iter().collect();
+
+        let computations = intersection::prepare_computations(&intersections[0], &ray, &xs);
+        // Note that there are zero remaining light bounces
+        let color = world.refracted_color(&computations, 5);
+
+        let expected_color = color::color(0.0, 0.0, 0.0);
+        assert_color_approx_eq!(color, expected_color);
+    }
+
+    #[test]
+    fn refracted_color_at_the_maximum_recursive_depth() {
+        let mut builder = world::WorldBuilder::new();
+        builder.add_light_source(lights::point_light(
+            tuple::Point::new(-10.0, 10.0, -10.0),
+            color::white(),
+        ));
+        builder.add_shape({
+            let mut sphere = shape::Shape::default_sphere();
+            sphere.material.transparency = 1.0;
+            sphere.material.refractive_index = 1.5;
+            sphere
+        });
+        let world = builder.world;
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+        let intersections = vec![
+            intersection::intersection(4.0, &world.shapes[0]),
+            intersection::intersection(6.0, &world.shapes[0]),
+        ];
+        let xs: Vec<&intersection::Intersection> = intersections.iter().collect();
+
+        let computations = intersection::prepare_computations(&intersections[0], &ray, &xs);
+        // Note that there are zero remaining light bounces
+        let color = world.refracted_color(&computations, 0);
+
+        let expected_color = color::color(0.0, 0.0, 0.0);
+        assert_color_approx_eq!(color, expected_color);
+    }
+
+    #[test]
+    fn refracted_color_under_total_internal_refraction() {
+        let mut builder = world::WorldBuilder::new();
+        builder.add_light_source(lights::point_light(
+            tuple::Point::new(-10.0, 10.0, -10.0),
+            color::white(),
+        ));
+        builder.add_shape({
+            let mut sphere = shape::Shape::default_sphere();
+            sphere.material.transparency = 1.0;
+            sphere.material.refractive_index = 1.5;
+            sphere
+        });
+        let world = builder.world;
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, 2.0_f64.sqrt() / 2.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+        );
+        let intersections = vec![
+            intersection::intersection(-2.0_f64.sqrt() / 2.0, &world.shapes[0]),
+            intersection::intersection(2.0_f64.sqrt() / 2.0, &world.shapes[0]),
+        ];
+        let xs: Vec<&intersection::Intersection> = intersections.iter().collect();
+
+        // This is looking at subsequent intersections when it's exiting the sphere.
+        let computations = intersection::prepare_computations(&intersections[1], &ray, &xs);
+        let color = world.refracted_color(&computations, 5);
 
         let expected_color = color::color(0.0, 0.0, 0.0);
         assert_color_approx_eq!(color, expected_color);
