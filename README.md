@@ -201,6 +201,39 @@ compare to the results they generate and smaller images are faster to render.
     </td>
   </tr>
 
+  <tr>
+    <td>World with reflective floor</td>
+    <td>
+      <img src="tests/fixtures/reflection.png"
+           alt="A world with three spheres of different colours sitting on a reflective floor."
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>World with reflective floor and spheres</td>
+    <td>
+      <img src="tests/fixtures/very_reflection.png"
+           alt="A world with three reflective spheres of different colours sitting on a reflective floor."
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>World glass sphere</td>
+    <td>
+      <img src="tests/fixtures/glass_sphere.png"
+           alt="A world with a glass spheres sitting on a patterned floor."
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
 </table>
 
 
