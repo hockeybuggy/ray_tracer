@@ -200,7 +200,7 @@ fn test_glass_sphere_scene() -> Result<(), std::io::Error> {
     // Create a floor and add it to the scene
     builder.add_shape({
         let mut floor = shape::Shape::default_plane();
-        floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(100.0, 0.01, 100.0));
+        floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(100.0, -0.1, 100.0));
         let mut material = material::material();
         let mut pattern =
             patterns::Pattern::checkers(color::color(0.5, 0.5, 0.5), color::color(0.7, 0.7, 0.7));
@@ -213,7 +213,7 @@ fn test_glass_sphere_scene() -> Result<(), std::io::Error> {
     // Add a sphere to the left
     builder.add_shape({
         let mut sphere = shape::Shape::glass_sphere();
-        sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 1.0, 0.0));
+        sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 1.2, 0.0));
         sphere
     });
 
@@ -225,7 +225,7 @@ fn test_glass_sphere_scene() -> Result<(), std::io::Error> {
 
     let mut camera = camera::Camera::new(150 * SCALE, 150 * SCALE, std::f64::consts::PI / 3.0);
     camera.transform = transformation::view_transform(
-        &tuple::Point::new(0.0, 5.0, 0.0),
+        &tuple::Point::new(0.0, 5.0, -1.0),
         &tuple::Point::new(0.0, 1.0, 0.0),
         &tuple::Vector::new(0.0, 0.0, 1.0),
     );

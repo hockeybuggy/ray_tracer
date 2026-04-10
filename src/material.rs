@@ -29,10 +29,21 @@ pub fn material() -> Material {
 }
 
 pub fn glass() -> Material {
-    let mut material = material();
-    material.transparency = 1.0;
-    material.refractive_index = 1.5;
-    return material;
+    Material {
+        color: color::color(0.5, 0.5, 0.5),
+        ambient: 0.0_f64,
+        diffuse: 0.9_f64,
+        specular: 0.9_f64,
+        shininess: 200.0_f64,
+        transparency: 1.0_f64,
+        reflective: 0.0_f64,
+        refractive_index: 1.5_f64,
+        pattern: None,
+    }
+    // let mut material = material();
+    // material.transparency = 1.0;
+    // material.refractive_index = 1.5;
+    // return material;
 }
 
 #[cfg(test)]
