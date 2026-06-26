@@ -389,7 +389,7 @@ mod world_tests {
             tuple::Vector::new(0.0, 1.0, 0.0),
         );
 
-        // Without an addtional contraint light will bounce between these two planes indefinitly.
+        // Without an additional constraint light will bounce between these two planes indefinitely.
         // Our assertion is really: does this call terminate.
         let color = world.color_at(&ray, 10);
 
