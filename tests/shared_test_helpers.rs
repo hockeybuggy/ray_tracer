@@ -17,6 +17,6 @@ pub fn read_image_from_fixture_file(
     let path_name = format!("tests/fixtures/{}.png", fixture_name);
     println!("{}", &path_name);
     let path = Path::new(&path_name);
-    let image: image::RgbImage = image::open(path).unwrap().to_rgb();
+    let image: image::RgbImage = image::open(path).unwrap().to_rgb8();
     return Ok(image);
 }
