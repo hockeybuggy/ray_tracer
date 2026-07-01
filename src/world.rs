@@ -714,4 +714,37 @@ mod world_tests {
         let expected_color = color::color(0.93391, 0.69643, 0.69243);
         assert_color_approx_eq!(color, expected_color);
     }
+
+    #[test]
+    fn a_pattern_on_a_group_child_uses_the_group_transform() {
+        // A striped sphere inside a doubled group: stripe boundaries must
+        // land in the sphere's combined space, not its own. The material is
+        // all ambient so color_at returns the pattern color directly. The
+        // ray hits the sphere at world x=1.5, which is x=0.75 after the
+        // group's scaling: inside the first (white) stripe. Ignoring the
+        // group transform would land in the second (black) stripe instead.
+        let mut builder = world::WorldBuilder::new();
+        builder.add_light_source(lights::point_light(
+            tuple::Point::new(0.0, 0.0, -10.0),
+            color::white(),
+        ));
+        let mut sphere = shape::Shape::default_sphere();
+        sphere.material.pattern = Some(patterns::Pattern::stripe(color::white(), color::black()));
+        sphere.material.ambient = 1.0;
+        sphere.material.diffuse = 0.0;
+        sphere.material.specular = 0.0;
+        let mut group = shape::Shape::default_group();
+        group.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(2.0, 2.0, 2.0));
+        group.add_child(sphere);
+        builder.add_shape(group);
+        let world = builder.world;
+        let ray = ray::ray(
+            tuple::Point::new(1.5, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+
+        let color = world.color_at(&ray, 10);
+
+        assert_color_approx_eq!(color, color::white());
+    }
 }

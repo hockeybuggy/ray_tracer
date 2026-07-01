@@ -500,3 +500,112 @@ mod intersection_tests {
         assert_approx_eq!(reflectance, 0.48873);
     }
 }
+
+#[cfg(test)]
+mod group_intersection_tests {
+    use crate::assert_tuple_approx_eq;
+    use crate::intersection;
+    use crate::matrix;
+    use crate::ray;
+    use crate::shape;
+    use crate::transformation::Transform;
+    use crate::tuple;
+
+    // The book's nested hierarchy: an outer group rotated a quarter turn
+    // around y, containing a scaled inner group, containing a sphere
+    // translated 5 units in x.
+    fn nested_groups(scale: (f64, f64, f64)) -> shape::Shape {
+        let mut inner = shape::Shape::default_group();
+        inner.set_transformation_matrix(
+            matrix::Matrix4::IDENTITY.scaling(scale.0, scale.1, scale.2),
+        );
+        let mut sphere = shape::Shape::default_sphere();
+        sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(5.0, 0.0, 0.0));
+        inner.add_child(sphere);
+
+        let mut outer = shape::Shape::default_group();
+        outer.set_transformation_matrix(
+            matrix::Matrix4::IDENTITY.rotation_y(std::f64::consts::PI / 2.0),
+        );
+        outer.add_child(inner);
+        return outer;
+    }
+
+    #[test]
+    fn test_converting_a_point_from_world_to_object_space() {
+        // With uniform scaling the sphere ends up centered at (0, 0, -10)
+        // with radius 2, so the ray down the z axis hits it, and the queried
+        // point sits on its -x side: one radius left of center, which is
+        // (0, 0, -1) in the sphere's own space.
+        let group = nested_groups((2.0, 2.0, 2.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -20.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+        let intersections = group.intersect(&ray);
+
+        let point = intersections[0].world_to_object(tuple::Point::new(-2.0, 0.0, -10.0));
+
+        assert_tuple_approx_eq!(tuple::Point::new(0.0, 0.0, -1.0), point);
+    }
+
+    #[test]
+    fn test_converting_a_normal_from_object_to_world_space() {
+        // The non-uniform scaling turns the sphere into an ellipsoid
+        // centered at (0, 0, -5). The expected vector is the book's
+        // (0.2857, 0.4286, -0.8571) in exact form.
+        let group = nested_groups((1.0, 2.0, 3.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -10.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+        let intersections = group.intersect(&ray);
+
+        let sqrt3_over_3 = 3.0_f64.sqrt() / 3.0;
+        let normal = intersections[0].normal_to_world(tuple::Vector::new(
+            sqrt3_over_3,
+            sqrt3_over_3,
+            sqrt3_over_3,
+        ));
+
+        assert_tuple_approx_eq!(tuple::Vector::new(2.0 / 7.0, 3.0 / 7.0, -6.0 / 7.0), normal);
+    }
+
+    #[test]
+    fn test_finding_the_normal_on_a_child_object() {
+        // The queried point lies on the ellipsoid's surface. The book
+        // rounds both the point and the resulting normal to four decimal
+        // places; the expected value here is computed from the rounded
+        // point, which is why it differs slightly from the previous test.
+        let group = nested_groups((1.0, 2.0, 3.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -10.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+        let intersections = group.intersect(&ray);
+
+        let normal = intersections[0].normal_at(tuple::Point::new(1.7321, 1.1547, -5.5774));
+
+        assert_tuple_approx_eq!(tuple::Vector::new(0.28570, 0.42854, -0.85716), normal);
+    }
+
+    #[test]
+    fn test_preparing_computations_on_a_child_of_transformed_groups() {
+        // The ray hits the ellipsoid head on at (0, 0, -6), where the
+        // surface faces straight back at the ray. Using only the sphere's
+        // own transform here would produce a wildly wrong normal.
+        let group = nested_groups((1.0, 2.0, 3.0));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -10.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+        let intersections = group.intersect(&ray);
+        let intersection_refs: Vec<&intersection::Intersection> = intersections.iter().collect();
+
+        let computations =
+            intersection::prepare_computations(&intersections[0], &ray, &intersection_refs);
+
+        assert_tuple_approx_eq!(tuple::Point::new(0.0, 0.0, -6.0), computations.point);
+        assert_tuple_approx_eq!(tuple::Vector::new(0.0, 0.0, -1.0), computations.normalv);
+    }
+}
