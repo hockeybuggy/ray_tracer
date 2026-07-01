@@ -16,5 +16,15 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
 
+    # Failing render tests write their canvas to the repo root; upload those
+    # images so fixture mismatches can be inspected.
+    - name: Upload differing renders
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: differing-renders
+        path: '*.png'
+        if-no-files-found: ignore
+
     - name: Run benchmarks
       run: cargo bench --verbose
