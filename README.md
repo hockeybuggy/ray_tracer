@@ -355,6 +355,17 @@ compare to the results they generate and smaller images are faster to render.
     </td>
   </tr>
 
+  <tr>
+    <td>Multiple lights</td>
+    <td>
+      <img src="tests/fixtures/multiple_lights.png"
+           alt="A white sphere lit by a warm light and a cool light, casting two tinted shadows."
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
 </table>
 
 
@@ -383,7 +394,6 @@ a change that you expect to improve performance and know if it worked on not.
 
 ## Possible improvements
 
-- Add multiple light sources (note for this on 138 of the book).
 - Builder interface for shapes.
 - Update setting of transformation matrices
 - Add a file input method for world description
