@@ -21,7 +21,7 @@ impl Ray {
     pub fn intersect_world<'a>(
         &'a self,
         world: &'a world::World,
-    ) -> Vec<intersection::Intersection> {
+    ) -> Vec<intersection::Intersection<'a>> {
         let mut intersections: Vec<intersection::Intersection> = world
             .shapes
             .iter()

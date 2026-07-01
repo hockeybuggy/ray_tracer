@@ -13,7 +13,7 @@ pub struct Intersection<'a> {
     pub object: &'a shape::Shape,
 }
 
-pub fn intersection(t: f64, object: &shape::Shape) -> Intersection {
+pub fn intersection(t: f64, object: &shape::Shape) -> Intersection<'_> {
     Intersection { t, object }
 }
 

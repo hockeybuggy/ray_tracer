@@ -62,7 +62,7 @@ impl Shape {
         self.transform = new_transform;
     }
 
-    pub fn intersect(&self, ray: &ray::Ray) -> Vec<intersection::Intersection> {
+    pub fn intersect(&self, ray: &ray::Ray) -> Vec<intersection::Intersection<'_>> {
         let local_ray = ray.transform(&self.transformation_matrix().inverse().unwrap());
         return self.local_intersect(local_ray);
     }
@@ -108,7 +108,7 @@ impl Shape {
         return tuple::normalize(&world_normal);
     }
 
-    pub fn local_intersect(&self, local_ray: ray::Ray) -> Vec<intersection::Intersection> {
+    pub fn local_intersect(&self, local_ray: ray::Ray) -> Vec<intersection::Intersection<'_>> {
         match self.shape_type {
             ShapeType::Sphere => self.sphere_local_intersect(local_ray),
             ShapeType::Plane => self.plane_local_intersect(local_ray),
@@ -116,7 +116,7 @@ impl Shape {
         }
     }
 
-    fn cube_local_intersect(&self, local_ray: ray::Ray) -> Vec<intersection::Intersection> {
+    fn cube_local_intersect(&self, local_ray: ray::Ray) -> Vec<intersection::Intersection<'_>> {
         let (xtmin, xtmax) = check_axis(local_ray.origin.x, local_ray.direction.x);
         let (ytmin, ytmax) = check_axis(local_ray.origin.y, local_ray.direction.y);
         let (ztmin, ztmax) = check_axis(local_ray.origin.z, local_ray.direction.z);
@@ -134,7 +134,7 @@ impl Shape {
         ];
     }
 
-    fn sphere_local_intersect(&self, local_ray: ray::Ray) -> Vec<intersection::Intersection> {
+    fn sphere_local_intersect(&self, local_ray: ray::Ray) -> Vec<intersection::Intersection<'_>> {
         let sphere_to_ray = local_ray.origin - tuple::Point::new(0.0, 0.0, 0.0);
 
         let a = tuple::dot(&local_ray.direction, &local_ray.direction);
@@ -155,7 +155,7 @@ impl Shape {
         ];
     }
 
-    fn plane_local_intersect(&self, local_ray: ray::Ray) -> Vec<intersection::Intersection> {
+    fn plane_local_intersect(&self, local_ray: ray::Ray) -> Vec<intersection::Intersection<'_>> {
         if local_ray.direction.y.abs() < EPSILON {
             return vec![];
         }
