@@ -75,8 +75,19 @@ impl Shape {
         tuple::Vector::new(0.0, 1.0, 0.0)
     }
 
-    fn cube_local_normal_at(&self, _object_point: tuple::Point) -> tuple::Vector {
-        todo!("chapter 12")
+    fn cube_local_normal_at(&self, object_point: tuple::Point) -> tuple::Vector {
+        let maxc = object_point
+            .x
+            .abs()
+            .max(object_point.y.abs())
+            .max(object_point.z.abs());
+
+        if maxc == object_point.x.abs() {
+            return tuple::Vector::new(object_point.x, 0.0, 0.0);
+        } else if maxc == object_point.y.abs() {
+            return tuple::Vector::new(0.0, object_point.y, 0.0);
+        }
+        return tuple::Vector::new(0.0, 0.0, object_point.z);
     }
 
     fn local_normal_at(&self, object_point: tuple::Point) -> tuple::Vector {
@@ -105,8 +116,22 @@ impl Shape {
         }
     }
 
-    fn cube_local_intersect(&self, _local_ray: ray::Ray) -> Vec<intersection::Intersection> {
-        todo!("chapter 12")
+    fn cube_local_intersect(&self, local_ray: ray::Ray) -> Vec<intersection::Intersection> {
+        let (xtmin, xtmax) = check_axis(local_ray.origin.x, local_ray.direction.x);
+        let (ytmin, ytmax) = check_axis(local_ray.origin.y, local_ray.direction.y);
+        let (ztmin, ztmax) = check_axis(local_ray.origin.z, local_ray.direction.z);
+
+        let tmin = xtmin.max(ytmin).max(ztmin);
+        let tmax = xtmax.min(ytmax).min(ztmax);
+
+        if tmin > tmax {
+            return vec![];
+        }
+
+        return vec![
+            intersection::intersection(tmin, self),
+            intersection::intersection(tmax, self),
+        ];
     }
 
     fn sphere_local_intersect(&self, local_ray: ray::Ray) -> Vec<intersection::Intersection> {
@@ -138,6 +163,19 @@ impl Shape {
 
         return vec![intersection::intersection(t, self)];
     }
+}
+
+// Find where the ray crosses the pair of parallel planes at -1 and +1 on one
+// axis. A zero direction divides to +/- infinity, which f64 handles natively,
+// so no EPSILON special case is needed.
+fn check_axis(origin: f64, direction: f64) -> (f64, f64) {
+    let tmin = (-1.0 - origin) / direction;
+    let tmax = (1.0 - origin) / direction;
+
+    if tmin > tmax {
+        return (tmax, tmin);
+    }
+    return (tmin, tmax);
 }
 
 #[cfg(test)]
