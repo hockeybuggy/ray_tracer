@@ -83,7 +83,7 @@ impl Pattern {
     }
 
     pub fn ring_at(&self, point: &tuple::Point) -> color::Color {
-        return if ((point.x * 2.0 + point.z * 2.0).sqrt().floor() as i64) % 2 == 0 {
+        return if ((point.x.powf(2.0) + point.z.powf(2.0)).sqrt().floor() as i64) % 2 == 0 {
             self.a
         } else {
             self.b
@@ -283,6 +283,17 @@ mod patterns_tests {
         assert_color_approx_eq!(
             pattern.pattern_at(&tuple::Point::new(0.708, 0.0, 0.708)),
             // 0.708 is more than 2.sqrt() / 2
+            color::black()
+        );
+        // The radius is the euclidean distance sqrt(x^2 + z^2), so this
+        // point is inside the first ring even though x + z > 1
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(0.6, 0.0, 0.6)),
+            color::white()
+        );
+        // Rings extend to negative coordinates too
+        assert_color_approx_eq!(
+            pattern.pattern_at(&tuple::Point::new(-1.5, 0.0, 0.0)),
             color::black()
         );
     }
