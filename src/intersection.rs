@@ -94,20 +94,23 @@ pub fn prepare_computations<'a>(
 
 impl<'a> Computation<'a> {
     pub fn shade_hit(&self, world: &world::World, remaining: usize) -> color::Color {
-        let has_light = &world.light.is_some();
-        if !has_light {
+        if world.lights.is_empty() {
             return color::black();
         }
-        let shadowed = world::is_shadowed(&world, &self.over_point);
-        let surface = lighting::lighting(
-            &self.object.material,
-            &self.object,
-            &world.light.as_ref().unwrap(),
-            &self.point,
-            &self.eyev,
-            &self.normalv,
-            shadowed,
-        );
+        let mut surface = color::black();
+        for light in world.lights.iter() {
+            let shadowed = world::is_shadowed(&world, &light, &self.over_point);
+            surface = surface
+                + lighting::lighting(
+                    &self.object.material,
+                    &self.object,
+                    &light,
+                    &self.point,
+                    &self.eyev,
+                    &self.normalv,
+                    shadowed,
+                );
+        }
         let reflected = world.reflected_color(&self, remaining);
         let refracted = world.refracted_color(&self, remaining);
 
@@ -318,10 +321,10 @@ mod intersection_tests {
     #[test]
     fn test_shading_an_intersection_from_inside() {
         let mut world = world::default_world();
-        world.light = Some(lights::point_light(
+        world.lights = vec![lights::point_light(
             tuple::Point::new(0.0, 0.25, 0.0),
             color::white(),
-        ));
+        )];
         let ray = ray::ray(
             tuple::Point::new(0.0, 0.0, 0.0),
             tuple::Vector::new(0.0, 0.0, 1.0),

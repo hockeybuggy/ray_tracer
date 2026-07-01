@@ -8,8 +8,7 @@ use crate::transformation::Transform;
 use crate::tuple;
 
 pub struct World {
-    // TODO Adding multiple light sources can be done by changing this to a vector of lights.
-    pub light: Option<lights::Light>,
+    pub lights: Vec<lights::Light>,
     pub shapes: Vec<shape::Shape>,
 }
 
@@ -87,14 +86,13 @@ pub fn default_world() -> World {
     small_sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(0.5, 0.5, 0.5));
     let shapes = vec![lime_sphere, small_sphere];
     World {
-        light: Some(white_point_light),
+        lights: vec![white_point_light],
         shapes: shapes,
     }
 }
 
-pub fn is_shadowed(world: &World, point: &tuple::Point) -> bool {
-    // TODO this unwrap doesn't feel safe
-    let v = world.light.as_ref().unwrap().position - *point;
+pub fn is_shadowed(world: &World, light: &lights::Light, point: &tuple::Point) -> bool {
+    let v = light.position - *point;
     let distance = tuple::magnitude(&v);
     let direction = tuple::normalize(&v);
 
@@ -115,7 +113,7 @@ pub struct WorldBuilder {
 impl WorldBuilder {
     pub fn new() -> Self {
         let world = World {
-            light: None,
+            lights: Vec::new(),
             shapes: Vec::new(),
         };
         WorldBuilder { world }
@@ -127,7 +125,7 @@ impl WorldBuilder {
     }
 
     pub fn add_light_source(&mut self, new_light: lights::Light) -> &Self {
-        self.world.light = Some(new_light);
+        self.world.lights.push(new_light);
         return self;
     }
 }
@@ -150,7 +148,7 @@ mod world_tests {
     fn empty_world() {
         let world = world::WorldBuilder::new().world;
 
-        assert_eq!(world.light.is_some(), false);
+        assert_eq!(world.lights.len(), 0);
         assert_eq!(world.shapes.len(), 0);
     }
 
@@ -161,8 +159,8 @@ mod world_tests {
         // There is a white point light in the world.
         let expected_light =
             lights::point_light(tuple::Point::new(-10.0, 10.0, -10.0), color::white());
-        assert_eq!(world.light.is_some(), true);
-        let world_light = world.light.unwrap();
+        assert_eq!(world.lights.len(), 1);
+        let world_light = &world.lights[0];
         assert_eq!(world_light.position, expected_light.position);
         assert_eq!(world_light.intensity, expected_light.intensity);
         // There are two spheres
@@ -254,7 +252,7 @@ mod world_tests {
         let world = world::default_world();
         let point = tuple::Point::new(0.0, 10.0, 0.0);
 
-        assert_eq!(world::is_shadowed(&world, &point), false);
+        assert_eq!(world::is_shadowed(&world, &world.lights[0], &point), false);
     }
 
     #[test]
@@ -262,7 +260,7 @@ mod world_tests {
         let world = world::default_world();
         let point = tuple::Point::new(10.0, -10.0, 10.0);
 
-        assert_eq!(world::is_shadowed(&world, &point), true);
+        assert_eq!(world::is_shadowed(&world, &world.lights[0], &point), true);
     }
 
     #[test]
@@ -270,7 +268,7 @@ mod world_tests {
         let world = world::default_world();
         let point = tuple::Point::new(-20.0, 20.0, -20.0);
 
-        assert_eq!(world::is_shadowed(&world, &point), false);
+        assert_eq!(world::is_shadowed(&world, &world.lights[0], &point), false);
     }
 
     #[test]
@@ -278,7 +276,7 @@ mod world_tests {
         let world = world::default_world();
         let point = tuple::Point::new(-2.0, 2.0, -2.0);
 
-        assert_eq!(world::is_shadowed(&world, &point), false);
+        assert_eq!(world::is_shadowed(&world, &world.lights[0], &point), false);
     }
 
     #[test]
@@ -304,6 +302,59 @@ mod world_tests {
         let color = computations.shade_hit(&world, 10);
         let expected_color = color::color(0.1, 0.1, 0.1);
         assert_color_approx_eq!(color, expected_color);
+    }
+
+    #[test]
+    fn shade_hit_with_two_identical_lights_doubles_the_color() {
+        let mut world = world::default_world();
+        world.lights.push(lights::point_light(
+            tuple::Point::new(-10.0, 10.0, -10.0),
+            color::white(),
+        ));
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+
+        let color = world.color_at(&ray, 10);
+
+        // Twice the single-light color from `color_at_when_a_ray_hits`.
+        assert_color_approx_eq!(color, color::color(0.76132, 0.95166, 0.571));
+    }
+
+    #[test]
+    fn shade_hit_with_one_light_shadowed_and_one_unobstructed() {
+        let mut builder = world::WorldBuilder::new();
+        // This light is blocked by the sphere at the origin.
+        builder.add_light_source(lights::point_light(
+            tuple::Point::new(0.0, 0.0, -10.0),
+            color::white(),
+        ));
+        // This light has a clear view of the hit point.
+        builder.add_light_source(lights::point_light(
+            tuple::Point::new(0.0, 0.0, 5.0),
+            color::white(),
+        ));
+        builder.add_shape(shape::Shape::default_sphere());
+        builder.add_shape({
+            let mut sphere = shape::Shape::default_sphere();
+            sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 0.0, 10.0));
+            sphere
+        });
+        let world = builder.world;
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, 5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+        let intersection = intersection::intersection(4.0, &world.shapes[1]);
+
+        let computations =
+            intersection::prepare_computations(&intersection, &ray, &vec![&intersection]);
+        let color = computations.shade_hit(&world, 10);
+
+        // The shadowed light contributes only its ambient term (0.1); the
+        // unobstructed light contributes ambient + diffuse + specular (1.9).
+        assert_color_approx_eq!(color, color::color(2.0, 2.0, 2.0));
     }
 
     #[test]
@@ -374,7 +425,7 @@ mod world_tests {
         let mut world = world::WorldBuilder::new().world;
         let light_position = tuple::Point::new(0.0, 0.0, -10.0);
         let light_color = color::color(1.0, 1.0, 1.0);
-        world.light = Some(lights::point_light(light_position, light_color));
+        world.lights = vec![lights::point_light(light_position, light_color)];
         let mut upper_plane = shape::Shape::default_plane();
         upper_plane.material.reflective = 1.0;
         upper_plane
