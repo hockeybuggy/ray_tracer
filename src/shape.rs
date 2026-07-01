@@ -460,6 +460,275 @@ mod cube_tests {
 }
 
 #[cfg(test)]
+mod cylinder_tests {
+    use assert_approx_eq::assert_approx_eq;
+
+    use crate::ray;
+    use crate::shape;
+    use crate::tuple;
+
+    #[test]
+    fn test_the_default_minimum_and_maximum_for_a_cylinder() {
+        let cylinder = shape::Shape::default_cylinder();
+
+        match &cylinder.shape_type {
+            shape::ShapeType::Cylinder {
+                minimum, maximum, ..
+            } => {
+                assert_eq!(*minimum, f64::NEG_INFINITY);
+                assert_eq!(*maximum, f64::INFINITY);
+            }
+            _ => panic!("expected a cylinder"),
+        }
+    }
+
+    #[test]
+    fn test_the_default_closed_value_for_a_cylinder() {
+        let cylinder = shape::Shape::default_cylinder();
+
+        match &cylinder.shape_type {
+            shape::ShapeType::Cylinder { closed, .. } => {
+                assert_eq!(*closed, false);
+            }
+            _ => panic!("expected a cylinder"),
+        }
+    }
+
+    #[test]
+    fn test_a_ray_misses_a_cylinder() {
+        // The first ray is on the surface pointing along the walls, the
+        // second is inside pointing along the axis, and the third is outside
+        // and askew from all axes.
+        let examples = [
+            (
+                tuple::Point::new(1.0, 0.0, 0.0),
+                tuple::Vector::new(0.0, 1.0, 0.0),
+            ),
+            (
+                tuple::Point::new(0.0, 0.0, 0.0),
+                tuple::Vector::new(0.0, 1.0, 0.0),
+            ),
+            (
+                tuple::Point::new(0.0, 0.0, -5.0),
+                tuple::Vector::new(1.0, 1.0, 1.0),
+            ),
+        ];
+
+        for (origin, direction) in examples {
+            let cylinder = shape::Shape::default_cylinder();
+            let ray = ray::ray(origin, tuple::normalize(&direction));
+
+            let intersections = cylinder.local_intersect(ray);
+
+            assert_eq!(intersections.len(), 0, "ray from {:?}", origin);
+        }
+    }
+
+    #[test]
+    fn test_a_ray_strikes_a_cylinder() {
+        // A tangent hit still produces two intersections (mirroring how
+        // sphere tangents work), then a perpendicular hit through the
+        // middle, then a skewed hit.
+        let examples = [
+            (
+                tuple::Point::new(1.0, 0.0, -5.0),
+                tuple::Vector::new(0.0, 0.0, 1.0),
+                5.0,
+                5.0,
+            ),
+            (
+                tuple::Point::new(0.0, 0.0, -5.0),
+                tuple::Vector::new(0.0, 0.0, 1.0),
+                4.0,
+                6.0,
+            ),
+            (
+                tuple::Point::new(0.5, 0.0, -5.0),
+                tuple::Vector::new(0.1, 1.0, 1.0),
+                6.80798,
+                7.08872,
+            ),
+        ];
+
+        for (origin, direction, t0, t1) in examples {
+            let cylinder = shape::Shape::default_cylinder();
+            let ray = ray::ray(origin, tuple::normalize(&direction));
+
+            let intersections = cylinder.local_intersect(ray);
+
+            assert_eq!(intersections.len(), 2, "ray from {:?}", origin);
+            assert_approx_eq!(intersections[0].t, t0, 1e-5f64);
+            assert_approx_eq!(intersections[1].t, t1, 1e-5f64);
+        }
+    }
+
+    #[test]
+    fn test_normal_vector_on_a_cylinder() {
+        // One point on each of the +x, -x, +z and -z sides; y has no effect.
+        let examples = [
+            (
+                tuple::Point::new(1.0, 0.0, 0.0),
+                tuple::Vector::new(1.0, 0.0, 0.0),
+            ),
+            (
+                tuple::Point::new(0.0, 5.0, -1.0),
+                tuple::Vector::new(0.0, 0.0, -1.0),
+            ),
+            (
+                tuple::Point::new(0.0, -2.0, 1.0),
+                tuple::Vector::new(0.0, 0.0, 1.0),
+            ),
+            (
+                tuple::Point::new(-1.0, 1.0, 0.0),
+                tuple::Vector::new(-1.0, 0.0, 0.0),
+            ),
+        ];
+
+        for (point, expected) in examples {
+            let cylinder = shape::Shape::default_cylinder();
+
+            let normal = cylinder.local_normal_at(point);
+
+            assert_eq!(expected, normal, "point {:?}", point);
+        }
+    }
+
+    #[test]
+    fn test_intersecting_a_constrained_cylinder() {
+        // In order: a ray escaping diagonally from inside; rays passing
+        // above and below the truncated section; rays hitting exactly the
+        // (exclusive) maximum and minimum bounds; and a ray through the
+        // middle.
+        let examples = [
+            (
+                tuple::Point::new(0.0, 1.5, 0.0),
+                tuple::Vector::new(0.1, 1.0, 0.0),
+                0,
+            ),
+            (
+                tuple::Point::new(0.0, 3.0, -5.0),
+                tuple::Vector::new(0.0, 0.0, 1.0),
+                0,
+            ),
+            (
+                tuple::Point::new(0.0, 0.0, -5.0),
+                tuple::Vector::new(0.0, 0.0, 1.0),
+                0,
+            ),
+            (
+                tuple::Point::new(0.0, 2.0, -5.0),
+                tuple::Vector::new(0.0, 0.0, 1.0),
+                0,
+            ),
+            (
+                tuple::Point::new(0.0, 1.0, -5.0),
+                tuple::Vector::new(0.0, 0.0, 1.0),
+                0,
+            ),
+            (
+                tuple::Point::new(0.0, 1.5, -2.0),
+                tuple::Vector::new(0.0, 0.0, 1.0),
+                2,
+            ),
+        ];
+
+        for (origin, direction, count) in examples {
+            let cylinder = shape::Shape::cylinder(1.0, 2.0, false);
+            let ray = ray::ray(origin, tuple::normalize(&direction));
+
+            let intersections = cylinder.local_intersect(ray);
+
+            assert_eq!(intersections.len(), count, "ray from {:?}", origin);
+        }
+    }
+
+    #[test]
+    fn test_intersecting_the_caps_of_a_closed_cylinder() {
+        // The first ray passes down the axis through both caps. The second
+        // and fourth enter through a cap and exit through the wall. The
+        // corner cases exit exactly where the far cap meets the wall, and
+        // must still produce only two intersections.
+        let examples = [
+            (
+                tuple::Point::new(0.0, 3.0, 0.0),
+                tuple::Vector::new(0.0, -1.0, 0.0),
+                2,
+            ),
+            (
+                tuple::Point::new(0.0, 3.0, -2.0),
+                tuple::Vector::new(0.0, -1.0, 2.0),
+                2,
+            ),
+            // corner case
+            (
+                tuple::Point::new(0.0, 4.0, -2.0),
+                tuple::Vector::new(0.0, -1.0, 1.0),
+                2,
+            ),
+            (
+                tuple::Point::new(0.0, 0.0, -2.0),
+                tuple::Vector::new(0.0, 1.0, 2.0),
+                2,
+            ),
+            // corner case
+            (
+                tuple::Point::new(0.0, -1.0, -2.0),
+                tuple::Vector::new(0.0, 1.0, 1.0),
+                2,
+            ),
+        ];
+
+        for (origin, direction, count) in examples {
+            let cylinder = shape::Shape::cylinder(1.0, 2.0, true);
+            let ray = ray::ray(origin, tuple::normalize(&direction));
+
+            let intersections = cylinder.local_intersect(ray);
+
+            assert_eq!(intersections.len(), count, "ray from {:?}", origin);
+        }
+    }
+
+    #[test]
+    fn test_the_normal_vector_on_a_cylinders_end_caps() {
+        // Three points on the bottom cap, then three on the top cap.
+        let examples = [
+            (
+                tuple::Point::new(0.0, 1.0, 0.0),
+                tuple::Vector::new(0.0, -1.0, 0.0),
+            ),
+            (
+                tuple::Point::new(0.5, 1.0, 0.0),
+                tuple::Vector::new(0.0, -1.0, 0.0),
+            ),
+            (
+                tuple::Point::new(0.0, 1.0, 0.5),
+                tuple::Vector::new(0.0, -1.0, 0.0),
+            ),
+            (
+                tuple::Point::new(0.0, 2.0, 0.0),
+                tuple::Vector::new(0.0, 1.0, 0.0),
+            ),
+            (
+                tuple::Point::new(0.5, 2.0, 0.0),
+                tuple::Vector::new(0.0, 1.0, 0.0),
+            ),
+            (
+                tuple::Point::new(0.0, 2.0, 0.5),
+                tuple::Vector::new(0.0, 1.0, 0.0),
+            ),
+        ];
+
+        for (point, expected) in examples {
+            let cylinder = shape::Shape::cylinder(1.0, 2.0, true);
+
+            let normal = cylinder.local_normal_at(point);
+
+            assert_eq!(expected, normal, "point {:?}", point);
+        }
+    }
+}
+
+#[cfg(test)]
 mod plane_tests {
     use crate::ray;
     use crate::shape;
