@@ -4,7 +4,7 @@ Rust implementation of *The Ray Tracer Challenge* (Jamis Buck). The book PDF
 lives at the repo root (`the-ray-tracer-challenge_P1.0.pdf`); chapter N page
 offsets are in the PDF bookmarks.
 
-**Progress:** chapters 1–12 complete. Next up: chapter 13 (Cylinders).
+**Progress:** chapters 1–13 complete. Next up: chapter 14 (Groups).
 
 ## Working agreement for book chapters
 

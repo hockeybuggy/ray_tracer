@@ -245,6 +245,17 @@ compare to the results they generate and smaller images are faster to render.
     </td>
   </tr>
 
+  <tr>
+    <td>Cylinders and cones</td>
+    <td>
+      <img src="tests/fixtures/cylinders_and_cones.png"
+           alt="A capped cylinder, a hollow pipe, and an ice cream cone with a strawberry scoop."
+           width="150px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
 </table>
 
 
