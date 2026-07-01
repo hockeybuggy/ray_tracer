@@ -856,6 +856,128 @@ mod cylinder_tests {
 }
 
 #[cfg(test)]
+mod cone_tests {
+    use assert_approx_eq::assert_approx_eq;
+
+    use crate::ray;
+    use crate::shape;
+    use crate::tuple;
+
+    #[test]
+    fn test_intersecting_a_cone_with_a_ray() {
+        // A head-on hit at the cone's tip, a diagonal hit, and a skewed ray
+        // that hits one half going in and the other half much later.
+        let examples = [
+            (
+                tuple::Point::new(0.0, 0.0, -5.0),
+                tuple::Vector::new(0.0, 0.0, 1.0),
+                5.0,
+                5.0,
+            ),
+            (
+                tuple::Point::new(0.0, 0.0, -5.0),
+                tuple::Vector::new(1.0, 1.0, 1.0),
+                8.66025,
+                8.66025,
+            ),
+            (
+                tuple::Point::new(1.0, 1.0, -5.0),
+                tuple::Vector::new(-0.5, -1.0, 1.0),
+                4.55006,
+                49.44994,
+            ),
+        ];
+
+        for (origin, direction, t0, t1) in examples {
+            let cone = shape::Shape::default_cone();
+            let ray = ray::ray(origin, tuple::normalize(&direction));
+
+            let intersections = cone.local_intersect(ray);
+
+            assert_eq!(intersections.len(), 2, "ray from {:?}", origin);
+            assert_approx_eq!(intersections[0].t, t0, 1e-5f64);
+            assert_approx_eq!(intersections[1].t, t1, 1e-5f64);
+        }
+    }
+
+    #[test]
+    fn test_intersecting_a_cone_with_a_ray_parallel_to_one_of_its_halves() {
+        // A ray parallel to one half of the cone (`a` is zero, `b` is not)
+        // still strikes the other half at a single point.
+        let cone = shape::Shape::default_cone();
+        let direction = tuple::normalize(&tuple::Vector::new(0.0, 1.0, 1.0));
+        let ray = ray::ray(tuple::Point::new(0.0, 0.0, -1.0), direction);
+
+        let intersections = cone.local_intersect(ray);
+
+        assert_eq!(intersections.len(), 1);
+        assert_approx_eq!(intersections[0].t, 0.35355, 1e-5f64);
+    }
+
+    #[test]
+    fn test_intersecting_a_cones_end_caps() {
+        // The first ray runs between the halves without touching them. The
+        // second enters through a cap and exits through a wall. The third
+        // runs up the y axis: through the lower cap, both walls (which meet
+        // at the origin), and the upper cap.
+        let examples = [
+            (
+                tuple::Point::new(0.0, 0.0, -5.0),
+                tuple::Vector::new(0.0, 1.0, 0.0),
+                0,
+            ),
+            (
+                tuple::Point::new(0.0, 0.0, -0.25),
+                tuple::Vector::new(0.0, 1.0, 1.0),
+                2,
+            ),
+            (
+                tuple::Point::new(0.0, 0.0, -0.25),
+                tuple::Vector::new(0.0, 1.0, 0.0),
+                4,
+            ),
+        ];
+
+        for (origin, direction, count) in examples {
+            let cone = shape::Shape::cone(-0.5, 0.5, true);
+            let ray = ray::ray(origin, tuple::normalize(&direction));
+
+            let intersections = cone.local_intersect(ray);
+
+            assert_eq!(intersections.len(), count, "ray from {:?}", origin);
+        }
+    }
+
+    #[test]
+    fn test_computing_the_normal_vector_on_a_cone() {
+        // Local (un-normalized) normals: degenerate at the tip, and leaning
+        // away from the y axis at 45 degrees on the walls.
+        let examples = [
+            (
+                tuple::Point::new(0.0, 0.0, 0.0),
+                tuple::Vector::new(0.0, 0.0, 0.0),
+            ),
+            (
+                tuple::Point::new(1.0, 1.0, 1.0),
+                tuple::Vector::new(1.0, -(2.0_f64.sqrt()), 1.0),
+            ),
+            (
+                tuple::Point::new(-1.0, -1.0, 0.0),
+                tuple::Vector::new(-1.0, 1.0, 0.0),
+            ),
+        ];
+
+        for (point, expected) in examples {
+            let cone = shape::Shape::default_cone();
+
+            let normal = cone.local_normal_at(point);
+
+            assert_eq!(expected, normal, "point {:?}", point);
+        }
+    }
+}
+
+#[cfg(test)]
 mod plane_tests {
     use crate::ray;
     use crate::shape;
