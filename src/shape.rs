@@ -53,30 +53,34 @@ impl Shape {
         self.transform = new_transform;
     }
 
-    pub fn intersect(&self, ray: ray::Ray) -> Vec<intersection::Intersection> {
+    pub fn intersect(&self, ray: &ray::Ray) -> Vec<intersection::Intersection> {
         let local_ray = ray.transform(&self.transformation_matrix().inverse().unwrap());
         return self.local_intersect(local_ray);
     }
 
-    fn sphere_normal_at(&self, world_point: tuple::Point) -> tuple::Vector {
+    fn sphere_local_normal_at(&self, object_point: tuple::Point) -> tuple::Vector {
+        object_point - tuple::Point::new(0.0, 0.0, 0.0)
+    }
+
+    fn plane_local_normal_at(&self, _object_point: tuple::Point) -> tuple::Vector {
+        tuple::Vector::new(0.0, 1.0, 0.0)
+    }
+
+    fn local_normal_at(&self, object_point: tuple::Point) -> tuple::Vector {
+        match self.shape_type {
+            ShapeType::Sphere => self.sphere_local_normal_at(object_point),
+            ShapeType::Plane => self.plane_local_normal_at(object_point),
+        }
+    }
+
+    pub fn normal_at(&self, world_point: tuple::Point) -> tuple::Vector {
         let transform_inverse = self.transform.inverse().unwrap();
         let object_point = transform_inverse * world_point;
-        let object_normal = object_point - tuple::Point::new(0.0, 0.0, 0.0);
+        let object_normal = self.local_normal_at(object_point);
         let mut world_normal = transform_inverse.transpose() * object_normal;
         // This is sorta a cheat to skip finding the submatrix.
         world_normal.w = 0.0;
         return tuple::normalize(&world_normal);
-    }
-
-    fn plane_normal_at(&self, _world_point: tuple::Point) -> tuple::Vector {
-        tuple::Vector::new(0.0, 1.0, 0.0)
-    }
-
-    pub fn normal_at(&self, world_point: tuple::Point) -> tuple::Vector {
-        match self.shape_type {
-            ShapeType::Sphere => self.sphere_normal_at(world_point),
-            ShapeType::Plane => self.plane_normal_at(world_point),
-        }
     }
 
     pub fn local_intersect(&self, local_ray: ray::Ray) -> Vec<intersection::Intersection> {
@@ -86,9 +90,24 @@ impl Shape {
         }
     }
 
-    fn sphere_local_intersect(&self, _local_ray: ray::Ray) -> Vec<intersection::Intersection> {
+    fn sphere_local_intersect(&self, local_ray: ray::Ray) -> Vec<intersection::Intersection> {
+        let sphere_to_ray = local_ray.origin - tuple::Point::new(0.0, 0.0, 0.0);
+
+        let a = tuple::dot(&local_ray.direction, &local_ray.direction);
+        let b = 2.0 * tuple::dot(&local_ray.direction, &sphere_to_ray);
+        let c = tuple::dot(&sphere_to_ray, &sphere_to_ray) - 1.0;
+
+        let discriminanant = b.powf(2.0) - 4.0 * a * c;
+
+        if discriminanant < 0.0 {
+            return vec![];
+        }
+
+        let t1 = (-b - discriminanant.sqrt()) / (2.0 * a);
+        let t2 = (-b + discriminanant.sqrt()) / (2.0 * a);
         return vec![
-            // tuple::Point::new(0.0, 1.0, 0.0)
+            intersection::intersection(t1, self),
+            intersection::intersection(t2, self),
         ];
     }
 

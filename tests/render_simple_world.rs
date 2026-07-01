@@ -213,7 +213,13 @@ mod test_helpers {
             }
             material.specular = 0.0;
             let mut pattern = patterns::Pattern::checkers(color::black(), color::white());
-            pattern.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(0.1, 0.1, 0.1));
+            // The y translation nudges the pattern off the y=0 checker boundary; intersection
+            // points on the plane straddle y=0 within float error, which speckles the checkers.
+            pattern.set_transformation_matrix(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.1, 0.1, 0.1)
+                    .translation(0.0, 0.01, 0.0),
+            );
             material.pattern = Some(pattern);
             floor.material = material;
             floor

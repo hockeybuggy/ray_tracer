@@ -1,7 +1,5 @@
 use crate::intersection;
 use crate::matrix;
-use crate::matrix::Inverse;
-use crate::shape;
 use crate::tuple;
 use crate::world;
 
@@ -20,30 +18,6 @@ impl Ray {
         self.origin + self.direction * t
     }
 
-    pub fn intersect<'a>(&'a self, sphere: &'a shape::Shape) -> Vec<intersection::Intersection> {
-        let transformed_ray = self.transform(&sphere.transformation_matrix().inverse().unwrap());
-        let sphere_to_ray = transformed_ray.origin - tuple::Point::new(0.0, 0.0, 0.0);
-
-        let a = tuple::dot(&transformed_ray.direction, &transformed_ray.direction);
-        let b = 2.0 * tuple::dot(&transformed_ray.direction, &sphere_to_ray);
-        let c = tuple::dot(&sphere_to_ray, &sphere_to_ray) - 1.0;
-
-        let discriminanant = b.powf(2.0) - 4.0 * a * c;
-
-        let mut intersections = Vec::new();
-
-        if discriminanant < 0.0 {
-            return intersections;
-        }
-
-        let t1 = (-b - discriminanant.sqrt()) / (2.0 * a);
-        intersections.push(intersection::intersection(t1, &sphere));
-        let t2 = (-b + discriminanant.sqrt()) / (2.0 * a);
-        intersections.push(intersection::intersection(t2, &sphere));
-
-        return intersections;
-    }
-
     pub fn intersect_world<'a>(
         &'a self,
         world: &'a world::World,
@@ -51,7 +25,7 @@ impl Ray {
         let mut intersections: Vec<intersection::Intersection> = world
             .shapes
             .iter()
-            .flat_map(|shape| self.intersect(&shape))
+            .flat_map(|shape| shape.intersect(self))
             .collect();
         intersections.sort_unstable_by(|x, y| x.t.partial_cmp(&y.t).unwrap());
         return intersections;
@@ -126,7 +100,7 @@ mod ray_tests {
         );
         let sphere = shape::Shape::default_sphere();
 
-        let intersections = ray.intersect(&sphere);
+        let intersections = sphere.intersect(&ray);
 
         assert_eq!(intersections.len(), 2);
         assert_eq!(intersections[0].t, 4.0_f64);
@@ -154,7 +128,7 @@ mod ray_tests {
         );
         let sphere = shape::Shape::default_sphere();
 
-        let intersections = ray.intersect(&sphere);
+        let intersections = sphere.intersect(&ray);
 
         assert_eq!(intersections.len(), 2);
         assert_eq!(intersections[0].t, 5.0_f64);
@@ -169,7 +143,7 @@ mod ray_tests {
         );
         let sphere = shape::Shape::default_sphere();
 
-        let intersections = ray.intersect(&sphere);
+        let intersections = sphere.intersect(&ray);
 
         assert_eq!(intersections.len(), 0);
     }
@@ -182,7 +156,7 @@ mod ray_tests {
         );
         let sphere = shape::Shape::default_sphere();
 
-        let intersections = ray.intersect(&sphere);
+        let intersections = sphere.intersect(&ray);
 
         assert_eq!(intersections.len(), 2);
         assert_eq!(intersections[0].t, -1.0_f64);
@@ -197,7 +171,7 @@ mod ray_tests {
         );
         let sphere = shape::Shape::default_sphere();
 
-        let intersections = ray.intersect(&sphere);
+        let intersections = sphere.intersect(&ray);
 
         assert_eq!(intersections.len(), 2);
         assert_eq!(intersections[0].t, -6.0_f64);
@@ -260,7 +234,7 @@ mod ray_tests {
         let mut sphere = shape::Shape::default_sphere();
         sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(2.0, 2.0, 2.0));
 
-        let intersections = ray.intersect(&sphere);
+        let intersections = sphere.intersect(&ray);
 
         assert_eq!(intersections.len(), 2);
         assert_eq!(intersections[0].t, 3.0);
@@ -277,7 +251,7 @@ mod ray_tests {
         let mut sphere = shape::Shape::default_sphere();
         sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(5.0, 0.0, 0.0));
 
-        let intersections = ray.intersect(&sphere);
+        let intersections = sphere.intersect(&ray);
 
         assert_eq!(intersections.len(), 0);
     }
