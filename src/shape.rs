@@ -1109,6 +1109,105 @@ mod cone_tests {
 }
 
 #[cfg(test)]
+mod group_tests {
+    use crate::matrix;
+    use crate::ray;
+    use crate::shape;
+    use crate::transformation::Transform;
+    use crate::tuple;
+
+    fn children(group: &shape::Shape) -> &Vec<shape::Shape> {
+        match &group.shape_type {
+            shape::ShapeType::Group { children } => children,
+            _ => panic!("expected a group"),
+        }
+    }
+
+    #[test]
+    fn test_creating_a_new_group() {
+        let group = shape::Shape::default_group();
+
+        assert_eq!(group.transform, matrix::Matrix4::IDENTITY);
+        assert_eq!(children(&group).len(), 0);
+    }
+
+    #[test]
+    fn test_adding_a_child_to_a_group() {
+        let mut group = shape::Shape::default_group();
+
+        group.add_child(shape::Shape::default_sphere());
+
+        assert_eq!(children(&group).len(), 1);
+        assert_eq!(children(&group)[0], shape::Shape::default_sphere());
+    }
+
+    #[test]
+    fn test_intersecting_a_ray_with_an_empty_group() {
+        let group = shape::Shape::default_group();
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, 0.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+
+        let intersections = group.local_intersect(ray);
+
+        assert_eq!(intersections.len(), 0);
+    }
+
+    #[test]
+    fn test_intersecting_a_ray_with_a_nonempty_group() {
+        // The first sphere sits at the origin, the second in front of it,
+        // and the third off to the side where the ray misses it. The
+        // intersections come back sorted by t, so the nearer sphere's pair
+        // appears first.
+        let mut group = shape::Shape::default_group();
+        let sphere1 = shape::Shape::default_sphere();
+        let mut sphere2 = shape::Shape::default_sphere();
+        sphere2.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 0.0, -3.0));
+        let mut sphere3 = shape::Shape::default_sphere();
+        sphere3.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(5.0, 0.0, 0.0));
+        group.add_child(sphere1);
+        group.add_child(sphere2);
+        group.add_child(sphere3);
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+
+        let intersections = group.local_intersect(ray);
+
+        let children = children(&group);
+        assert_eq!(intersections.len(), 4);
+        assert_eq!(intersections[0].object, &children[1]);
+        assert_eq!(intersections[1].object, &children[1]);
+        assert_eq!(intersections[2].object, &children[0]);
+        assert_eq!(intersections[3].object, &children[0]);
+    }
+
+    #[test]
+    fn test_intersecting_a_transformed_group() {
+        // The group's scaling moves the sphere's world position to
+        // (10, 0, 0), where the ray hits it. This works without any special
+        // handling as long as the group's local_intersect calls the
+        // children's intersect (not local_intersect), so each child applies
+        // its own transform too.
+        let mut group = shape::Shape::default_group();
+        group.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(2.0, 2.0, 2.0));
+        let mut sphere = shape::Shape::default_sphere();
+        sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(5.0, 0.0, 0.0));
+        group.add_child(sphere);
+        let ray = ray::ray(
+            tuple::Point::new(10.0, 0.0, -10.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+
+        let intersections = group.intersect(&ray);
+
+        assert_eq!(intersections.len(), 2);
+    }
+}
+
+#[cfg(test)]
 mod plane_tests {
     use crate::ray;
     use crate::shape;
