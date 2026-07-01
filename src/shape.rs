@@ -11,6 +11,7 @@ const EPSILON: f64 = 1e-5;
 enum ShapeType {
     Sphere,
     Plane,
+    Cube,
 }
 
 #[derive(Debug, PartialEq)]
@@ -34,6 +35,14 @@ impl Shape {
             transform: matrix::Matrix4::IDENTITY,
             material: material::material(),
             shape_type: ShapeType::Plane,
+        };
+    }
+
+    pub fn default_cube() -> Shape {
+        return Shape {
+            transform: matrix::Matrix4::IDENTITY,
+            material: material::material(),
+            shape_type: ShapeType::Cube,
         };
     }
 
@@ -66,10 +75,15 @@ impl Shape {
         tuple::Vector::new(0.0, 1.0, 0.0)
     }
 
+    fn cube_local_normal_at(&self, _object_point: tuple::Point) -> tuple::Vector {
+        todo!("chapter 12")
+    }
+
     fn local_normal_at(&self, object_point: tuple::Point) -> tuple::Vector {
         match self.shape_type {
             ShapeType::Sphere => self.sphere_local_normal_at(object_point),
             ShapeType::Plane => self.plane_local_normal_at(object_point),
+            ShapeType::Cube => self.cube_local_normal_at(object_point),
         }
     }
 
@@ -87,7 +101,12 @@ impl Shape {
         match self.shape_type {
             ShapeType::Sphere => self.sphere_local_intersect(local_ray),
             ShapeType::Plane => self.plane_local_intersect(local_ray),
+            ShapeType::Cube => self.cube_local_intersect(local_ray),
         }
+    }
+
+    fn cube_local_intersect(&self, _local_ray: ray::Ray) -> Vec<intersection::Intersection> {
+        todo!("chapter 12")
     }
 
     fn sphere_local_intersect(&self, local_ray: ray::Ray) -> Vec<intersection::Intersection> {
@@ -236,6 +255,169 @@ mod sphere_tests {
         sphere.material = material1;
 
         assert_eq!(sphere.material.ambient, 1.0);
+    }
+}
+
+#[cfg(test)]
+mod cube_tests {
+    use crate::ray;
+    use crate::shape;
+    use crate::tuple;
+
+    #[test]
+    fn test_a_ray_intersects_a_cube() {
+        // One ray aimed at each face of the cube, plus one starting inside it.
+        let examples = [
+            (
+                "+x",
+                tuple::Point::new(5.0, 0.5, 0.0),
+                tuple::Vector::new(-1.0, 0.0, 0.0),
+                4.0,
+                6.0,
+            ),
+            (
+                "-x",
+                tuple::Point::new(-5.0, 0.5, 0.0),
+                tuple::Vector::new(1.0, 0.0, 0.0),
+                4.0,
+                6.0,
+            ),
+            (
+                "+y",
+                tuple::Point::new(0.5, 5.0, 0.0),
+                tuple::Vector::new(0.0, -1.0, 0.0),
+                4.0,
+                6.0,
+            ),
+            (
+                "-y",
+                tuple::Point::new(0.5, -5.0, 0.0),
+                tuple::Vector::new(0.0, 1.0, 0.0),
+                4.0,
+                6.0,
+            ),
+            (
+                "+z",
+                tuple::Point::new(0.5, 0.0, 5.0),
+                tuple::Vector::new(0.0, 0.0, -1.0),
+                4.0,
+                6.0,
+            ),
+            (
+                "-z",
+                tuple::Point::new(0.5, 0.0, -5.0),
+                tuple::Vector::new(0.0, 0.0, 1.0),
+                4.0,
+                6.0,
+            ),
+            (
+                "inside",
+                tuple::Point::new(0.0, 0.5, 0.0),
+                tuple::Vector::new(0.0, 0.0, 1.0),
+                -1.0,
+                1.0,
+            ),
+        ];
+
+        for (name, origin, direction, t1, t2) in examples {
+            let cube = shape::Shape::default_cube();
+            let ray = ray::ray(origin, direction);
+
+            let intersections = cube.local_intersect(ray);
+
+            assert_eq!(intersections.len(), 2, "case `{}`", name);
+            assert_eq!(intersections[0].t, t1, "case `{}`", name);
+            assert_eq!(intersections[1].t, t2, "case `{}`", name);
+        }
+    }
+
+    #[test]
+    fn test_a_ray_misses_a_cube() {
+        // The first three rays point diagonally away from the cube; the rest
+        // run parallel to a face but past the cube.
+        let examples = [
+            (
+                tuple::Point::new(-2.0, 0.0, 0.0),
+                tuple::Vector::new(0.2673, 0.5345, 0.8018),
+            ),
+            (
+                tuple::Point::new(0.0, -2.0, 0.0),
+                tuple::Vector::new(0.8018, 0.2673, 0.5345),
+            ),
+            (
+                tuple::Point::new(0.0, 0.0, -2.0),
+                tuple::Vector::new(0.5345, 0.8018, 0.2673),
+            ),
+            (
+                tuple::Point::new(2.0, 0.0, 2.0),
+                tuple::Vector::new(0.0, 0.0, -1.0),
+            ),
+            (
+                tuple::Point::new(0.0, 2.0, 2.0),
+                tuple::Vector::new(0.0, -1.0, 0.0),
+            ),
+            (
+                tuple::Point::new(2.0, 2.0, 0.0),
+                tuple::Vector::new(-1.0, 0.0, 0.0),
+            ),
+        ];
+
+        for (origin, direction) in examples {
+            let cube = shape::Shape::default_cube();
+            let ray = ray::ray(origin, direction);
+
+            let intersections = cube.local_intersect(ray);
+
+            assert_eq!(intersections.len(), 0, "ray from {:?}", origin);
+        }
+    }
+
+    #[test]
+    fn test_the_normal_on_the_surface_of_a_cube() {
+        // The last two cases are corners, which are treated as being on the
+        // +x or -x face.
+        let examples = [
+            (
+                tuple::Point::new(1.0, 0.5, -0.8),
+                tuple::Vector::new(1.0, 0.0, 0.0),
+            ),
+            (
+                tuple::Point::new(-1.0, -0.2, 0.9),
+                tuple::Vector::new(-1.0, 0.0, 0.0),
+            ),
+            (
+                tuple::Point::new(-0.4, 1.0, -0.1),
+                tuple::Vector::new(0.0, 1.0, 0.0),
+            ),
+            (
+                tuple::Point::new(0.3, -1.0, -0.7),
+                tuple::Vector::new(0.0, -1.0, 0.0),
+            ),
+            (
+                tuple::Point::new(-0.6, 0.3, 1.0),
+                tuple::Vector::new(0.0, 0.0, 1.0),
+            ),
+            (
+                tuple::Point::new(0.4, 0.4, -1.0),
+                tuple::Vector::new(0.0, 0.0, -1.0),
+            ),
+            (
+                tuple::Point::new(1.0, 1.0, 1.0),
+                tuple::Vector::new(1.0, 0.0, 0.0),
+            ),
+            (
+                tuple::Point::new(-1.0, -1.0, -1.0),
+                tuple::Vector::new(-1.0, 0.0, 0.0),
+            ),
+        ];
+
+        for (point, expected) in examples {
+            let cube = shape::Shape::default_cube();
+
+            let normal = cube.local_normal_at(point);
+
+            assert_eq!(expected, normal, "point {:?}", point);
+        }
     }
 }
 
