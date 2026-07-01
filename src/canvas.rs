@@ -37,7 +37,7 @@ impl Canvas {
     pub fn canvas_to_image(&self) -> RgbImage {
         let mut img: RgbImage = ImageBuffer::new(self.width, self.height);
 
-        let clamp = |x: f64| (255.0_f64.min(x * 255.0).max(0.0) as u8);
+        let clamp = |x: f64| 255.0_f64.min(x * 255.0).max(0.0) as u8;
         let (width, height) = img.dimensions();
         for x in 0..width {
             for y in 0..height {

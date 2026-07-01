@@ -34,7 +34,7 @@ fn test_simple_sphere_test() -> Result<(), std::io::Error> {
 
             let ray = ray::ray(ray_origin, tuple::normalize(&(position - ray_origin)));
 
-            let intersections = ray.intersect(&sphere);
+            let intersections = sphere.intersect(&ray);
 
             match ray::hit(&intersections) {
                 Some(hit) => {
@@ -104,7 +104,7 @@ fn test_translated_sphere_test() -> Result<(), std::io::Error> {
 
             let ray = ray::ray(ray_origin, tuple::normalize(&(position - ray_origin)));
 
-            let intersections = ray.intersect(&sphere);
+            let intersections = sphere.intersect(&ray);
 
             match ray::hit(&intersections) {
                 Some(hit) => {

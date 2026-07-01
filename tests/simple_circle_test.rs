@@ -25,7 +25,7 @@ fn test_simple_circle_test() -> Result<(), std::io::Error> {
             let position = tuple::Point::new(world_x, world_y, wall_z);
 
             let ray = ray::ray(ray_origin, tuple::normalize(&(position - ray_origin)));
-            let intersections = ray.intersect(&sphere);
+            let intersections = sphere.intersect(&ray);
 
             match ray::hit(&intersections) {
                 Some(_hit) => canvas.write_pixel(x, y, color::color(1.0, 0.8, 0.6)),

@@ -13,7 +13,7 @@ pub struct Intersection<'a> {
     pub object: &'a shape::Shape,
 }
 
-pub fn intersection(t: f64, object: &shape::Shape) -> Intersection {
+pub fn intersection(t: f64, object: &shape::Shape) -> Intersection<'_> {
     Intersection { t, object }
 }
 
@@ -113,7 +113,7 @@ impl<'a> Computation<'a> {
 
         if self.object.material.reflective > 0.0 && self.object.material.transparency > 0.0 {
             let reflectance = self.reflectance();
-            return surface + reflected + refracted * refracted * (1.0 - reflectance);
+            return surface + reflected * reflectance + refracted * (1.0 - reflectance);
         }
 
         return surface + reflected + refracted;
@@ -185,7 +185,7 @@ mod intersection_tests {
             tuple::Vector::new(0.0, 0.0, 1.0),
         );
 
-        let intersections = ray.intersect(&sphere);
+        let intersections = sphere.intersect(&ray);
 
         assert_eq!(intersections.len(), 2);
         assert_eq!(intersections[0].object, &sphere);
