@@ -204,7 +204,14 @@ fn test_glass_sphere_scene() -> Result<(), std::io::Error> {
         let mut material = material::material();
         let mut pattern =
             patterns::Pattern::checkers(color::color(0.5, 0.5, 0.5), color::color(0.7, 0.7, 0.7));
-        pattern.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(0.005, 0.005, 0.005));
+        // The y translation nudges the pattern off the y=0 checker boundary; intersection
+        // points on the plane straddle y=0 within float error, and which side they land on
+        // differs between platforms, which made this fixture fail on CI.
+        pattern.set_transformation_matrix(
+            matrix::Matrix4::IDENTITY
+                .scaling(0.005, 0.005, 0.005)
+                .translation(0.0, 0.01, 0.0),
+        );
         material.pattern = Some(pattern);
         floor.material = material;
         floor
