@@ -37,7 +37,11 @@ Library crate; all modules exposed via `src/lib.rs`. One file per concept:
 Shapes are a single `Shape` struct with a private `ShapeType` enum
 (`src/shape.rs`), dispatched by `match` — not a trait. Adding a shape means:
 new enum variant, `default_<shape>()` constructor, and match arms in
-`local_intersect` / `normal_at`.
+`local_intersect` / `local_normal_at` (both operate in object space;
+`Shape::intersect` and `normal_at` handle the world/object conversions).
+
+Transform chaining left-multiplies: `.scaling(..).translation(..)` builds
+`T * S`, i.e. book order — the unit shape is scaled first, then translated.
 
 ## Conventions
 
@@ -53,3 +57,20 @@ new enum variant, `default_<shape>()` constructor, and match arms in
   visually verifying it.
 - Each render test has a `SCALE` constant for rendering higher-res versions.
 - New fixtures must be added to the README gallery or CI fails.
+
+## Render fixture gotchas
+
+- Fixture comparison is exact byte equality, fixtures are rendered on macOS,
+  and CI runs Linux — any float that rounds differently across platforms
+  breaks CI even when the render passes locally.
+- The main culprit: checker patterns on planes. Intersection points straddle
+  the pattern-space y=0 cell boundary within float error, and macOS/Linux
+  resolve the noise differently. Scenes nudge the pattern with a small y
+  translation; the offset must be a *non-integer* number of pattern cells
+  (half a cell is safest) or it lands back on a boundary.
+- When a render test fails on CI, the workflow uploads the differing render
+  as a `differing-renders` artifact: `gh run download <run-id> --name
+  differing-renders`, then diff it against the fixture pixel-by-pixel to see
+  whether it's a pattern flip (clustered large deltas) or float drift (±1-2).
+- The fixture PNGs are tiny; upscale with nearest-neighbour (e.g. Pillow)
+  before visually inspecting a render.
