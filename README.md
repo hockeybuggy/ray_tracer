@@ -234,6 +234,17 @@ compare to the results they generate and smaller images are faster to render.
     </td>
   </tr>
 
+  <tr>
+    <td>World made of cubes</td>
+    <td>
+      <img src="tests/fixtures/cubes.png"
+           alt="A room containing a table made of cubes, with boxes on the table and floor."
+           width="150px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
 </table>
 
 
