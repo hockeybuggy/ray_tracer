@@ -17,6 +17,11 @@ enum ShapeType {
         maximum: f64,
         closed: bool,
     },
+    Cone {
+        minimum: f64,
+        maximum: f64,
+        closed: bool,
+    },
 }
 
 #[derive(Debug, PartialEq)]
@@ -60,6 +65,22 @@ impl Shape {
             transform: matrix::Matrix4::IDENTITY,
             material: material::material(),
             shape_type: ShapeType::Cylinder {
+                minimum,
+                maximum,
+                closed,
+            },
+        };
+    }
+
+    pub fn default_cone() -> Shape {
+        return Shape::cone(f64::NEG_INFINITY, f64::INFINITY, false);
+    }
+
+    pub fn cone(minimum: f64, maximum: f64, closed: bool) -> Shape {
+        return Shape {
+            transform: matrix::Matrix4::IDENTITY,
+            material: material::material(),
+            shape_type: ShapeType::Cone {
                 minimum,
                 maximum,
                 closed,
@@ -130,6 +151,33 @@ impl Shape {
         return tuple::Vector::new(object_point.x, 0.0, object_point.z);
     }
 
+    fn cone_local_normal_at(
+        &self,
+        object_point: tuple::Point,
+        minimum: f64,
+        maximum: f64,
+    ) -> tuple::Vector {
+        // Same end cap check as the cylinder, except the cap radius is the
+        // absolute value of the extent's y rather than 1.
+        let distance = object_point.x.powf(2.0) + object_point.z.powf(2.0);
+
+        if distance < maximum.powf(2.0) && object_point.y >= maximum - EPSILON {
+            return tuple::Vector::new(0.0, 1.0, 0.0);
+        }
+        if distance < minimum.powf(2.0) && object_point.y <= minimum + EPSILON {
+            return tuple::Vector::new(0.0, -1.0, 0.0);
+        }
+
+        // The walls slope at 45 degrees, so the normal leans away from the
+        // y axis by the point's distance from it, downward on the upper
+        // half. At the tip this degenerates to a zero vector.
+        let mut y = distance.sqrt();
+        if object_point.y > 0.0 {
+            y = -y;
+        }
+        return tuple::Vector::new(object_point.x, y, object_point.z);
+    }
+
     fn local_normal_at(&self, object_point: tuple::Point) -> tuple::Vector {
         match self.shape_type {
             ShapeType::Sphere => self.sphere_local_normal_at(object_point),
@@ -138,6 +186,9 @@ impl Shape {
             ShapeType::Cylinder {
                 minimum, maximum, ..
             } => self.cylinder_local_normal_at(object_point, minimum, maximum),
+            ShapeType::Cone {
+                minimum, maximum, ..
+            } => self.cone_local_normal_at(object_point, minimum, maximum),
         }
     }
 
@@ -161,7 +212,76 @@ impl Shape {
                 maximum,
                 closed,
             } => self.cylinder_local_intersect(local_ray, minimum, maximum, closed),
+            ShapeType::Cone {
+                minimum,
+                maximum,
+                closed,
+            } => self.cone_local_intersect(local_ray, minimum, maximum, closed),
         }
+    }
+
+    fn cone_local_intersect(
+        &self,
+        local_ray: ray::Ray,
+        minimum: f64,
+        maximum: f64,
+        closed: bool,
+    ) -> Vec<intersection::Intersection<'_>> {
+        let mut intersections = vec![];
+
+        // The cylinder's coefficients with the y terms subtracted in.
+        let a = local_ray.direction.x.powf(2.0) - local_ray.direction.y.powf(2.0)
+            + local_ray.direction.z.powf(2.0);
+        let b = 2.0 * local_ray.origin.x * local_ray.direction.x
+            - 2.0 * local_ray.origin.y * local_ray.direction.y
+            + 2.0 * local_ray.origin.z * local_ray.direction.z;
+        let c = local_ray.origin.x.powf(2.0) - local_ray.origin.y.powf(2.0)
+            + local_ray.origin.z.powf(2.0);
+
+        if a.abs() < EPSILON {
+            // The ray is parallel to one half of the cone, but unless `b`
+            // is also zero it still strikes the other half once.
+            if b.abs() >= EPSILON {
+                let t = -c / (2.0 * b);
+                let y = local_ray.origin.y + t * local_ray.direction.y;
+                if minimum < y && y < maximum {
+                    intersections.push(intersection::intersection(t, self));
+                }
+            }
+        } else {
+            let discriminant = b.powf(2.0) - 4.0 * a * c;
+
+            if discriminant >= 0.0 {
+                let mut t0 = (-b - discriminant.sqrt()) / (2.0 * a);
+                let mut t1 = (-b + discriminant.sqrt()) / (2.0 * a);
+                if t0 > t1 {
+                    std::mem::swap(&mut t0, &mut t1);
+                }
+
+                // The minimum and maximum bounds are exclusive.
+                let y0 = local_ray.origin.y + t0 * local_ray.direction.y;
+                if minimum < y0 && y0 < maximum {
+                    intersections.push(intersection::intersection(t0, self));
+                }
+                let y1 = local_ray.origin.y + t1 * local_ray.direction.y;
+                if minimum < y1 && y1 < maximum {
+                    intersections.push(intersection::intersection(t1, self));
+                }
+            }
+        }
+
+        // A cone's cap radius equals the absolute value of the extent's y.
+        self.intersect_caps(
+            &local_ray,
+            minimum,
+            maximum,
+            closed,
+            minimum.abs(),
+            maximum.abs(),
+            &mut intersections,
+        );
+
+        return intersections;
     }
 
     fn cylinder_local_intersect(
@@ -204,33 +324,44 @@ impl Shape {
             }
         }
 
-        self.cylinder_intersect_caps(&local_ray, minimum, maximum, closed, &mut intersections);
+        // A cylinder's caps both have its unit radius.
+        self.intersect_caps(
+            &local_ray,
+            minimum,
+            maximum,
+            closed,
+            1.0,
+            1.0,
+            &mut intersections,
+        );
 
         return intersections;
     }
 
-    fn cylinder_intersect_caps<'a>(
+    fn intersect_caps<'a>(
         &'a self,
         local_ray: &ray::Ray,
         minimum: f64,
         maximum: f64,
         closed: bool,
+        minimum_radius: f64,
+        maximum_radius: f64,
         intersections: &mut Vec<intersection::Intersection<'a>>,
     ) {
-        // Caps only matter if the cylinder is closed and the ray isn't
+        // Caps only matter if the shape is closed and the ray isn't
         // parallel to them.
         if !closed || local_ray.direction.y.abs() < EPSILON {
             return;
         }
 
         // Intersect the ray with the planes at y=minimum and y=maximum, and
-        // keep each hit that lands within the cylinder's radius.
+        // keep each hit that lands within that cap's radius.
         let t_lower = (minimum - local_ray.origin.y) / local_ray.direction.y;
-        if check_cap(local_ray, t_lower) {
+        if check_cap(local_ray, t_lower, minimum_radius) {
             intersections.push(intersection::intersection(t_lower, self));
         }
         let t_upper = (maximum - local_ray.origin.y) / local_ray.direction.y;
-        if check_cap(local_ray, t_upper) {
+        if check_cap(local_ray, t_upper, maximum_radius) {
             intersections.push(intersection::intersection(t_upper, self));
         }
     }
@@ -298,11 +429,11 @@ fn check_axis(origin: f64, direction: f64) -> (f64, f64) {
 }
 
 // Check whether the point where the ray crosses a cap's plane at `t` lies
-// within one unit (the cylinder's radius) of the y axis.
-fn check_cap(ray: &ray::Ray, t: f64) -> bool {
+// within the cap's radius of the y axis.
+fn check_cap(ray: &ray::Ray, t: f64, radius: f64) -> bool {
     let x = ray.origin.x + t * ray.direction.x;
     let z = ray.origin.z + t * ray.direction.z;
-    return x.powf(2.0) + z.powf(2.0) <= 1.0;
+    return x.powf(2.0) + z.powf(2.0) <= radius.powf(2.0);
 }
 
 #[cfg(test)]
