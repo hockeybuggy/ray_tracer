@@ -106,10 +106,32 @@ compare to the results they generate and smaller images are faster to render.
   </tr>
 
   <tr>
+    <td>Open Cylinder</td>
+    <td>
+      <img src="tests/fixtures/open_cylinder.png"
+           alt="An uncapped purple cylinder seen from above, showing its hollow inside"
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
+  <tr>
     <td>Simple Cone</td>
     <td>
       <img src="tests/fixtures/simple_cone.png"
            alt="An orange cone with its wide base at the bottom and its tip pointing up"
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Open Cone</td>
+    <td>
+      <img src="tests/fixtures/open_cone.png"
+           alt="An uncapped red cone opening upward like a funnel, showing its hollow inside"
            width="100px"
            height="100px"
            >
@@ -168,7 +190,18 @@ compare to the results they generate and smaller images are faster to render.
     <td>Ring Sphere</td>
     <td>
       <img src="tests/fixtures/ring_sphere.png"
-           alt="A black and white sphere with a ring pattern"
+           alt="Two spheres with black and white bullseye ring patterns"
+           width="100px"
+           height="50px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Ring Cylinder</td>
+    <td>
+      <img src="tests/fixtures/ring_cylinder.png"
+           alt="Two cylinders with ring patterns, one with rings arcing around its barrel and one with a bullseye on its top cap"
            width="100px"
            height="50px"
            >
