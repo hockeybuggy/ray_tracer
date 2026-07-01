@@ -242,6 +242,207 @@ fn test_ring_sphere() -> Result<(), std::io::Error> {
 }
 
 #[test]
+fn test_checkered_cube() -> Result<(), std::io::Error> {
+    let mut builder = world::WorldBuilder::new();
+
+    // Create a floor and add it to the scene
+    builder.add_shape({
+        let mut floor = shape::Shape::default_sphere();
+        floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
+        let mut material = material::material();
+        material.color = color::color(1.0, 0.9, 0.9);
+        material.specular = 0.0;
+        floor.material = material;
+        floor
+    });
+
+    // Add a cube to the left. The pattern is scaled and nudged so cell
+    // boundaries don't land exactly on the cube faces (float noise there
+    // renders differently on macOS and Linux).
+    builder.add_shape({
+        let mut left = shape::Shape::default_cube();
+        left.set_transformation_matrix(
+            matrix::Matrix4::IDENTITY
+                .scaling(0.7, 0.7, 0.7)
+                .rotation_y(std::f64::consts::PI / 6.0)
+                .translation(-1.5, 0.7, 0.5),
+        );
+        let mut pattern = patterns::Pattern::checkers(color::black(), color::white());
+        pattern.set_transformation_matrix(
+            matrix::Matrix4::IDENTITY
+                .scaling(0.45, 0.45, 0.45)
+                .translation(0.01, 0.01, 0.01),
+        );
+        let mut material = material::material();
+        material.color = color::color(0.1, 1.0, 0.5);
+        material.diffuse = 0.7;
+        material.specular = 0.3;
+        material.pattern = Some(pattern);
+        left.material = material;
+        left
+    });
+
+    // Add a cube to the right, rotated the other way
+    builder.add_shape({
+        let mut right = shape::Shape::default_cube();
+        right.set_transformation_matrix(
+            matrix::Matrix4::IDENTITY
+                .scaling(0.7, 0.7, 0.7)
+                .rotation_y(-std::f64::consts::PI / 5.0)
+                .translation(1.5, 0.7, 0.5),
+        );
+        let mut pattern = patterns::Pattern::checkers(color::black(), color::white());
+        pattern.set_transformation_matrix(
+            matrix::Matrix4::IDENTITY
+                .scaling(0.55, 0.55, 0.55)
+                .translation(0.01, 0.01, 0.01),
+        );
+        let mut material = material::material();
+        material.color = color::color(0.1, 1.0, 0.5);
+        material.diffuse = 0.7;
+        material.specular = 0.3;
+        material.pattern = Some(pattern);
+        right.material = material;
+        right
+    });
+
+    // Let there be light
+    builder.add_light_source(lights::point_light(
+        tuple::Point::new(-10.0, 10.0, -10.0),
+        color::white(),
+    ));
+
+    let mut camera = camera::Camera::new(100 * SCALE, 50 * SCALE, std::f64::consts::PI / 3.0);
+    camera.transform = transformation::view_transform(
+        &tuple::Point::new(0.0, 1.5, -5.0),
+        &tuple::Point::new(0.0, 1.0, 0.0),
+        &tuple::Vector::new(0.0, 1.0, 0.0),
+    );
+
+    let canvas = camera.render(&builder.world);
+
+    if !std::path::Path::new("tests/fixtures/checkered_cube.png").exists() {
+        shared_test_helpers::write_image_to_file(&canvas, "checkered_cube.png").unwrap();
+        assert!(
+            false,
+            "No fixture yet. Written canvas to `checkered_cube.png`."
+        );
+    }
+
+    let expected_image =
+        shared_test_helpers::read_image_from_fixture_file("checkered_cube").unwrap();
+
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(&canvas, "checkered_cube.png").unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `checkered_cube.png`."
+        );
+    }
+    return Ok(());
+}
+
+#[test]
+fn test_stripe_cube() -> Result<(), std::io::Error> {
+    let mut builder = world::WorldBuilder::new();
+
+    // Create a floor and add it to the scene
+    builder.add_shape({
+        let mut floor = shape::Shape::default_sphere();
+        floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
+        let mut material = material::material();
+        material.color = color::color(1.0, 0.9, 0.9);
+        material.specular = 0.0;
+        floor.material = material;
+        floor
+    });
+
+    // Add a cube to the left with vertical stripes. The pattern is scaled
+    // and nudged so stripe boundaries don't land exactly on the cube faces.
+    builder.add_shape({
+        let mut left = shape::Shape::default_cube();
+        left.set_transformation_matrix(
+            matrix::Matrix4::IDENTITY
+                .scaling(0.7, 0.7, 0.7)
+                .rotation_y(std::f64::consts::PI / 6.0)
+                .translation(-1.5, 0.7, 0.5),
+        );
+        let mut pattern = patterns::Pattern::stripe(color::black(), color::white());
+        pattern.set_transformation_matrix(
+            matrix::Matrix4::IDENTITY
+                .scaling(0.25, 0.25, 0.25)
+                .translation(0.01, 0.0, 0.0),
+        );
+        let mut material = material::material();
+        material.color = color::color(0.1, 1.0, 0.5);
+        material.diffuse = 0.7;
+        material.specular = 0.3;
+        material.pattern = Some(pattern);
+        left.material = material;
+        left
+    });
+
+    // Add a cube to the right with the stripes running horizontally
+    builder.add_shape({
+        let mut right = shape::Shape::default_cube();
+        right.set_transformation_matrix(
+            matrix::Matrix4::IDENTITY
+                .scaling(0.7, 0.7, 0.7)
+                .rotation_y(-std::f64::consts::PI / 5.0)
+                .translation(1.5, 0.7, 0.5),
+        );
+        let mut pattern = patterns::Pattern::stripe(color::black(), color::white());
+        pattern.set_transformation_matrix(
+            matrix::Matrix4::IDENTITY
+                .scaling(0.25, 0.25, 0.25)
+                .rotation_z(std::f64::consts::PI / 2.0)
+                .translation(0.0, 0.01, 0.0),
+        );
+        let mut material = material::material();
+        material.color = color::color(0.1, 1.0, 0.5);
+        material.diffuse = 0.7;
+        material.specular = 0.3;
+        material.pattern = Some(pattern);
+        right.material = material;
+        right
+    });
+
+    // Let there be light
+    builder.add_light_source(lights::point_light(
+        tuple::Point::new(-10.0, 10.0, -10.0),
+        color::white(),
+    ));
+
+    let mut camera = camera::Camera::new(100 * SCALE, 50 * SCALE, std::f64::consts::PI / 3.0);
+    camera.transform = transformation::view_transform(
+        &tuple::Point::new(0.0, 1.5, -5.0),
+        &tuple::Point::new(0.0, 1.0, 0.0),
+        &tuple::Vector::new(0.0, 1.0, 0.0),
+    );
+
+    let canvas = camera.render(&builder.world);
+
+    if !std::path::Path::new("tests/fixtures/stripe_cube.png").exists() {
+        shared_test_helpers::write_image_to_file(&canvas, "stripe_cube.png").unwrap();
+        assert!(
+            false,
+            "No fixture yet. Written canvas to `stripe_cube.png`."
+        );
+    }
+
+    let expected_image = shared_test_helpers::read_image_from_fixture_file("stripe_cube").unwrap();
+
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(&canvas, "stripe_cube.png").unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `stripe_cube.png`."
+        );
+    }
+    return Ok(());
+}
+
+#[test]
 fn test_stripe_sphere() -> Result<(), std::io::Error> {
     let mut builder = world::WorldBuilder::new();
 

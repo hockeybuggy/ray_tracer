@@ -82,6 +82,50 @@ compare to the results they generate and smaller images are faster to render.
            >
     </td>
   </tr>
+
+  <tr>
+    <td>Simple Cube</td>
+    <td>
+      <img src="tests/fixtures/simple_cube.png"
+           alt="A blue cube rotated so three of its faces are visible"
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Simple Cylinder</td>
+    <td>
+      <img src="tests/fixtures/simple_cylinder.png"
+           alt="A capped teal cylinder seen from slightly above"
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Simple Cone</td>
+    <td>
+      <img src="tests/fixtures/simple_cone.png"
+           alt="An orange cone with its wide base at the bottom and its tip pointing up"
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Simple Plane</td>
+    <td>
+      <img src="tests/fixtures/simple_plane.png"
+           alt="A blue plane stretching to the horizon under a black sky"
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
 </table>
 
 
@@ -136,6 +180,28 @@ compare to the results they generate and smaller images are faster to render.
     <td>
       <img src="tests/fixtures/stripe_sphere.png"
            alt="A black and white sphere with a stripe pattern"
+           width="100px"
+           height="50px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Checkered Cube</td>
+    <td>
+      <img src="tests/fixtures/checkered_cube.png"
+           alt="Two black and white cubes with checkered patterns of different sizes"
+           width="100px"
+           height="50px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Stripe Cube</td>
+    <td>
+      <img src="tests/fixtures/stripe_cube.png"
+           alt="Two black and white cubes, one with vertical stripes and one with horizontal stripes"
            width="100px"
            height="50px"
            >
