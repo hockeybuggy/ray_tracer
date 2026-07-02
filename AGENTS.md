@@ -4,7 +4,8 @@ Rust implementation of *The Ray Tracer Challenge* (Jamis Buck). The book PDF
 lives at the repo root (`the-ray-tracer-challenge_P1.0.pdf`); chapter N page
 offsets are in the PDF bookmarks.
 
-**Progress:** chapters 1–14 complete. Next up: chapter 15 (Triangles).
+**Progress:** chapters 1–15 complete. Next up: chapter 16 (Constructive
+Solid Geometry).
 
 ## Working agreement for book chapters
 
@@ -32,7 +33,8 @@ Library crate; all modules exposed via `src/lib.rs`. One file per concept:
 `tuple` (points/vectors), `color`, `canvas` (PPM/image output), `matrix`,
 `transformation` (`Transform` trait), `ray`, `shape`, `intersection`,
 `material`, `patterns`, `lighting`, `lights`, `world` (+ `WorldBuilder`),
-`camera`.
+`camera`, `obj_file` (Wavefront OBJ model import; sample models in
+`object_files/`).
 
 Shapes are a single `Shape` struct with a private `ShapeType` enum
 (`src/shape.rs`), dispatched by `match` — not a trait. Adding a shape means:
