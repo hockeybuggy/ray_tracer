@@ -1442,6 +1442,89 @@ mod triangle_tests {
 }
 
 #[cfg(test)]
+mod smooth_triangle_tests {
+    use assert_approx_eq::assert_approx_eq;
+
+    use crate::assert_tuple_approx_eq;
+    use crate::intersection;
+    use crate::ray;
+    use crate::shape;
+    use crate::tuple;
+
+    // The book's background triangle: the same corners as the flat test
+    // triangle, but with a vertex normal at each corner pointing up at the
+    // apex and outward along x at the base corners.
+    fn smooth_triangle() -> shape::Shape {
+        shape::Shape::smooth_triangle(
+            tuple::Point::new(0.0, 1.0, 0.0),
+            tuple::Point::new(-1.0, 0.0, 0.0),
+            tuple::Point::new(1.0, 0.0, 0.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+            tuple::Vector::new(-1.0, 0.0, 0.0),
+            tuple::Vector::new(1.0, 0.0, 0.0),
+        )
+    }
+
+    #[test]
+    fn test_constructing_a_smooth_triangle() {
+        // A smooth triangle stores a normal for each corner alongside the
+        // corner points themselves.
+        let triangle = smooth_triangle();
+
+        match &triangle.shape_type {
+            shape::ShapeType::SmoothTriangle {
+                p1,
+                p2,
+                p3,
+                n1,
+                n2,
+                n3,
+                ..
+            } => {
+                assert_eq!(*p1, tuple::Point::new(0.0, 1.0, 0.0));
+                assert_eq!(*p2, tuple::Point::new(-1.0, 0.0, 0.0));
+                assert_eq!(*p3, tuple::Point::new(1.0, 0.0, 0.0));
+                assert_eq!(*n1, tuple::Vector::new(0.0, 1.0, 0.0));
+                assert_eq!(*n2, tuple::Vector::new(-1.0, 0.0, 0.0));
+                assert_eq!(*n3, tuple::Vector::new(1.0, 0.0, 0.0));
+            }
+            _ => panic!("expected a smooth triangle"),
+        }
+    }
+
+    #[test]
+    fn test_an_intersection_with_a_smooth_triangle_stores_u_and_v() {
+        // The barycentric u/v that Möller-Trumbore computes identify where
+        // on the triangle the hit landed; they must be preserved on the
+        // intersection so the normal can be interpolated later.
+        let triangle = smooth_triangle();
+        let ray = ray::ray(
+            tuple::Point::new(-0.2, 0.3, -2.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+
+        let intersections = triangle.local_intersect(ray);
+
+        assert_eq!(intersections.len(), 1);
+        assert_approx_eq!(intersections[0].u, 0.45, 1e-5f64);
+        assert_approx_eq!(intersections[0].v, 0.25, 1e-5f64);
+    }
+
+    #[test]
+    fn test_a_smooth_triangle_interpolates_the_normal_from_u_and_v() {
+        // The queried point is deliberately the origin: only the hit's u
+        // and v drive the result, blending the three vertex normals with
+        // the barycentric weights n2*u + n3*v + n1*(1 - u - v).
+        let triangle = smooth_triangle();
+        let hit = intersection::intersection_with_uv(1.0, &triangle, 0.45, 0.25);
+
+        let normal = hit.normal_at(tuple::Point::new(0.0, 0.0, 0.0));
+
+        assert_tuple_approx_eq!(tuple::Vector::new(-0.5547, 0.83205, 0.0), normal);
+    }
+}
+
+#[cfg(test)]
 mod plane_tests {
     use crate::ray;
     use crate::shape;
