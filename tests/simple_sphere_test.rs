@@ -39,11 +39,11 @@ fn test_simple_sphere_test() -> Result<(), std::io::Error> {
             match ray::hit(&intersections) {
                 Some(hit) => {
                     let point = ray.position(hit.t);
-                    let normal = hit.object.normal_at(point);
+                    let normal = hit.normal_at(point);
                     let camera = -ray.direction;
                     let color = lighting::lighting(
                         &hit.object.material,
-                        &hit.object,
+                        &hit.world_transform,
                         &light,
                         &point,
                         &camera,
@@ -109,11 +109,11 @@ fn test_translated_sphere_test() -> Result<(), std::io::Error> {
             match ray::hit(&intersections) {
                 Some(hit) => {
                     let point = ray.position(hit.t);
-                    let normal = hit.object.normal_at(point);
+                    let normal = hit.normal_at(point);
                     let camera = -ray.direction;
                     let color = lighting::lighting(
                         &hit.object.material,
-                        &hit.object,
+                        &hit.world_transform,
                         &light,
                         &point,
                         &camera,
