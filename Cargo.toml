@@ -5,6 +5,14 @@ authors = ["Douglas Anderson <hockeybuggy@gmail.com>"]
 edition = "2024"
 license = "MIT"
 
+# The render tests are compute heavy (the OBJ models especially), so build
+# tests and the library they link against with optimizations.
+[profile.test]
+opt-level = 2
+
+[profile.dev]
+opt-level = 2
+
 [dependencies]
 assert_approx_eq = "1.1.0"
 criterion = "0.8"
