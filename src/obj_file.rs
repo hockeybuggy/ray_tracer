@@ -1,6 +1,9 @@
 // A parser for the Wavefront OBJ 3D model format (chapter 15). Only the
-// statements the ray tracer needs are recognized: `v` (vertex) and `f`
-// (face) so far, with `g` (named group) routing faces into groups. Faces
+// statements the ray tracer needs are recognized: `v` (vertex), `vn`
+// (vertex normal), and `f` (face), with `g` (named group) routing faces
+// into groups. A face names its corners as plain vertex indices or as
+// vertex/texture/normal triples like `1//3`; when normals are present the
+// face produces smooth triangles (texture indices are ignored). Faces
 // with more than three vertices are fan-triangulated, so only convex
 // polygons are supported. Everything else is silently ignored.
 //
@@ -26,6 +29,7 @@ use crate::tuple;
 pub struct Parser {
     pub ignored_lines: usize,
     vertices: Vec<tuple::Point>,
+    normals: Vec<tuple::Vector>,
     default_group: Vec<shape::Shape>,
     // The named groups in file order. Vertex indices are global to the
     // file, so only the triangles are grouped, not the vertices.
@@ -36,6 +40,7 @@ pub fn parse_obj(source: &str) -> Parser {
     let mut parser = Parser {
         ignored_lines: 0,
         vertices: Vec::new(),
+        normals: Vec::new(),
         default_group: Vec::new(),
         named_groups: Vec::new(),
     };
@@ -48,6 +53,7 @@ pub fn parse_obj(source: &str) -> Parser {
         let tokens: Vec<&str> = line.split_whitespace().collect();
         let recognized = match tokens.split_first() {
             Some((&"v", args)) => parser.parse_vertex(args),
+            Some((&"vn", args)) => parser.parse_normal(args),
             Some((&"f", args)) => parser.parse_face(args, current_group),
             Some((&"g", args)) => match parser.enter_group(args) {
                 Some(index) => {
@@ -67,9 +73,13 @@ pub fn parse_obj(source: &str) -> Parser {
 }
 
 impl Parser {
-    // Vertices use the OBJ format's 1-based indexing.
+    // Vertices and normals use the OBJ format's 1-based indexing.
     pub fn vertex(&self, index: usize) -> tuple::Point {
         return self.vertices[index - 1];
+    }
+
+    pub fn normal(&self, index: usize) -> tuple::Vector {
+        return self.normals[index - 1];
     }
 
     pub fn default_group(&self) -> &[shape::Shape] {
@@ -123,26 +133,63 @@ impl Parser {
         return true;
     }
 
-    fn parse_face(&mut self, args: &[&str], current_group: Option<usize>) -> bool {
-        let indices: Vec<usize> = args.iter().filter_map(|arg| arg.parse().ok()).collect();
-        if indices.len() != args.len() || indices.len() < 3 {
+    fn parse_normal(&mut self, args: &[&str]) -> bool {
+        let components: Vec<f64> = args.iter().filter_map(|arg| arg.parse().ok()).collect();
+        if args.len() != 3 || components.len() != 3 {
             return false;
         }
-        if indices
-            .iter()
-            .any(|&index| index < 1 || index > self.vertices.len())
-        {
+
+        // Normals are imported as is, without normalization.
+        self.normals.push(tuple::Vector::new(
+            components[0],
+            components[1],
+            components[2],
+        ));
+        return true;
+    }
+
+    fn parse_face(&mut self, args: &[&str], current_group: Option<usize>) -> bool {
+        let mut corners: Vec<(usize, Option<usize>)> = Vec::new();
+        for arg in args {
+            match parse_face_corner(arg) {
+                Some(corner) => corners.push(corner),
+                None => return false,
+            }
+        }
+        if corners.len() < 3 {
+            return false;
+        }
+        if corners.iter().any(|&(vertex, normal)| {
+            vertex < 1
+                || vertex > self.vertices.len()
+                || normal.is_some_and(|index| index < 1 || index > self.normals.len())
+        }) {
+            return false;
+        }
+
+        // A face is smooth only when every corner names a normal; a face
+        // that mixes corners with and without normals is malformed.
+        let smooth = corners.iter().all(|&(_, normal)| normal.is_some());
+        if !smooth && corners.iter().any(|&(_, normal)| normal.is_some()) {
             return false;
         }
 
         // Fan triangulation: this assumes the polygon is convex, so every
-        // triangle can share the face's first vertex.
-        for i in 1..indices.len() - 1 {
-            let triangle = shape::Shape::triangle(
-                self.vertex(indices[0]),
-                self.vertex(indices[i]),
-                self.vertex(indices[i + 1]),
-            );
+        // triangle can share the face's first corner.
+        for i in 1..corners.len() - 1 {
+            let (v1, v2, v3) = (corners[0].0, corners[i].0, corners[i + 1].0);
+            let triangle = if smooth {
+                shape::Shape::smooth_triangle(
+                    self.vertex(v1),
+                    self.vertex(v2),
+                    self.vertex(v3),
+                    self.normal(corners[0].1.unwrap()),
+                    self.normal(corners[i].1.unwrap()),
+                    self.normal(corners[i + 1].1.unwrap()),
+                )
+            } else {
+                shape::Shape::triangle(self.vertex(v1), self.vertex(v2), self.vertex(v3))
+            };
             match current_group {
                 Some(group) => self.named_groups[group].1.push(triangle),
                 None => self.default_group.push(triangle),
@@ -165,6 +212,23 @@ impl Parser {
         self.named_groups.push((name.to_string(), Vec::new()));
         return Some(self.named_groups.len() - 1);
     }
+}
+
+// Parses one face corner of the form `v`, `v/t`, `v/t/n`, or `v//n` into
+// the vertex index and optional normal index. The texture index in the
+// middle is not used by the ray tracer and is ignored unparsed.
+fn parse_face_corner(arg: &str) -> Option<(usize, Option<usize>)> {
+    let mut parts = arg.split('/');
+    let vertex = parts.next()?.parse().ok()?;
+    let _texture = parts.next();
+    let normal = match parts.next() {
+        Some(part) => Some(part.parse().ok()?),
+        None => None,
+    };
+    if parts.next().is_some() {
+        return None;
+    }
+    return Some((vertex, normal));
 }
 
 #[cfg(test)]
