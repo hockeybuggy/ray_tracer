@@ -25,6 +25,14 @@ enum ShapeType {
     Group {
         children: Vec<Shape>,
     },
+    Triangle {
+        p1: tuple::Point,
+        p2: tuple::Point,
+        p3: tuple::Point,
+        e1: tuple::Vector,
+        e2: tuple::Vector,
+        normal: tuple::Vector,
+    },
 }
 
 #[derive(Debug, PartialEq)]
@@ -106,6 +114,26 @@ impl Shape {
             ShapeType::Group { children } => children.push(child),
             _ => panic!("only groups can contain children"),
         }
+    }
+
+    pub fn triangle(p1: tuple::Point, p2: tuple::Point, p3: tuple::Point) -> Shape {
+        // The edge vectors and normal never vary across the surface, so
+        // they are computed once here rather than on every intersection.
+        let e1 = p2 - p1;
+        let e2 = p3 - p1;
+        let normal = tuple::normalize(&tuple::cross(&e2, &e1));
+        return Shape {
+            transform: matrix::Matrix4::IDENTITY,
+            material: material::material(),
+            shape_type: ShapeType::Triangle {
+                p1,
+                p2,
+                p3,
+                e1,
+                e2,
+                normal,
+            },
+        };
     }
 
     pub fn glass_sphere() -> Shape {
@@ -212,6 +240,7 @@ impl Shape {
             // A group has no surface of its own; normals are always computed
             // on the concrete child shape the ray actually hit.
             ShapeType::Group { .. } => panic!("groups do not have a local normal"),
+            ShapeType::Triangle { normal, .. } => normal,
         }
     }
 
@@ -241,7 +270,48 @@ impl Shape {
                 closed,
             } => self.cone_local_intersect(local_ray, minimum, maximum, closed),
             ShapeType::Group { ref children } => self.group_local_intersect(children, local_ray),
+            ShapeType::Triangle { p1, e1, e2, .. } => {
+                self.triangle_local_intersect(local_ray, p1, e1, e2)
+            }
         }
+    }
+
+    fn triangle_local_intersect(
+        &self,
+        local_ray: ray::Ray,
+        p1: tuple::Point,
+        e1: tuple::Vector,
+        e2: tuple::Vector,
+    ) -> Vec<intersection::Intersection<'_>> {
+        // Möller–Trumbore: solve origin + t*dir = p1 + u*e1 + v*e2 for
+        // (t, u, v) via Cramer's rule, where u and v are barycentric
+        // coordinates that must stay within the triangle.
+        let dir_cross_e2 = tuple::cross(&local_ray.direction, &e2);
+        let det = tuple::dot(&e1, &dir_cross_e2);
+
+        // A determinant of zero means the ray is parallel to the triangle.
+        if det.abs() < EPSILON {
+            return vec![];
+        }
+        let f = 1.0 / det;
+
+        // A u outside [0, 1] means the ray passes beyond the p1-p3 edge.
+        let p1_to_origin = local_ray.origin - p1;
+        let u = f * tuple::dot(&p1_to_origin, &dir_cross_e2);
+        if !(0.0..=1.0).contains(&u) {
+            return vec![];
+        }
+
+        // A negative v or u + v beyond 1 means the ray passes beyond the
+        // p1-p2 or p2-p3 edge respectively.
+        let origin_cross_e1 = tuple::cross(&p1_to_origin, &e1);
+        let v = f * tuple::dot(&local_ray.direction, &origin_cross_e1);
+        if v < 0.0 || (u + v) > 1.0 {
+            return vec![];
+        }
+
+        let t = f * tuple::dot(&e2, &origin_cross_e1);
+        return vec![intersection::intersection(t, self)];
     }
 
     fn group_local_intersect<'a>(
