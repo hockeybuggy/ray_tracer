@@ -1253,6 +1253,125 @@ mod group_tests {
 }
 
 #[cfg(test)]
+mod triangle_tests {
+    use crate::ray;
+    use crate::shape;
+    use crate::tuple;
+
+    // The book's test triangle: apex at (0, 1, 0), base corners at
+    // (-1, 0, 0) and (1, 0, 0), all in the z=0 plane.
+    fn triangle() -> shape::Shape {
+        shape::Shape::triangle(
+            tuple::Point::new(0.0, 1.0, 0.0),
+            tuple::Point::new(-1.0, 0.0, 0.0),
+            tuple::Point::new(1.0, 0.0, 0.0),
+        )
+    }
+
+    #[test]
+    fn test_constructing_a_triangle() {
+        // The edge vectors e1 = p2 - p1 and e2 = p3 - p1 and the normal
+        // (normalize(cross(e2, e1))) are the same everywhere on the
+        // triangle, so the constructor precomputes them once.
+        let p1 = tuple::Point::new(0.0, 1.0, 0.0);
+        let p2 = tuple::Point::new(-1.0, 0.0, 0.0);
+        let p3 = tuple::Point::new(1.0, 0.0, 0.0);
+
+        let triangle = shape::Shape::triangle(p1, p2, p3);
+
+        match &triangle.shape_type {
+            shape::ShapeType::Triangle {
+                p1: point1,
+                p2: point2,
+                p3: point3,
+                e1,
+                e2,
+                normal,
+            } => {
+                assert_eq!(*point1, p1);
+                assert_eq!(*point2, p2);
+                assert_eq!(*point3, p3);
+                assert_eq!(*e1, tuple::Vector::new(-1.0, -1.0, 0.0));
+                assert_eq!(*e2, tuple::Vector::new(1.0, -1.0, 0.0));
+                assert_eq!(*normal, tuple::Vector::new(0.0, 0.0, -1.0));
+            }
+            _ => panic!("expected a triangle"),
+        }
+    }
+
+    #[test]
+    fn test_finding_the_normal_on_a_triangle() {
+        // Every point on a flat triangle shares the precomputed normal.
+        let triangle = triangle();
+
+        let expected = tuple::Vector::new(0.0, 0.0, -1.0);
+        assert_eq!(
+            triangle.local_normal_at(tuple::Point::new(0.0, 0.5, 0.0)),
+            expected,
+        );
+        assert_eq!(
+            triangle.local_normal_at(tuple::Point::new(-0.5, 0.75, 0.0)),
+            expected,
+        );
+        assert_eq!(
+            triangle.local_normal_at(tuple::Point::new(0.5, 0.25, 0.0)),
+            expected,
+        );
+    }
+
+    #[test]
+    fn test_intersecting_a_ray_parallel_to_the_triangle() {
+        // The ray points along y, parallel to the triangle's plane, so the
+        // determinant in the intersection algorithm is zero.
+        let triangle = triangle();
+        let ray = ray::ray(
+            tuple::Point::new(0.0, -1.0, -2.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+        );
+
+        let intersections = triangle.local_intersect(ray);
+
+        assert_eq!(intersections.len(), 0);
+    }
+
+    #[test]
+    fn test_a_ray_misses_the_triangles_edges() {
+        // One ray aimed past each edge of the triangle. The first misses
+        // beyond the p1-p3 edge (caught by the u check); the other two miss
+        // beyond the p1-p2 and p2-p3 edges (caught by the v checks).
+        let examples = [
+            ("p1-p3", tuple::Point::new(1.0, 1.0, -2.0)),
+            ("p1-p2", tuple::Point::new(-1.0, 1.0, -2.0)),
+            ("p2-p3", tuple::Point::new(0.0, -1.0, -2.0)),
+        ];
+
+        for (name, origin) in examples {
+            let triangle = triangle();
+            let ray = ray::ray(origin, tuple::Vector::new(0.0, 0.0, 1.0));
+
+            let intersections = triangle.local_intersect(ray);
+
+            assert_eq!(intersections.len(), 0, "case `{}`", name);
+        }
+    }
+
+    #[test]
+    fn test_a_ray_strikes_a_triangle() {
+        // Unlike the other solids, a ray crosses a triangle at most once.
+        let triangle = triangle();
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.5, -2.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+
+        let intersections = triangle.local_intersect(ray);
+
+        assert_eq!(intersections.len(), 1);
+        assert_eq!(intersections[0].t, 2.0);
+    }
+}
+
+#[cfg(test)]
 mod plane_tests {
     use crate::ray;
     use crate::shape;
