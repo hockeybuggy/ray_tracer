@@ -33,6 +33,16 @@ enum ShapeType {
         e2: tuple::Vector,
         normal: tuple::Vector,
     },
+    SmoothTriangle {
+        p1: tuple::Point,
+        p2: tuple::Point,
+        p3: tuple::Point,
+        e1: tuple::Vector,
+        e2: tuple::Vector,
+        n1: tuple::Vector,
+        n2: tuple::Vector,
+        n3: tuple::Vector,
+    },
 }
 
 #[derive(Debug, PartialEq)]
@@ -132,6 +142,32 @@ impl Shape {
                 e1,
                 e2,
                 normal,
+            },
+        };
+    }
+
+    pub fn smooth_triangle(
+        p1: tuple::Point,
+        p2: tuple::Point,
+        p3: tuple::Point,
+        n1: tuple::Vector,
+        n2: tuple::Vector,
+        n3: tuple::Vector,
+    ) -> Shape {
+        let e1 = p2 - p1;
+        let e2 = p3 - p1;
+        return Shape {
+            transform: matrix::Matrix4::IDENTITY,
+            material: material::material(),
+            shape_type: ShapeType::SmoothTriangle {
+                p1,
+                p2,
+                p3,
+                e1,
+                e2,
+                n1,
+                n2,
+                n3,
             },
         };
     }
@@ -241,6 +277,26 @@ impl Shape {
             // on the concrete child shape the ray actually hit.
             ShapeType::Group { .. } => panic!("groups do not have a local normal"),
             ShapeType::Triangle { normal, .. } => normal,
+            // A smooth triangle's normal depends on where the hit landed,
+            // which only the intersection knows; see local_normal_at_with_uv.
+            ShapeType::SmoothTriangle { .. } => {
+                panic!("smooth triangles interpolate their normal from the hit's u/v")
+            }
+        }
+    }
+
+    // The normal for a smooth triangle blends the vertex normals with the
+    // same barycentric weights that locate the hit between the corners.
+    // Every other shape's normal depends only on the point.
+    pub(crate) fn local_normal_at_with_uv(
+        &self,
+        object_point: tuple::Point,
+        u: f64,
+        v: f64,
+    ) -> tuple::Vector {
+        match self.shape_type {
+            ShapeType::SmoothTriangle { n1, n2, n3, .. } => n2 * u + n3 * v + n1 * (1.0 - u - v),
+            _ => self.local_normal_at(object_point),
         }
     }
 
@@ -271,6 +327,9 @@ impl Shape {
             } => self.cone_local_intersect(local_ray, minimum, maximum, closed),
             ShapeType::Group { ref children } => self.group_local_intersect(children, local_ray),
             ShapeType::Triangle { p1, e1, e2, .. } => {
+                self.triangle_local_intersect(local_ray, p1, e1, e2)
+            }
+            ShapeType::SmoothTriangle { p1, e1, e2, .. } => {
                 self.triangle_local_intersect(local_ray, p1, e1, e2)
             }
         }
@@ -311,7 +370,7 @@ impl Shape {
         }
 
         let t = f * tuple::dot(&e2, &origin_cross_e1);
-        return vec![intersection::intersection(t, self)];
+        return vec![intersection::intersection_with_uv(t, self, u, v)];
     }
 
     fn group_local_intersect<'a>(

@@ -18,13 +18,24 @@ pub struct Intersection<'a> {
     // transform, and each enclosing group prepends its transform as the
     // intersections bubble back up the tree.
     pub world_transform: matrix::Matrix4,
+
+    // Barycentric coordinates of the hit, relative to a triangle's
+    // corners. They stay zero for every other shape.
+    pub u: f64,
+    pub v: f64,
 }
 
 pub fn intersection(t: f64, object: &shape::Shape) -> Intersection<'_> {
+    intersection_with_uv(t, object, 0.0, 0.0)
+}
+
+pub fn intersection_with_uv(t: f64, object: &shape::Shape, u: f64, v: f64) -> Intersection<'_> {
     Intersection {
         t,
         object,
         world_transform: object.transform,
+        u,
+        v,
     }
 }
 
@@ -42,7 +53,9 @@ impl<'a> Intersection<'a> {
 
     pub fn normal_at(&self, world_point: tuple::Point) -> tuple::Vector {
         let object_point = self.world_to_object(world_point);
-        let object_normal = self.object.local_normal_at(object_point);
+        let object_normal = self
+            .object
+            .local_normal_at_with_uv(object_point, self.u, self.v);
         return self.normal_to_world(object_normal);
     }
 }
