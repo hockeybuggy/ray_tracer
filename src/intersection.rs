@@ -641,3 +641,56 @@ mod group_intersection_tests {
         assert_tuple_approx_eq!(tuple::Vector::new(0.0, 0.0, -1.0), computations.normalv);
     }
 }
+
+#[cfg(test)]
+mod uv_intersection_tests {
+    use crate::assert_tuple_approx_eq;
+    use crate::intersection;
+    use crate::ray;
+    use crate::shape;
+    use crate::tuple;
+
+    #[test]
+    fn test_an_intersection_can_encapsulate_u_and_v() {
+        // Only triangle intersections carry meaningful u/v values;
+        // intersections built the ordinary way leave them at zero.
+        let triangle = shape::Shape::triangle(
+            tuple::Point::new(0.0, 1.0, 0.0),
+            tuple::Point::new(-1.0, 0.0, 0.0),
+            tuple::Point::new(1.0, 0.0, 0.0),
+        );
+
+        let intersection = intersection::intersection_with_uv(3.5, &triangle, 0.2, 0.4);
+
+        assert_eq!(intersection.u, 0.2);
+        assert_eq!(intersection.v, 0.4);
+    }
+
+    #[test]
+    fn test_preparing_the_normal_on_a_smooth_triangle() {
+        // prepare_computations computes the normal via the hit itself, so
+        // the smooth triangle's interpolated normal flows through to
+        // normalv without any extra plumbing.
+        let triangle = shape::Shape::smooth_triangle(
+            tuple::Point::new(0.0, 1.0, 0.0),
+            tuple::Point::new(-1.0, 0.0, 0.0),
+            tuple::Point::new(1.0, 0.0, 0.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+            tuple::Vector::new(-1.0, 0.0, 0.0),
+            tuple::Vector::new(1.0, 0.0, 0.0),
+        );
+        let hit = intersection::intersection_with_uv(1.0, &triangle, 0.45, 0.25);
+        let ray = ray::ray(
+            tuple::Point::new(-0.2, 0.3, -2.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+        let intersection_refs = vec![&hit];
+
+        let computations = intersection::prepare_computations(&hit, &ray, &intersection_refs);
+
+        assert_tuple_approx_eq!(
+            tuple::Vector::new(-0.5547, 0.83205, 0.0),
+            computations.normalv
+        );
+    }
+}
