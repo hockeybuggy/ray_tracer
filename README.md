@@ -366,6 +366,17 @@ compare to the results they generate and smaller images are faster to render.
     </td>
   </tr>
 
+  <tr>
+    <td>Hexagon</td>
+    <td>
+      <img src="tests/fixtures/hexagon.png"
+           alt="A teal hexagonal ring built from grouped spheres and cylinders, tipped forward above a white floor."
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
 </table>
 
 
