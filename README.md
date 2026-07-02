@@ -388,6 +388,39 @@ compare to the results they generate and smaller images are faster to render.
     </td>
   </tr>
 
+  <tr>
+    <td>Teapot (high resolution)</td>
+    <td>
+      <img src="tests/fixtures/teapot_high.png"
+           alt="The same white teapot imported from a high resolution OBJ model, with a cleaner silhouette and lid."
+           width="100px"
+           height="75px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Cow</td>
+    <td>
+      <img src="tests/fixtures/cow.png"
+           alt="A faceted white cow imported from an OBJ model without vertex normals, standing on a gray floor."
+           width="100px"
+           height="75px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Teddy</td>
+    <td>
+      <img src="tests/fixtures/teddy.png"
+           alt="A faceted white teddy bear imported from an OBJ model without vertex normals, facing the camera."
+           width="100px"
+           height="75px"
+           >
+    </td>
+  </tr>
+
 </table>
 
 
