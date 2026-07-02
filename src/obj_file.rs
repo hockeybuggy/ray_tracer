@@ -10,7 +10,8 @@
 //   `Parser`. (Reading from an actual file can be layered on later, when
 //   rendering downloaded models.)
 // - `parser.ignored_lines` counts the unrecognized lines.
-// - `parser.vertex(i)` returns a vertex by its 1-based OBJ index.
+// - `parser.vertex(i)` and `parser.normal(i)` return a vertex or vertex
+//   normal by its 1-based OBJ index.
 // - `parser.default_group()` and `parser.group(name)` return the triangles
 //   collected into the default and named groups, as slices.
 // - `parser.into_group()` consumes the parser and assembles the model into
@@ -278,6 +279,56 @@ f 1 2 3 4 5
             triangles[2],
             shape::Shape::triangle(parser.vertex(1), parser.vertex(4), parser.vertex(5)),
         );
+    }
+
+    #[test]
+    fn test_vertex_normal_records() {
+        // A `vn` statement records a vertex normal, imported as is with no
+        // normalization. Like vertices, normals are indexed 1-based.
+        let file = "\
+vn 0 0 1
+vn 0.707 0 -0.707
+vn 1 2 3
+";
+
+        let parser = obj_file::parse_obj(file);
+
+        assert_eq!(parser.normal(1), tuple::Vector::new(0.0, 0.0, 1.0));
+        assert_eq!(parser.normal(2), tuple::Vector::new(0.707, 0.0, -0.707));
+        assert_eq!(parser.normal(3), tuple::Vector::new(1.0, 2.0, 3.0));
+    }
+
+    #[test]
+    fn test_faces_with_normals() {
+        // The full `f` syntax is vertex/texture/normal index triples. When
+        // normal indices are present the face becomes a smooth triangle
+        // with each corner's normal attached; the middle (texture) index
+        // is ignored, which is why the two faces here are equivalent.
+        let file = "\
+v 0 1 0
+v -1 0 0
+v 1 0 0
+vn -1 0 0
+vn 1 0 0
+vn 0 1 0
+f 1//3 2//1 3//2
+f 1/0/3 2/102/1 3/14/2
+";
+
+        let parser = obj_file::parse_obj(file);
+
+        let triangles = parser.default_group();
+        let expected = shape::Shape::smooth_triangle(
+            parser.vertex(1),
+            parser.vertex(2),
+            parser.vertex(3),
+            parser.normal(3),
+            parser.normal(1),
+            parser.normal(2),
+        );
+        assert_eq!(triangles.len(), 2);
+        assert_eq!(triangles[0], expected);
+        assert_eq!(triangles[1], expected);
     }
 
     #[test]
