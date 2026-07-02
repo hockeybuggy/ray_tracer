@@ -1,12 +1,12 @@
 use crate::color;
 use crate::lights;
 use crate::material;
-use crate::shape;
+use crate::matrix;
 use crate::tuple;
 
 pub fn lighting(
     material: &material::Material,
-    object: &shape::Shape,
+    object_to_world: &matrix::Matrix4,
     light: &lights::Light,
     point: &tuple::Point,
     camerav: &tuple::Vector,
@@ -22,7 +22,7 @@ pub fn lighting(
             .pattern
             .as_ref()
             .unwrap()
-            .pattern_at_object(object, &point)
+            .pattern_at_object(object_to_world, &point)
     } else {
         material.color
     };

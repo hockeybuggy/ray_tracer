@@ -1,7 +1,6 @@
 use crate::color;
 use crate::matrix;
 use crate::matrix::Inverse;
-use crate::shape;
 use crate::tuple;
 
 #[derive(Debug, PartialEq)]
@@ -108,12 +107,14 @@ impl Pattern {
         };
     }
 
+    // `object_to_world` is the object's transform with any enclosing group
+    // transforms composed on, so patterns follow shapes into groups.
     pub fn pattern_at_object(
         &self,
-        object: &shape::Shape,
+        object_to_world: &matrix::Matrix4,
         world_point: &tuple::Point,
     ) -> color::Color {
-        let object_point = object.transform.inverse().unwrap() * *world_point;
+        let object_point = object_to_world.inverse().unwrap() * *world_point;
         let pattern_point = self.transform.inverse().unwrap() * object_point;
 
         self.pattern_at(&pattern_point)
@@ -214,7 +215,7 @@ mod patterns_tests {
         let pattern = patterns::Pattern::stripe(color::white(), color::black());
 
         assert_color_approx_eq!(
-            pattern.pattern_at_object(&object, &tuple::Point::new(1.5, 0.0, 0.0)),
+            pattern.pattern_at_object(&object.transform, &tuple::Point::new(1.5, 0.0, 0.0)),
             color::white()
         );
     }
@@ -226,7 +227,7 @@ mod patterns_tests {
         pattern.transform = pattern.transform.scaling(2.0, 2.0, 2.0);
 
         assert_color_approx_eq!(
-            pattern.pattern_at_object(&object, &tuple::Point::new(1.5, 0.0, 0.0)),
+            pattern.pattern_at_object(&object.transform, &tuple::Point::new(1.5, 0.0, 0.0)),
             color::white()
         );
     }
@@ -239,7 +240,7 @@ mod patterns_tests {
         pattern.transform = pattern.transform.translation(0.5, 0.0, 0.0);
 
         assert_color_approx_eq!(
-            pattern.pattern_at_object(&object, &tuple::Point::new(2.5, 0.0, 0.0)),
+            pattern.pattern_at_object(&object.transform, &tuple::Point::new(2.5, 0.0, 0.0)),
             color::white()
         );
     }
@@ -356,7 +357,7 @@ mod patterns_tests {
         let pattern = patterns::Pattern::test_pattern();
 
         assert_color_approx_eq!(
-            pattern.pattern_at_object(&object, &tuple::Point::new(2.0, 3.0, 4.0)),
+            pattern.pattern_at_object(&object.transform, &tuple::Point::new(2.0, 3.0, 4.0)),
             color::color(1.0, 1.5, 2.0)
         );
     }
@@ -368,7 +369,7 @@ mod patterns_tests {
         pattern.transform = pattern.transform.scaling(2.0, 2.0, 2.0);
 
         assert_color_approx_eq!(
-            pattern.pattern_at_object(&object, &tuple::Point::new(2.0, 3.0, 4.0)),
+            pattern.pattern_at_object(&object.transform, &tuple::Point::new(2.0, 3.0, 4.0)),
             color::color(1.0, 1.5, 2.0)
         );
     }
@@ -381,7 +382,7 @@ mod patterns_tests {
         pattern.transform = pattern.transform.translation(0.5, 1.0, 1.5);
 
         assert_color_approx_eq!(
-            pattern.pattern_at_object(&object, &tuple::Point::new(2.5, 3.0, 3.5)),
+            pattern.pattern_at_object(&object.transform, &tuple::Point::new(2.5, 3.0, 3.5)),
             color::color(0.75, 0.5, 0.25)
         );
     }

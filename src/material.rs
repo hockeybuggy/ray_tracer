@@ -74,7 +74,13 @@ mod material_tests {
         );
 
         let result = lighting::lighting(
-            &material, &object, &light, &position, &camera, &normal, false,
+            &material,
+            &object.transform,
+            &light,
+            &position,
+            &camera,
+            &normal,
+            false,
         );
 
         let expected = color::color(1.9, 1.9, 1.9);
@@ -100,7 +106,13 @@ mod material_tests {
         );
 
         let result = lighting::lighting(
-            &material, &object, &light, &position, &camera, &normal, false,
+            &material,
+            &object.transform,
+            &light,
+            &position,
+            &camera,
+            &normal,
+            false,
         );
 
         let expected = color::color(1.0, 1.0, 1.0);
@@ -126,7 +138,13 @@ mod material_tests {
         );
 
         let result = lighting::lighting(
-            &material, &object, &light, &position, &camera, &normal, false,
+            &material,
+            &object.transform,
+            &light,
+            &position,
+            &camera,
+            &normal,
+            false,
         );
 
         let expected = color::color(0.7364, 0.7364, 0.7364);
@@ -153,7 +171,13 @@ mod material_tests {
         );
 
         let result = lighting::lighting(
-            &material, &object, &light, &position, &camera, &normal, false,
+            &material,
+            &object.transform,
+            &light,
+            &position,
+            &camera,
+            &normal,
+            false,
         );
 
         let expected = color::color(1.6364, 1.6364, 1.6364);
@@ -176,7 +200,13 @@ mod material_tests {
         );
 
         let result = lighting::lighting(
-            &material, &object, &light, &position, &camera, &normal, false,
+            &material,
+            &object.transform,
+            &light,
+            &position,
+            &camera,
+            &normal,
+            false,
         );
 
         let expected = color::color(0.1, 0.1, 0.1);
@@ -197,7 +227,13 @@ mod material_tests {
         let in_shadow = true;
 
         let result = lighting::lighting(
-            &material, &object, &light, &position, &camera, &normal, in_shadow,
+            &material,
+            &object.transform,
+            &light,
+            &position,
+            &camera,
+            &normal,
+            in_shadow,
         );
 
         let expected = color::color(0.1, 0.1, 0.1);
@@ -222,10 +258,22 @@ mod material_tests {
         );
 
         let result1 = lighting::lighting(
-            &material, &object, &light, &position1, &camera, &normal, false,
+            &material,
+            &object.transform,
+            &light,
+            &position1,
+            &camera,
+            &normal,
+            false,
         );
         let result2 = lighting::lighting(
-            &material, &object, &light, &position2, &camera, &normal, false,
+            &material,
+            &object.transform,
+            &light,
+            &position2,
+            &camera,
+            &normal,
+            false,
         );
         assert_color_approx_eq!(color::color(1.0, 1.0, 1.0), result1);
         assert_color_approx_eq!(color::color(0.0, 0.0, 0.0), result2);

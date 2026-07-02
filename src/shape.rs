@@ -22,6 +22,9 @@ enum ShapeType {
         maximum: f64,
         closed: bool,
     },
+    Group {
+        children: Vec<Shape>,
+    },
 }
 
 #[derive(Debug, PartialEq)]
@@ -86,6 +89,23 @@ impl Shape {
                 closed,
             },
         };
+    }
+
+    pub fn default_group() -> Shape {
+        return Shape {
+            transform: matrix::Matrix4::IDENTITY,
+            material: material::material(),
+            shape_type: ShapeType::Group {
+                children: Vec::new(),
+            },
+        };
+    }
+
+    pub fn add_child(&mut self, child: Shape) {
+        match &mut self.shape_type {
+            ShapeType::Group { children } => children.push(child),
+            _ => panic!("only groups can contain children"),
+        }
     }
 
     pub fn glass_sphere() -> Shape {
@@ -178,7 +198,7 @@ impl Shape {
         return tuple::Vector::new(object_point.x, y, object_point.z);
     }
 
-    fn local_normal_at(&self, object_point: tuple::Point) -> tuple::Vector {
+    pub(crate) fn local_normal_at(&self, object_point: tuple::Point) -> tuple::Vector {
         match self.shape_type {
             ShapeType::Sphere => self.sphere_local_normal_at(object_point),
             ShapeType::Plane => self.plane_local_normal_at(object_point),
@@ -189,6 +209,9 @@ impl Shape {
             ShapeType::Cone {
                 minimum, maximum, ..
             } => self.cone_local_normal_at(object_point, minimum, maximum),
+            // A group has no surface of its own; normals are always computed
+            // on the concrete child shape the ray actually hit.
+            ShapeType::Group { .. } => panic!("groups do not have a local normal"),
         }
     }
 
@@ -217,7 +240,29 @@ impl Shape {
                 maximum,
                 closed,
             } => self.cone_local_intersect(local_ray, minimum, maximum, closed),
+            ShapeType::Group { ref children } => self.group_local_intersect(children, local_ray),
         }
+    }
+
+    fn group_local_intersect<'a>(
+        &'a self,
+        children: &'a [Shape],
+        local_ray: ray::Ray,
+    ) -> Vec<intersection::Intersection<'a>> {
+        let mut intersections: Vec<intersection::Intersection<'a>> = children
+            .iter()
+            .flat_map(|child| child.intersect(&local_ray))
+            .collect();
+
+        // Each child reports a transform relative to this group, so prepend
+        // the group's own transform to walk the accumulated matrix one level
+        // closer to world space.
+        for intersection in intersections.iter_mut() {
+            intersection.world_transform = self.transform * intersection.world_transform;
+        }
+
+        intersections.sort_unstable_by(|x, y| x.t.partial_cmp(&y.t).unwrap());
+        return intersections;
     }
 
     fn cone_local_intersect(

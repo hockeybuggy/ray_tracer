@@ -1,5 +1,7 @@
 use crate::color;
 use crate::lighting;
+use crate::matrix;
+use crate::matrix::{Inverse, Transpose};
 use crate::ray;
 use crate::shape;
 use crate::tuple;
@@ -11,16 +13,45 @@ const EPSILON: f64 = 1e-5;
 pub struct Intersection<'a> {
     pub t: f64,
     pub object: &'a shape::Shape,
+
+    // The object-to-world transform. This starts as the object's own
+    // transform, and each enclosing group prepends its transform as the
+    // intersections bubble back up the tree.
+    pub world_transform: matrix::Matrix4,
 }
 
 pub fn intersection(t: f64, object: &shape::Shape) -> Intersection<'_> {
-    Intersection { t, object }
+    Intersection {
+        t,
+        object,
+        world_transform: object.transform,
+    }
+}
+
+impl<'a> Intersection<'a> {
+    pub fn world_to_object(&self, world_point: tuple::Point) -> tuple::Point {
+        return self.world_transform.inverse().unwrap() * world_point;
+    }
+
+    pub fn normal_to_world(&self, object_normal: tuple::Vector) -> tuple::Vector {
+        let mut world_normal = self.world_transform.inverse().unwrap().transpose() * object_normal;
+        // This is sorta a cheat to skip finding the submatrix.
+        world_normal.w = 0.0;
+        return tuple::normalize(&world_normal);
+    }
+
+    pub fn normal_at(&self, world_point: tuple::Point) -> tuple::Vector {
+        let object_point = self.world_to_object(world_point);
+        let object_normal = self.object.local_normal_at(object_point);
+        return self.normal_to_world(object_normal);
+    }
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Computation<'a> {
     pub t: f64,
     pub object: &'a shape::Shape,
+    pub world_transform: matrix::Matrix4,
 
     pub point: tuple::Point,
     pub eyev: tuple::Vector,
@@ -44,7 +75,7 @@ pub fn prepare_computations<'a>(
     let object = hit.object;
     let point = ray.position(t);
     let eyev = -ray.direction;
-    let normalv = object.normal_at(point);
+    let normalv = hit.normal_at(point);
     let inside: bool = tuple::dot(&normalv, &eyev) < 0.0;
     let maybe_inverted_normalv = if inside { -normalv } else { normalv };
     let reflectv = ray.direction.reflect(&maybe_inverted_normalv);
@@ -80,6 +111,7 @@ pub fn prepare_computations<'a>(
     Computation {
         t,
         object,
+        world_transform: hit.world_transform,
         point,
         eyev,
         normalv: maybe_inverted_normalv,
@@ -103,7 +135,7 @@ impl<'a> Computation<'a> {
             surface = surface
                 + lighting::lighting(
                     &self.object.material,
-                    &self.object,
+                    &self.world_transform,
                     &light,
                     &self.point,
                     &self.eyev,
