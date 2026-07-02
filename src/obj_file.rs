@@ -18,6 +18,154 @@
 //   included) becomes a child `Group` of triangles, in file order; empty
 //   groups contribute nothing.
 
+use crate::shape;
+use crate::tuple;
+
+#[derive(Debug)]
+pub struct Parser {
+    pub ignored_lines: usize,
+    vertices: Vec<tuple::Point>,
+    default_group: Vec<shape::Shape>,
+    // The named groups in file order. Vertex indices are global to the
+    // file, so only the triangles are grouped, not the vertices.
+    named_groups: Vec<(String, Vec<shape::Shape>)>,
+}
+
+pub fn parse_obj(source: &str) -> Parser {
+    let mut parser = Parser {
+        ignored_lines: 0,
+        vertices: Vec::new(),
+        default_group: Vec::new(),
+        named_groups: Vec::new(),
+    };
+
+    // Faces land in the most recently named group, or in the default group
+    // until the first `g` statement is seen.
+    let mut current_group: Option<usize> = None;
+
+    for line in source.lines() {
+        let tokens: Vec<&str> = line.split_whitespace().collect();
+        let recognized = match tokens.split_first() {
+            Some((&"v", args)) => parser.parse_vertex(args),
+            Some((&"f", args)) => parser.parse_face(args, current_group),
+            Some((&"g", args)) => match parser.enter_group(args) {
+                Some(index) => {
+                    current_group = Some(index);
+                    true
+                }
+                None => false,
+            },
+            _ => false,
+        };
+        if !recognized {
+            parser.ignored_lines += 1;
+        }
+    }
+
+    return parser;
+}
+
+impl Parser {
+    // Vertices use the OBJ format's 1-based indexing.
+    pub fn vertex(&self, index: usize) -> tuple::Point {
+        return self.vertices[index - 1];
+    }
+
+    pub fn default_group(&self) -> &[shape::Shape] {
+        return &self.default_group;
+    }
+
+    pub fn group(&self, name: &str) -> &[shape::Shape] {
+        for (group_name, triangles) in self.named_groups.iter() {
+            if group_name == name {
+                return triangles;
+            }
+        }
+        panic!("no group named `{}` in the OBJ file", name);
+    }
+
+    pub fn into_group(self) -> shape::Shape {
+        let mut model = shape::Shape::default_group();
+
+        let mut groups = vec![self.default_group];
+        groups.extend(
+            self.named_groups
+                .into_iter()
+                .map(|(_, triangles)| triangles),
+        );
+
+        for triangles in groups {
+            if triangles.is_empty() {
+                continue;
+            }
+            let mut group = shape::Shape::default_group();
+            for triangle in triangles {
+                group.add_child(triangle);
+            }
+            model.add_child(group);
+        }
+
+        return model;
+    }
+
+    fn parse_vertex(&mut self, args: &[&str]) -> bool {
+        let coordinates: Vec<f64> = args.iter().filter_map(|arg| arg.parse().ok()).collect();
+        if args.len() != 3 || coordinates.len() != 3 {
+            return false;
+        }
+
+        self.vertices.push(tuple::Point::new(
+            coordinates[0],
+            coordinates[1],
+            coordinates[2],
+        ));
+        return true;
+    }
+
+    fn parse_face(&mut self, args: &[&str], current_group: Option<usize>) -> bool {
+        let indices: Vec<usize> = args.iter().filter_map(|arg| arg.parse().ok()).collect();
+        if indices.len() != args.len() || indices.len() < 3 {
+            return false;
+        }
+        if indices
+            .iter()
+            .any(|&index| index < 1 || index > self.vertices.len())
+        {
+            return false;
+        }
+
+        // Fan triangulation: this assumes the polygon is convex, so every
+        // triangle can share the face's first vertex.
+        for i in 1..indices.len() - 1 {
+            let triangle = shape::Shape::triangle(
+                self.vertex(indices[0]),
+                self.vertex(indices[i]),
+                self.vertex(indices[i + 1]),
+            );
+            match current_group {
+                Some(group) => self.named_groups[group].1.push(triangle),
+                None => self.default_group.push(triangle),
+            }
+        }
+        return true;
+    }
+
+    // Returns the index of the (possibly new) named group, so that a group
+    // split into multiple `g` sections still collects into one group.
+    fn enter_group(&mut self, args: &[&str]) -> Option<usize> {
+        if args.len() != 1 {
+            return None;
+        }
+
+        let name = args[0];
+        if let Some(index) = self.named_groups.iter().position(|(n, _)| n == name) {
+            return Some(index);
+        }
+        self.named_groups.push((name.to_string(), Vec::new()));
+        return Some(self.named_groups.len() - 1);
+    }
+}
+
 #[cfg(test)]
 mod obj_file_tests {
     use crate::obj_file;
