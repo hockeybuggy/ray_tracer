@@ -377,6 +377,17 @@ compare to the results they generate and smaller images are faster to render.
     </td>
   </tr>
 
+  <tr>
+    <td>Teapot</td>
+    <td>
+      <img src="tests/fixtures/teapot.png"
+           alt="A smooth shaded white teapot, imported from a low resolution OBJ model, casting a shadow on a gray floor."
+           width="100px"
+           height="75px"
+           >
+    </td>
+  </tr>
+
 </table>
 
 
