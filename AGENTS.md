@@ -4,8 +4,9 @@ Rust implementation of *The Ray Tracer Challenge* (Jamis Buck). The book PDF
 lives at the repo root (`the-ray-tracer-challenge_P1.0.pdf`); chapter N page
 offsets are in the PDF bookmarks.
 
-**Progress:** chapters 1–15 complete. Next up: chapter 16 (Constructive
-Solid Geometry).
+**Progress:** chapters 1–16 complete — all of the book's core material.
+What remains is optional: the chapter 17 extensions (area lights, focal
+blur, anti-aliasing, texture maps, …) and the appendix cover image.
 
 ## Working agreement for book chapters
 
