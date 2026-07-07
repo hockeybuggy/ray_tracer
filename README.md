@@ -443,6 +443,17 @@ compare to the results they generate and smaller images are faster to render.
     </td>
   </tr>
 
+  <tr>
+    <td>The book cover</td>
+    <td>
+      <img src="tests/fixtures/cover.png"
+           alt="The cover image of The Ray Tracer Challenge: a glassy dark sphere resting in a tilted cascade of red, blue, and white cubes."
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
 </table>
 
 
