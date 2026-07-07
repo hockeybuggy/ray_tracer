@@ -43,6 +43,37 @@ enum ShapeType {
         n2: tuple::Vector,
         n3: tuple::Vector,
     },
+    Csg {
+        operation: CsgOperation,
+        left: Box<Shape>,
+        right: Box<Shape>,
+    },
+}
+
+#[derive(Debug, PartialEq)]
+pub enum CsgOperation {
+    Union,
+    Intersection,
+    Difference,
+}
+
+impl CsgOperation {
+    // Decides whether an intersection lies on the surface of the composite
+    // shape. `lhit` says which child was hit; `inl` and `inr` say whether
+    // the ray is currently inside the left and right child.
+    pub fn intersection_allowed(&self, lhit: bool, inl: bool, inr: bool) -> bool {
+        match self {
+            // Keep hits that are not inside the other shape, so the
+            // interior surfaces vanish.
+            CsgOperation::Union => (lhit && !inr) || (!lhit && !inl),
+            // Keep hits that are inside the other shape: only the shared
+            // volume survives.
+            CsgOperation::Intersection => (lhit && inr) || (!lhit && inl),
+            // Keep the left shape's surface outside the right, plus the
+            // right shape's surface capping the hole it carves.
+            CsgOperation::Difference => (lhit && !inr) || (!lhit && inl),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -124,6 +155,18 @@ impl Shape {
             ShapeType::Group { children } => children.push(child),
             _ => panic!("only groups can contain children"),
         }
+    }
+
+    pub fn csg(operation: CsgOperation, left: Shape, right: Shape) -> Shape {
+        return Shape {
+            transform: matrix::Matrix4::IDENTITY,
+            material: material::material(),
+            shape_type: ShapeType::Csg {
+                operation,
+                left: Box::new(left),
+                right: Box::new(right),
+            },
+        };
     }
 
     pub fn triangle(p1: tuple::Point, p2: tuple::Point, p3: tuple::Point) -> Shape {
@@ -282,6 +325,10 @@ impl Shape {
             ShapeType::SmoothTriangle { .. } => {
                 panic!("smooth triangles interpolate their normal from the hit's u/v")
             }
+            // Like a group, a CSG shape has no surface of its own; the
+            // filtered intersections reference the primitive child that was
+            // hit, so the child computes the normal.
+            ShapeType::Csg { .. } => panic!("csg shapes do not have a local normal"),
         }
     }
 
@@ -332,6 +379,11 @@ impl Shape {
             ShapeType::SmoothTriangle { p1, e1, e2, .. } => {
                 self.triangle_local_intersect(local_ray, p1, e1, e2)
             }
+            ShapeType::Csg {
+                ref left,
+                ref right,
+                ..
+            } => self.csg_local_intersect(left, right, local_ray),
         }
     }
 
@@ -392,6 +444,72 @@ impl Shape {
 
         intersections.sort_unstable_by(|x, y| x.t.partial_cmp(&y.t).unwrap());
         return intersections;
+    }
+
+    fn csg_local_intersect<'a>(
+        &'a self,
+        left: &'a Shape,
+        right: &'a Shape,
+        local_ray: ray::Ray,
+    ) -> Vec<intersection::Intersection<'a>> {
+        let mut intersections = left.intersect(&local_ray);
+        intersections.extend(right.intersect(&local_ray));
+
+        // As with groups, prepend this shape's transform to walk each
+        // child's accumulated matrix one level closer to world space.
+        for intersection in intersections.iter_mut() {
+            intersection.world_transform = self.transform * intersection.world_transform;
+        }
+
+        // The filter walks the crossings in the order the ray meets them,
+        // so the combined list must be sorted before filtering.
+        intersections.sort_unstable_by(|x, y| x.t.partial_cmp(&y.t).unwrap());
+        return self.filter_intersections(intersections);
+    }
+
+    pub fn filter_intersections<'a>(
+        &self,
+        intersections: Vec<intersection::Intersection<'a>>,
+    ) -> Vec<intersection::Intersection<'a>> {
+        let (operation, left) = match &self.shape_type {
+            ShapeType::Csg {
+                operation, left, ..
+            } => (operation, left),
+            _ => panic!("only csg shapes can filter intersections"),
+        };
+
+        // The ray begins outside both children; every intersection is a
+        // surface crossing, so being inside a child toggles as each of its
+        // crossings goes by.
+        let mut inl = false;
+        let mut inr = false;
+
+        let mut result = Vec::new();
+        for intersection in intersections {
+            let lhit = left.includes(intersection.object);
+
+            if operation.intersection_allowed(lhit, inl, inr) {
+                result.push(intersection);
+            }
+
+            if lhit {
+                inl = !inl;
+            } else {
+                inr = !inr;
+            }
+        }
+        return result;
+    }
+
+    // Whether `other` is this shape itself or a descendant of it. Compares
+    // by address rather than equality, since a scene can contain identical
+    // shapes on both sides of a CSG operation.
+    fn includes(&self, other: &Shape) -> bool {
+        match &self.shape_type {
+            ShapeType::Group { children } => children.iter().any(|child| child.includes(other)),
+            ShapeType::Csg { left, right, .. } => left.includes(other) || right.includes(other),
+            _ => std::ptr::eq(self, other),
+        }
     }
 
     fn cone_local_intersect(
