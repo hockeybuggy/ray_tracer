@@ -1663,3 +1663,195 @@ mod plane_tests {
         assert_eq!(intersections[0].object, &plane);
     }
 }
+
+#[cfg(test)]
+mod csg_tests {
+    use crate::intersection;
+    use crate::matrix;
+    use crate::ray;
+    use crate::shape;
+    use crate::transformation::Transform;
+    use crate::tuple;
+
+    fn operands(csg: &shape::Shape) -> (&shape::CsgOperation, &shape::Shape, &shape::Shape) {
+        match &csg.shape_type {
+            shape::ShapeType::Csg {
+                operation,
+                left,
+                right,
+            } => (operation, left.as_ref(), right.as_ref()),
+            _ => panic!("expected a csg shape"),
+        }
+    }
+
+    #[test]
+    fn test_csg_is_created_with_an_operation_and_two_shapes() {
+        // The book also asserts that each child's parent pointer is set to
+        // the CSG shape; here ownership expresses that relationship, just
+        // like a group owning its children.
+        let csg = shape::Shape::csg(
+            shape::CsgOperation::Union,
+            shape::Shape::default_sphere(),
+            shape::Shape::default_cube(),
+        );
+
+        let (operation, left, right) = operands(&csg);
+        assert_eq!(*operation, shape::CsgOperation::Union);
+        assert_eq!(left, &shape::Shape::default_sphere());
+        assert_eq!(right, &shape::Shape::default_cube());
+    }
+
+    #[test]
+    fn test_evaluating_the_rule_for_a_csg_union() {
+        // A union keeps only the intersections on the exterior of both
+        // shapes: a hit is discarded whenever it lies inside the other
+        // shape.
+        let examples = [
+            // (lhit, inl, inr, expected)
+            (true, true, true, false),
+            (true, true, false, true),
+            (true, false, true, false),
+            (true, false, false, true),
+            (false, true, true, false),
+            (false, true, false, false),
+            (false, false, true, true),
+            (false, false, false, true),
+        ];
+
+        for (lhit, inl, inr, expected) in examples {
+            let result = shape::CsgOperation::Union.intersection_allowed(lhit, inl, inr);
+
+            assert_eq!(expected, result, "lhit {}, inl {}, inr {}", lhit, inl, inr);
+        }
+    }
+
+    #[test]
+    fn test_evaluating_the_rule_for_a_csg_intersection() {
+        // An intersection keeps only the volume the shapes share: a hit
+        // counts only while the ray is inside the other shape.
+        let examples = [
+            // (lhit, inl, inr, expected)
+            (true, true, true, true),
+            (true, true, false, false),
+            (true, false, true, true),
+            (true, false, false, false),
+            (false, true, true, true),
+            (false, true, false, true),
+            (false, false, true, false),
+            (false, false, false, false),
+        ];
+
+        for (lhit, inl, inr, expected) in examples {
+            let result = shape::CsgOperation::Intersection.intersection_allowed(lhit, inl, inr);
+
+            assert_eq!(expected, result, "lhit {}, inl {}, inr {}", lhit, inl, inr);
+        }
+    }
+
+    #[test]
+    fn test_evaluating_the_rule_for_a_csg_difference() {
+        // A difference keeps everything of the left shape not inside the
+        // right, plus the parts of the right shape's surface that cap the
+        // hole it carves out of the left.
+        let examples = [
+            // (lhit, inl, inr, expected)
+            (true, true, true, false),
+            (true, true, false, true),
+            (true, false, true, false),
+            (true, false, false, true),
+            (false, true, true, true),
+            (false, true, false, true),
+            (false, false, true, false),
+            (false, false, false, false),
+        ];
+
+        for (lhit, inl, inr, expected) in examples {
+            let result = shape::CsgOperation::Difference.intersection_allowed(lhit, inl, inr);
+
+            assert_eq!(expected, result, "lhit {}, inl {}, inr {}", lhit, inl, inr);
+        }
+    }
+
+    #[test]
+    fn test_filtering_a_list_of_intersections() {
+        // Four intersections alternating between the two children, as if a
+        // ray pierced two overlapping shapes: into the sphere, into the
+        // cube, out of the sphere, out of the cube. Each operation keeps a
+        // different pair.
+        let examples = [
+            // (operation, [(t, is the left child); 2])
+            (shape::CsgOperation::Union, [(1.0, true), (4.0, false)]),
+            (
+                shape::CsgOperation::Intersection,
+                [(2.0, false), (3.0, true)],
+            ),
+            (shape::CsgOperation::Difference, [(1.0, true), (2.0, false)]),
+        ];
+
+        for (operation, expected) in examples {
+            let label = format!("{:?}", operation);
+            let csg = shape::Shape::csg(
+                operation,
+                shape::Shape::default_sphere(),
+                shape::Shape::default_cube(),
+            );
+            let (_, left, right) = operands(&csg);
+            let xs = vec![
+                intersection::intersection(1.0, left),
+                intersection::intersection(2.0, right),
+                intersection::intersection(3.0, left),
+                intersection::intersection(4.0, right),
+            ];
+
+            let result = csg.filter_intersections(xs);
+
+            assert_eq!(result.len(), 2, "operation {}", label);
+            for (index, (expected_t, expect_left)) in expected.into_iter().enumerate() {
+                let expected_object = if expect_left { left } else { right };
+                assert_eq!(result[index].t, expected_t, "operation {}", label);
+                assert_eq!(result[index].object, expected_object, "operation {}", label);
+            }
+        }
+    }
+
+    #[test]
+    fn test_a_ray_misses_a_csg_object() {
+        let csg = shape::Shape::csg(
+            shape::CsgOperation::Union,
+            shape::Shape::default_sphere(),
+            shape::Shape::default_cube(),
+        );
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 2.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+
+        let intersections = csg.local_intersect(ray);
+
+        assert_eq!(intersections.len(), 0);
+    }
+
+    #[test]
+    fn test_a_ray_hits_a_csg_object() {
+        // Two overlapping spheres joined by a union: the ray enters the
+        // first sphere at t=4 and leaves the second at t=6.5. The two
+        // interior surfaces (t=6 and t=4.5) are filtered out.
+        let sphere1 = shape::Shape::default_sphere();
+        let mut sphere2 = shape::Shape::default_sphere();
+        sphere2.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 0.0, 0.5));
+        let csg = shape::Shape::csg(shape::CsgOperation::Union, sphere1, sphere2);
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+
+        let intersections = csg.local_intersect(ray);
+
+        let (_, left, right) = operands(&csg);
+        assert_eq!(intersections.len(), 2);
+        assert_eq!(intersections[0].t, 4.0);
+        assert_eq!(intersections[0].object, left);
+        assert_eq!(intersections[1].t, 6.5);
+        assert_eq!(intersections[1].object, right);
+    }
+}
