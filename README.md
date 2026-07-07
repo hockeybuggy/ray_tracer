@@ -432,6 +432,17 @@ compare to the results they generate and smaller images are faster to render.
     </td>
   </tr>
 
+  <tr>
+    <td>Dice</td>
+    <td>
+      <img src="tests/fixtures/dice.png"
+           alt="An ivory die and a red die resting on green felt, each carved from CSG operations: rounded cubes with dished pips."
+           width="150px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
 </table>
 
 
