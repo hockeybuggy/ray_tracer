@@ -69,8 +69,11 @@ impl World {
         // Create a new refracted ray
         let refract_ray = ray::ray(computations.under_point, direction);
 
+        // `color_at` decrements `remaining` itself (as it does for
+        // `reflected_color` above); decrementing here as well would let it
+        // reach zero and underflow.
         let refracted_color =
-            self.color_at(&refract_ray, remaining - 1) * computations.object.material.transparency;
+            self.color_at(&refract_ray, remaining) * computations.object.material.transparency;
         return refracted_color;
     }
 }
