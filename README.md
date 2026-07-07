@@ -421,6 +421,17 @@ compare to the results they generate and smaller images are faster to render.
     </td>
   </tr>
 
+  <tr>
+    <td>Constructive solid geometry</td>
+    <td>
+      <img src="tests/fixtures/csg_shapes.png"
+           alt="A two-tone lens made from intersecting spheres, a yellow cube with red spherical hollows carved from its faces, and a ringed Saturn."
+           width="150px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
 </table>
 
 
