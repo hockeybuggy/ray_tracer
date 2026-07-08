@@ -49,46 +49,47 @@ fn hexagon_material() -> material::Material {
 }
 
 fn hexagon_corner() -> shape::Shape {
-    let mut corner = shape::Shape::default_sphere();
-    corner.set_transformation_matrix(
-        matrix::Matrix4::IDENTITY
-            .scaling(0.25, 0.25, 0.25)
-            .translation(0.0, 0.0, -1.0),
-    );
-    corner.material = hexagon_material();
-    return corner;
+    shape::ShapeBuilder::sphere()
+        .set_transform(
+            matrix::Matrix4::IDENTITY
+                .scaling(0.25, 0.25, 0.25)
+                .translation(0.0, 0.0, -1.0),
+        )
+        .set_material(hexagon_material())
+        .build()
 }
 
 fn hexagon_edge() -> shape::Shape {
-    let mut edge = shape::Shape::cylinder(0.0, 1.0, false);
-    edge.set_transformation_matrix(
-        matrix::Matrix4::IDENTITY
-            .scaling(0.25, 1.0, 0.25)
-            .rotation_z(-std::f64::consts::PI / 2.0)
-            .rotation_y(-std::f64::consts::PI / 6.0)
-            .translation(0.0, 0.0, -1.0),
-    );
-    edge.material = hexagon_material();
-    return edge;
+    shape::ShapeBuilder::cylinder(0.0, 1.0, false)
+        .set_transform(
+            matrix::Matrix4::IDENTITY
+                .scaling(0.25, 1.0, 0.25)
+                .rotation_z(-std::f64::consts::PI / 2.0)
+                .rotation_y(-std::f64::consts::PI / 6.0)
+                .translation(0.0, 0.0, -1.0),
+        )
+        .set_material(hexagon_material())
+        .build()
 }
 
 fn hexagon_side() -> shape::Shape {
-    let mut side = shape::Shape::default_group();
-    side.add_child(hexagon_corner());
-    side.add_child(hexagon_edge());
-    return side;
+    shape::ShapeBuilder::group()
+        .add_child(hexagon_corner())
+        .add_child(hexagon_edge())
+        .build()
 }
 
 fn hexagon() -> shape::Shape {
-    let mut hexagon = shape::Shape::default_group();
+    let mut hexagon = shape::ShapeBuilder::group();
     for n in 0..6 {
-        let mut side = hexagon_side();
-        side.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY.rotation_y(n as f64 * std::f64::consts::PI / 3.0),
-        );
-        hexagon.add_child(side);
+        let side = shape::ShapeBuilder::from(hexagon_side())
+            .set_transform(
+                matrix::Matrix4::IDENTITY.rotation_y(n as f64 * std::f64::consts::PI / 3.0),
+            )
+            .build();
+        hexagon = hexagon.add_child(side);
     }
-    return hexagon;
+    return hexagon.build();
 }
 
 #[test]
@@ -96,26 +97,28 @@ fn test_hexagon() -> Result<(), std::io::Error> {
     let mut builder = world::WorldBuilder::new();
 
     // A matte white floor to catch the hexagon's shadow.
-    builder.add_shape({
-        let mut floor = shape::Shape::default_plane();
-        let mut material = material::material();
-        material.color = color::color(1.0, 1.0, 1.0);
-        material.specular = 0.0;
-        floor.material = material;
-        floor
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::plane()
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(1.0, 1.0, 1.0);
+                material.specular = 0.0;
+                material
+            })
+            .build(),
+    );
 
     // The whole hexagon is lifted and tipped forward with a single
     // transform on the outermost group.
-    builder.add_shape({
-        let mut hexagon = hexagon();
-        hexagon.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .rotation_x(-std::f64::consts::PI / 6.0)
-                .translation(0.0, 1.2, 0.0),
-        );
-        hexagon
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::from(hexagon())
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .rotation_x(-std::f64::consts::PI / 6.0)
+                    .translation(0.0, 1.2, 0.0),
+            )
+            .build(),
+    );
 
     builder.add_light_source(lights::point_light(
         tuple::Point::new(-6.0, 8.0, -8.0),

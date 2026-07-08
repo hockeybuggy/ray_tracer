@@ -728,6 +728,172 @@ fn check_cap(ray: &ray::Ray, t: f64, radius: f64) -> bool {
     return x.powf(2.0) + z.powf(2.0) <= radius.powf(2.0);
 }
 
+// A fluent alternative to the `default_<shape>()` constructors, which need a
+// `let mut` binding plus separate `set_transformation_matrix`/`material`
+// statements to configure. Each `with_*`/`set_*` call consumes and returns
+// the builder so a shape can be built, transformed, and materialed in one
+// expression; `build()` unwraps the finished `Shape`.
+pub struct ShapeBuilder {
+    shape: Shape,
+}
+
+impl From<Shape> for ShapeBuilder {
+    // Resumes building an already-constructed shape, e.g. to set a
+    // transform on a shape assembled elsewhere (a group returned by a
+    // helper function, an OBJ model, ...).
+    fn from(shape: Shape) -> Self {
+        ShapeBuilder { shape }
+    }
+}
+
+impl ShapeBuilder {
+    pub fn sphere() -> Self {
+        ShapeBuilder {
+            shape: Shape::default_sphere(),
+        }
+    }
+
+    pub fn glass_sphere() -> Self {
+        ShapeBuilder {
+            shape: Shape::glass_sphere(),
+        }
+    }
+
+    pub fn plane() -> Self {
+        ShapeBuilder {
+            shape: Shape::default_plane(),
+        }
+    }
+
+    pub fn cube() -> Self {
+        ShapeBuilder {
+            shape: Shape::default_cube(),
+        }
+    }
+
+    pub fn cylinder(minimum: f64, maximum: f64, closed: bool) -> Self {
+        ShapeBuilder {
+            shape: Shape::cylinder(minimum, maximum, closed),
+        }
+    }
+
+    pub fn cone(minimum: f64, maximum: f64, closed: bool) -> Self {
+        ShapeBuilder {
+            shape: Shape::cone(minimum, maximum, closed),
+        }
+    }
+
+    pub fn group() -> Self {
+        ShapeBuilder {
+            shape: Shape::default_group(),
+        }
+    }
+
+    pub fn triangle(p1: tuple::Point, p2: tuple::Point, p3: tuple::Point) -> Self {
+        ShapeBuilder {
+            shape: Shape::triangle(p1, p2, p3),
+        }
+    }
+
+    pub fn smooth_triangle(
+        p1: tuple::Point,
+        p2: tuple::Point,
+        p3: tuple::Point,
+        n1: tuple::Vector,
+        n2: tuple::Vector,
+        n3: tuple::Vector,
+    ) -> Self {
+        ShapeBuilder {
+            shape: Shape::smooth_triangle(p1, p2, p3, n1, n2, n3),
+        }
+    }
+
+    pub fn csg(operation: CsgOperation, left: Shape, right: Shape) -> Self {
+        ShapeBuilder {
+            shape: Shape::csg(operation, left, right),
+        }
+    }
+
+    pub fn set_transform(mut self, transform: matrix::Matrix4) -> Self {
+        self.shape.transform = transform;
+        self
+    }
+
+    pub fn set_material(mut self, material: material::Material) -> Self {
+        self.shape.material = material;
+        self
+    }
+
+    pub fn add_child(mut self, child: Shape) -> Self {
+        self.shape.add_child(child);
+        self
+    }
+
+    pub fn build(self) -> Shape {
+        self.shape
+    }
+}
+
+#[cfg(test)]
+mod shape_builder_tests {
+    use crate::material;
+    use crate::matrix;
+    use crate::shape;
+    use crate::transformation::Transform;
+
+    fn blue_material() -> material::Material {
+        let mut material = material::material();
+        material.color = crate::color::color(0.2, 0.4, 1.0);
+        material
+    }
+
+    #[test]
+    fn test_building_a_shape_with_a_transform_and_material() {
+        let transform = matrix::Matrix4::IDENTITY.scaling(2.0, 2.0, 2.0);
+
+        let built = shape::ShapeBuilder::cube()
+            .set_transform(transform)
+            .set_material(blue_material())
+            .build();
+
+        let mut expected = shape::Shape::default_cube();
+        expected.set_transformation_matrix(transform);
+        expected.material = blue_material();
+        assert_eq!(built, expected);
+    }
+
+    #[test]
+    fn test_building_a_group_adds_children() {
+        let child = shape::Shape::default_sphere();
+        let built = shape::ShapeBuilder::group().add_child(child).build();
+
+        match &built.shape_type {
+            shape::ShapeType::Group { children } => assert_eq!(children.len(), 1),
+            _ => panic!("expected a group shape"),
+        }
+    }
+
+    #[test]
+    fn test_build_returns_defaults_when_unconfigured() {
+        let built = shape::ShapeBuilder::sphere().build();
+
+        assert_eq!(built, shape::Shape::default_sphere());
+    }
+
+    #[test]
+    fn test_from_shape_resumes_building_an_existing_shape() {
+        let transform = matrix::Matrix4::IDENTITY.translation(1.0, 2.0, 3.0);
+
+        let built = shape::ShapeBuilder::from(shape::Shape::default_sphere())
+            .set_transform(transform)
+            .build();
+
+        let mut expected = shape::Shape::default_sphere();
+        expected.set_transformation_matrix(transform);
+        assert_eq!(built, expected);
+    }
+}
+
 #[cfg(test)]
 mod sphere_tests {
     use crate::assert_tuple_approx_eq;

@@ -14,64 +14,72 @@ fn test_reflective_scene() -> Result<(), std::io::Error> {
     let mut builder = world::WorldBuilder::new();
 
     // Create a floor and add it to the scene
-    builder.add_shape({
-        let mut floor = shape::Shape::default_plane();
-        floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
-        let mut material = material::material();
-        material.color = color::color(1.0, 1.0, 1.0);
-        material.specular = 0.0;
-        material.reflective = 0.5;
-        floor.material = material;
-        floor
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::plane()
+            .set_transform(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0))
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(1.0, 1.0, 1.0);
+                material.specular = 0.0;
+                material.reflective = 0.5;
+                material
+            })
+            .build(),
+    );
 
     // Add a sphere to the left
-    builder.add_shape({
-        let mut left = shape::Shape::default_sphere();
-        left.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .translation(-2.5, 1.0, 0.5)
-                .scaling(0.7, 0.7, 0.7),
-        );
-        let mut material = material::material();
-        material.color = color::color(1.0, 0.0, 0.0);
-        material.diffuse = 0.7;
-        material.specular = 0.3;
-        left.material = material;
-        left
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::sphere()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .translation(-2.5, 1.0, 0.5)
+                    .scaling(0.7, 0.7, 0.7),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(1.0, 0.0, 0.0);
+                material.diffuse = 0.7;
+                material.specular = 0.3;
+                material
+            })
+            .build(),
+    );
 
     // Add a sphere in the middle
-    builder.add_shape({
-        let mut middle = shape::Shape::default_sphere();
-        middle.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .translation(0.0, 1.0, 0.5)
-                .scaling(0.7, 0.7, 0.7),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.0, 1.0, 0.0);
-        material.diffuse = 0.7;
-        material.specular = 0.3;
-        middle.material = material;
-        middle
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::sphere()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .translation(0.0, 1.0, 0.5)
+                    .scaling(0.7, 0.7, 0.7),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.0, 1.0, 0.0);
+                material.diffuse = 0.7;
+                material.specular = 0.3;
+                material
+            })
+            .build(),
+    );
 
     // Add a sphere to the right
-    builder.add_shape({
-        let mut right = shape::Shape::default_sphere();
-        right.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .translation(2.5, 1.0, 0.5)
-                .scaling(0.7, 0.7, 0.7),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.0, 0.0, 1.0);
-        material.diffuse = 0.7;
-        material.specular = 0.3;
-        right.material = material;
-        right
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::sphere()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .translation(2.5, 1.0, 0.5)
+                    .scaling(0.7, 0.7, 0.7),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.0, 0.0, 1.0);
+                material.diffuse = 0.7;
+                material.specular = 0.3;
+                material
+            })
+            .build(),
+    );
     // Let there be light
     builder.add_light_source(lights::point_light(
         tuple::Point::new(-10.0, 10.0, -10.0),
@@ -104,67 +112,75 @@ fn test_very_reflective_scene() -> Result<(), std::io::Error> {
     let mut builder = world::WorldBuilder::new();
 
     // Create a floor and add it to the scene
-    builder.add_shape({
-        let mut floor = shape::Shape::default_plane();
-        floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0));
-        let mut material = material::material();
-        material.color = color::color(1.0, 1.0, 1.0);
-        material.specular = 0.0;
-        material.reflective = 0.5;
-        floor.material = material;
-        floor
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::plane()
+            .set_transform(matrix::Matrix4::IDENTITY.scaling(10.0, 0.01, 10.0))
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(1.0, 1.0, 1.0);
+                material.specular = 0.0;
+                material.reflective = 0.5;
+                material
+            })
+            .build(),
+    );
 
     // Add a sphere to the left
-    builder.add_shape({
-        let mut left = shape::Shape::default_sphere();
-        left.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .translation(-2.5, 1.0, 0.5)
-                .scaling(0.7, 0.7, 0.7),
-        );
-        let mut material = material::material();
-        material.color = color::color(1.0, 0.0, 0.0);
-        material.diffuse = 0.7;
-        material.specular = 0.3;
-        material.reflective = 0.5;
-        left.material = material;
-        left
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::sphere()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .translation(-2.5, 1.0, 0.5)
+                    .scaling(0.7, 0.7, 0.7),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(1.0, 0.0, 0.0);
+                material.diffuse = 0.7;
+                material.specular = 0.3;
+                material.reflective = 0.5;
+                material
+            })
+            .build(),
+    );
 
     // Add a sphere in the middle
-    builder.add_shape({
-        let mut middle = shape::Shape::default_sphere();
-        middle.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .translation(0.0, 1.0, 0.5)
-                .scaling(0.7, 0.7, 0.7),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.0, 1.0, 0.0);
-        material.diffuse = 0.7;
-        material.specular = 0.3;
-        material.reflective = 0.5;
-        middle.material = material;
-        middle
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::sphere()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .translation(0.0, 1.0, 0.5)
+                    .scaling(0.7, 0.7, 0.7),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.0, 1.0, 0.0);
+                material.diffuse = 0.7;
+                material.specular = 0.3;
+                material.reflective = 0.5;
+                material
+            })
+            .build(),
+    );
 
     // Add a sphere to the right
-    builder.add_shape({
-        let mut right = shape::Shape::default_sphere();
-        right.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .translation(2.5, 1.0, 0.5)
-                .scaling(0.7, 0.7, 0.7),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.0, 0.0, 1.0);
-        material.diffuse = 0.7;
-        material.specular = 0.3;
-        material.reflective = 0.5;
-        right.material = material;
-        right
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::sphere()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .translation(2.5, 1.0, 0.5)
+                    .scaling(0.7, 0.7, 0.7),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.0, 0.0, 1.0);
+                material.diffuse = 0.7;
+                material.specular = 0.3;
+                material.reflective = 0.5;
+                material
+            })
+            .build(),
+    );
     // Let there be light
     builder.add_light_source(lights::point_light(
         tuple::Point::new(-5.0, 10.0, -10.0),
@@ -198,33 +214,37 @@ fn test_glass_sphere_scene() -> Result<(), std::io::Error> {
     let mut builder = world::WorldBuilder::new();
 
     // Create a floor and add it to the scene
-    builder.add_shape({
-        let mut floor = shape::Shape::default_plane();
-        floor.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(100.0, 0.01, 100.0));
-        let mut material = material::material();
-        let mut pattern =
-            patterns::Pattern::checkers(color::color(0.5, 0.5, 0.5), color::color(0.7, 0.7, 0.7));
-        // The y translation nudges the pattern off the y=0 checker boundary; intersection
-        // points on the plane straddle y=0 within float error, and which side they land on
-        // differs between platforms, which made this fixture fail on CI. The offset must
-        // not be a whole number of checker cells (cells are 0.005 here), or it lands back
-        // on a boundary: half a cell puts every point safely inside one.
-        pattern.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.005, 0.005, 0.005)
-                .translation(0.0, 0.0025, 0.0),
-        );
-        material.pattern = Some(pattern);
-        floor.material = material;
-        floor
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::plane()
+            .set_transform(matrix::Matrix4::IDENTITY.scaling(100.0, 0.01, 100.0))
+            .set_material({
+                let mut material = material::material();
+                let mut pattern = patterns::Pattern::checkers(
+                    color::color(0.5, 0.5, 0.5),
+                    color::color(0.7, 0.7, 0.7),
+                );
+                // The y translation nudges the pattern off the y=0 checker boundary; intersection
+                // points on the plane straddle y=0 within float error, and which side they land on
+                // differs between platforms, which made this fixture fail on CI. The offset must
+                // not be a whole number of checker cells (cells are 0.005 here), or it lands back
+                // on a boundary: half a cell puts every point safely inside one.
+                pattern.set_transformation_matrix(
+                    matrix::Matrix4::IDENTITY
+                        .scaling(0.005, 0.005, 0.005)
+                        .translation(0.0, 0.0025, 0.0),
+                );
+                material.pattern = Some(pattern);
+                material
+            })
+            .build(),
+    );
 
     // Add a sphere to the left
-    builder.add_shape({
-        let mut sphere = shape::Shape::glass_sphere();
-        sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 1.0, 0.0));
-        sphere
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::glass_sphere()
+            .set_transform(matrix::Matrix4::IDENTITY.translation(0.0, 1.0, 0.0))
+            .build(),
+    );
 
     // Let there be light
     builder.add_light_source(lights::point_light(

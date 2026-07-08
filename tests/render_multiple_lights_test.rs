@@ -42,24 +42,28 @@ fn test_multiple_lights() -> Result<(), std::io::Error> {
     let mut builder = world::WorldBuilder::new();
 
     // A matte white floor to catch the shadows.
-    builder.add_shape({
-        let mut floor = shape::Shape::default_plane();
-        let mut material = material::material();
-        material.color = color::color(1.0, 1.0, 1.0);
-        material.specular = 0.0;
-        floor.material = material;
-        floor
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::plane()
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(1.0, 1.0, 1.0);
+                material.specular = 0.0;
+                material
+            })
+            .build(),
+    );
 
     // A white sphere lit from both sides.
-    builder.add_shape({
-        let mut sphere = shape::Shape::default_sphere();
-        sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 1.0, 0.0));
-        let mut material = material::material();
-        material.color = color::color(0.9, 0.9, 0.9);
-        sphere.material = material;
-        sphere
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::sphere()
+            .set_transform(matrix::Matrix4::IDENTITY.translation(0.0, 1.0, 0.0))
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.9, 0.9, 0.9);
+                material
+            })
+            .build(),
+    );
 
     // A warm light from the left and a cool light from the right. Each casts
     // its own shadow, tinted by the opposite light's color.
