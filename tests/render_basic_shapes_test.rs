@@ -42,16 +42,16 @@ fn test_simple_cube() -> Result<(), std::io::Error> {
     let mut builder = world::WorldBuilder::new();
 
     // A blue cube, rotated so three faces are visible.
-    builder.add_shape({
-        let mut cube = shape::Shape::default_cube();
-        cube.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY.rotation_y(std::f64::consts::PI / 6.0),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.2, 0.4, 1.0);
-        cube.material = material;
-        cube
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cube()
+            .set_transform(matrix::Matrix4::IDENTITY.rotation_y(std::f64::consts::PI / 6.0))
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.2, 0.4, 1.0);
+                material
+            })
+            .build(),
+    );
 
     builder.add_light_source(lights::point_light(
         tuple::Point::new(-10.0, 10.0, -10.0),
@@ -76,13 +76,15 @@ fn test_simple_cylinder() -> Result<(), std::io::Error> {
     let mut builder = world::WorldBuilder::new();
 
     // A capped teal cylinder, seen from slightly above so the top cap shows.
-    builder.add_shape({
-        let mut cylinder = shape::Shape::cylinder(0.0, 2.0, true);
-        let mut material = material::material();
-        material.color = color::color(0.2, 0.7, 0.6);
-        cylinder.material = material;
-        cylinder
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cylinder(0.0, 2.0, true)
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.2, 0.7, 0.6);
+                material
+            })
+            .build(),
+    );
 
     builder.add_light_source(lights::point_light(
         tuple::Point::new(-10.0, 10.0, -10.0),
@@ -108,13 +110,15 @@ fn test_open_cylinder() -> Result<(), std::io::Error> {
 
     // An uncapped purple cylinder; the camera looks down into it, so the
     // hollow inside is visible.
-    builder.add_shape({
-        let mut cylinder = shape::Shape::cylinder(0.0, 2.0, false);
-        let mut material = material::material();
-        material.color = color::color(0.6, 0.3, 0.8);
-        cylinder.material = material;
-        cylinder
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cylinder(0.0, 2.0, false)
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.6, 0.3, 0.8);
+                material
+            })
+            .build(),
+    );
 
     builder.add_light_source(lights::point_light(
         tuple::Point::new(-10.0, 10.0, -10.0),
@@ -141,14 +145,16 @@ fn test_open_cone() -> Result<(), std::io::Error> {
     // An uncapped red cone with its tip at the bottom, opening upward like
     // a funnel; the camera looks down into the hollow inside. Squeezed in
     // `x` and `z` so the funnel is taller than it is wide.
-    builder.add_shape({
-        let mut cone = shape::Shape::cone(0.0, 1.0, false);
-        cone.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(0.5, 1.0, 0.5));
-        let mut material = material::material();
-        material.color = color::color(0.85, 0.3, 0.3);
-        cone.material = material;
-        cone
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cone(0.0, 1.0, false)
+            .set_transform(matrix::Matrix4::IDENTITY.scaling(0.5, 1.0, 0.5))
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.85, 0.3, 0.3);
+                material
+            })
+            .build(),
+    );
 
     builder.add_light_source(lights::point_light(
         tuple::Point::new(-10.0, 10.0, -10.0),
@@ -174,14 +180,16 @@ fn test_simple_cone() -> Result<(), std::io::Error> {
 
     // An orange cone with its wide capped base at the bottom and its tip
     // pointing up.
-    builder.add_shape({
-        let mut cone = shape::Shape::cone(-1.0, 0.0, true);
-        cone.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(0.0, 1.0, 0.0));
-        let mut material = material::material();
-        material.color = color::color(0.9, 0.5, 0.2);
-        cone.material = material;
-        cone
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cone(-1.0, 0.0, true)
+            .set_transform(matrix::Matrix4::IDENTITY.translation(0.0, 1.0, 0.0))
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.9, 0.5, 0.2);
+                material
+            })
+            .build(),
+    );
 
     builder.add_light_source(lights::point_light(
         tuple::Point::new(-10.0, 10.0, -10.0),
@@ -206,14 +214,16 @@ fn test_simple_plane() -> Result<(), std::io::Error> {
     let mut builder = world::WorldBuilder::new();
 
     // A single matte plane stretching to the horizon.
-    builder.add_shape({
-        let mut plane = shape::Shape::default_plane();
-        let mut material = material::material();
-        material.color = color::color(0.4, 0.6, 0.9);
-        material.specular = 0.0;
-        plane.material = material;
-        plane
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::plane()
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.4, 0.6, 0.9);
+                material.specular = 0.0;
+                material
+            })
+            .build(),
+    );
 
     builder.add_light_source(lights::point_light(
         tuple::Point::new(-10.0, 10.0, -10.0),

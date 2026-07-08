@@ -18,136 +18,154 @@ fn test_cube_scene() -> Result<(), std::io::Error> {
 
     // The room: one big cube. The floor is at y = 0 because the cube is
     // scaled to 15 and lifted by 15.
-    builder.add_shape({
-        let mut room = shape::Shape::default_cube();
-        room.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(15.0, 15.0, 15.0)
-                .translation(0.0, 15.0, 0.0),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.9, 0.85, 0.8);
-        material.specular = 0.0;
-        room.material = material;
-        room
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cube()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .scaling(15.0, 15.0, 15.0)
+                    .translation(0.0, 15.0, 0.0),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.9, 0.85, 0.8);
+                material.specular = 0.0;
+                material
+            })
+            .build(),
+    );
 
     // The table top.
-    builder.add_shape({
-        let mut top = shape::Shape::default_cube();
-        top.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(1.5, 0.05, 1.0)
-                .translation(0.0, 1.0, 0.0),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.55, 0.35, 0.2);
-        material.specular = 0.3;
-        top.material = material;
-        top
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cube()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .scaling(1.5, 0.05, 1.0)
+                    .translation(0.0, 1.0, 0.0),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.55, 0.35, 0.2);
+                material.specular = 0.3;
+                material
+            })
+            .build(),
+    );
 
     // The table legs: tall thin cubes under each corner of the top.
-    builder.add_shape({
-        let mut leg = shape::Shape::default_cube();
-        leg.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.05, 0.5, 0.05)
-                .translation(-1.3, 0.5, -0.8),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.55, 0.35, 0.2);
-        material.specular = 0.3;
-        leg.material = material;
-        leg
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cube()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.05, 0.5, 0.05)
+                    .translation(-1.3, 0.5, -0.8),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.55, 0.35, 0.2);
+                material.specular = 0.3;
+                material
+            })
+            .build(),
+    );
 
-    builder.add_shape({
-        let mut leg = shape::Shape::default_cube();
-        leg.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.05, 0.5, 0.05)
-                .translation(-1.3, 0.5, 0.8),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.55, 0.35, 0.2);
-        material.specular = 0.3;
-        leg.material = material;
-        leg
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cube()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.05, 0.5, 0.05)
+                    .translation(-1.3, 0.5, 0.8),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.55, 0.35, 0.2);
+                material.specular = 0.3;
+                material
+            })
+            .build(),
+    );
 
-    builder.add_shape({
-        let mut leg = shape::Shape::default_cube();
-        leg.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.05, 0.5, 0.05)
-                .translation(1.3, 0.5, -0.8),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.55, 0.35, 0.2);
-        material.specular = 0.3;
-        leg.material = material;
-        leg
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cube()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.05, 0.5, 0.05)
+                    .translation(1.3, 0.5, -0.8),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.55, 0.35, 0.2);
+                material.specular = 0.3;
+                material
+            })
+            .build(),
+    );
 
-    builder.add_shape({
-        let mut leg = shape::Shape::default_cube();
-        leg.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.05, 0.5, 0.05)
-                .translation(1.3, 0.5, 0.8),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.55, 0.35, 0.2);
-        material.specular = 0.3;
-        leg.material = material;
-        leg
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cube()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.05, 0.5, 0.05)
+                    .translation(1.3, 0.5, 0.8),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.55, 0.35, 0.2);
+                material.specular = 0.3;
+                material
+            })
+            .build(),
+    );
 
     // A small red box sitting on the table, turned slightly.
-    builder.add_shape({
-        let mut small_box = shape::Shape::default_cube();
-        small_box.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.15, 0.15, 0.15)
-                .rotation_y(0.5)
-                .translation(0.4, 1.2, 0.2),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.8, 0.2, 0.2);
-        small_box.material = material;
-        small_box
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cube()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.15, 0.15, 0.15)
+                    .rotation_y(0.5)
+                    .translation(0.4, 1.2, 0.2),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.8, 0.2, 0.2);
+                material
+            })
+            .build(),
+    );
 
     // A green box on the floor, left of the table.
-    builder.add_shape({
-        let mut floor_box = shape::Shape::default_cube();
-        floor_box.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.35, 0.35, 0.35)
-                .rotation_y(0.3)
-                .translation(-2.7, 0.35, -1.4),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.2, 0.6, 0.3);
-        floor_box.material = material;
-        floor_box
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cube()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.35, 0.35, 0.35)
+                    .rotation_y(0.3)
+                    .translation(-2.7, 0.35, -1.4),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.2, 0.6, 0.3);
+                material
+            })
+            .build(),
+    );
 
     // A blue box on the floor, in front of the table.
-    builder.add_shape({
-        let mut floor_box = shape::Shape::default_cube();
-        floor_box.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.2, 0.2, 0.2)
-                .rotation_y(-0.4)
-                .translation(1.2, 0.2, -1.8),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.25, 0.35, 0.8);
-        floor_box.material = material;
-        floor_box
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cube()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.2, 0.2, 0.2)
+                    .rotation_y(-0.4)
+                    .translation(1.2, 0.2, -1.8),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.25, 0.35, 0.8);
+                material
+            })
+            .build(),
+    );
 
     builder.add_light_source(lights::point_light(
         tuple::Point::new(-6.0, 8.0, -8.0),

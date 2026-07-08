@@ -482,7 +482,7 @@ a change that you expect to improve performance and know if it worked on not.
 
 ## Possible improvements
 
-- Builder interface for shapes.
-- Update setting of transformation matrices
-- Add a file input method for world description
-- Create animated gifs
+- A file format for describing whole scenes (camera, lights, shapes) —
+  distinct from the existing OBJ model importer (`obj_file`), which only
+  loads mesh geometry, not full scene descriptions.
+- Animated GIF output.

@@ -18,76 +18,86 @@ fn test_cylinder_scene() -> Result<(), std::io::Error> {
     let mut builder = world::WorldBuilder::new();
 
     // The floor.
-    builder.add_shape({
-        let mut floor = shape::Shape::default_plane();
-        let mut material = material::material();
-        material.color = color::color(0.9, 0.85, 0.8);
-        material.specular = 0.0;
-        floor.material = material;
-        floor
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::plane()
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.9, 0.85, 0.8);
+                material.specular = 0.0;
+                material
+            })
+            .build(),
+    );
 
     // A solid green column: a capped unit-height cylinder.
-    builder.add_shape({
-        let mut column = shape::Shape::cylinder(0.0, 1.0, true);
-        column.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.5, 1.0, 0.5)
-                .translation(-1.5, 0.0, 0.5),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.2, 0.6, 0.4);
-        material.specular = 0.3;
-        column.material = material;
-        column
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cylinder(0.0, 1.0, true)
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.5, 1.0, 0.5)
+                    .translation(-1.5, 0.0, 0.5),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.2, 0.6, 0.4);
+                material.specular = 0.3;
+                material
+            })
+            .build(),
+    );
 
     // An open yellow pipe; the camera looks down into it, so the hollow
     // inside is visible.
-    builder.add_shape({
-        let mut pipe = shape::Shape::cylinder(0.0, 1.0, false);
-        pipe.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.35, 1.4, 0.35)
-                .translation(1.6, 0.0, 1.0),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.8, 0.7, 0.3);
-        material.specular = 0.3;
-        pipe.material = material;
-        pipe
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cylinder(0.0, 1.0, false)
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.35, 1.4, 0.35)
+                    .translation(1.6, 0.0, 1.0),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.8, 0.7, 0.3);
+                material.specular = 0.3;
+                material
+            })
+            .build(),
+    );
 
     // The waffle cone: the upper half of a cone opens upward, leaving the
     // tip resting on the floor.
-    builder.add_shape({
-        let mut waffle_cone = shape::Shape::cone(0.0, 1.0, false);
-        waffle_cone.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.5, 1.5, 0.5)
-                .translation(0.0, 0.0, -0.5),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.8, 0.6, 0.4);
-        material.specular = 0.2;
-        waffle_cone.material = material;
-        waffle_cone
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::cone(0.0, 1.0, false)
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.5, 1.5, 0.5)
+                    .translation(0.0, 0.0, -0.5),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.8, 0.6, 0.4);
+                material.specular = 0.2;
+                material
+            })
+            .build(),
+    );
 
     // The strawberry scoop, overlapping the cone's rim.
-    builder.add_shape({
-        let mut scoop = shape::Shape::default_sphere();
-        scoop.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.6, 0.6, 0.6)
-                .translation(0.0, 1.6, -0.5),
-        );
-        let mut material = material::material();
-        material.color = color::color(0.9, 0.5, 0.6);
-        material.specular = 0.4;
-        scoop.material = material;
-        scoop
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::sphere()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.6, 0.6, 0.6)
+                    .translation(0.0, 1.6, -0.5),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.9, 0.5, 0.6);
+                material.specular = 0.4;
+                material
+            })
+            .build(),
+    );
 
     builder.add_light_source(lights::point_light(
         tuple::Point::new(-6.0, 8.0, -8.0),

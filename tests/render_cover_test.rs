@@ -56,10 +56,10 @@ fn small_object() -> matrix::Matrix4 {
 }
 
 fn cube(color: color::Color, transform: matrix::Matrix4) -> shape::Shape {
-    let mut cube = shape::Shape::default_cube();
-    cube.material = cover_material(color);
-    cube.set_transformation_matrix(transform);
-    cube
+    shape::ShapeBuilder::cube()
+        .set_material(cover_material(color))
+        .set_transform(transform)
+        .build()
 }
 
 // The book's cover image, translated from the YAML scene description in
@@ -70,38 +70,42 @@ fn test_cover_scene() -> Result<(), std::io::Error> {
     let mut builder = world::WorldBuilder::new();
 
     // A white backdrop far behind the scene, lit only by its ambient term.
-    builder.add_shape({
-        let mut backdrop = shape::Shape::default_plane();
-        let mut material = material::material();
-        material.color = white();
-        material.ambient = 1.0;
-        material.diffuse = 0.0;
-        material.specular = 0.0;
-        backdrop.material = material;
-        backdrop.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .rotation_x(std::f64::consts::FRAC_PI_2)
-                .translation(0.0, 0.0, 500.0),
-        );
-        backdrop
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::plane()
+            .set_material({
+                let mut material = material::material();
+                material.color = white();
+                material.ambient = 1.0;
+                material.diffuse = 0.0;
+                material.specular = 0.0;
+                material
+            })
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .rotation_x(std::f64::consts::FRAC_PI_2)
+                    .translation(0.0, 0.0, 500.0),
+            )
+            .build(),
+    );
 
     // The glassy purple sphere sitting on top of the stack.
-    builder.add_shape({
-        let mut sphere = shape::Shape::default_sphere();
-        let mut material = material::material();
-        material.color = purple();
-        material.diffuse = 0.2;
-        material.ambient = 0.0;
-        material.specular = 1.0;
-        material.shininess = 200.0;
-        material.reflective = 0.7;
-        material.transparency = 0.7;
-        material.refractive_index = 1.5;
-        sphere.material = material;
-        sphere.set_transformation_matrix(large_object());
-        sphere
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::sphere()
+            .set_material({
+                let mut material = material::material();
+                material.color = purple();
+                material.diffuse = 0.2;
+                material.ambient = 0.0;
+                material.specular = 1.0;
+                material.shininess = 200.0;
+                material.reflective = 0.7;
+                material.transparency = 0.7;
+                material.refractive_index = 1.5;
+                material
+            })
+            .set_transform(large_object())
+            .build(),
+    );
 
     // The cascade of cubes, listed in the same order as the book.
     builder.add_shape(cube(white(), medium_object().translation(4.0, 0.0, 0.0)));

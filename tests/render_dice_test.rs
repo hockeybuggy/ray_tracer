@@ -62,23 +62,26 @@ fn pip_positions() -> Vec<(f64, f64, f64)> {
 // round the corners off, then a difference for each pip, carving a dish
 // that keeps the pip's own color.
 fn die(body_color: color::Color, pip_color: color::Color) -> shape::Shape {
-    let mut cube = shape::Shape::default_cube();
-    cube.material = colored_material(body_color);
+    let cube = shape::ShapeBuilder::cube()
+        .set_material(colored_material(body_color))
+        .build();
 
-    let mut corners = shape::Shape::default_sphere();
-    corners.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(1.6, 1.6, 1.6));
-    corners.material = colored_material(body_color);
+    let corners = shape::ShapeBuilder::sphere()
+        .set_transform(matrix::Matrix4::IDENTITY.scaling(1.6, 1.6, 1.6))
+        .set_material(colored_material(body_color))
+        .build();
 
     let mut die = shape::Shape::csg(shape::CsgOperation::Intersection, cube, corners);
 
     for (x, y, z) in pip_positions() {
-        let mut pip = shape::Shape::default_sphere();
-        pip.set_transformation_matrix(
-            matrix::Matrix4::IDENTITY
-                .scaling(0.22, 0.22, 0.22)
-                .translation(x, y, z),
-        );
-        pip.material = pip_material(pip_color);
+        let pip = shape::ShapeBuilder::sphere()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.22, 0.22, 0.22)
+                    .translation(x, y, z),
+            )
+            .set_material(pip_material(pip_color))
+            .build();
         die = shape::Shape::csg(shape::CsgOperation::Difference, die, pip);
     }
     return die;
@@ -92,46 +95,48 @@ fn test_dice_scene() -> Result<(), std::io::Error> {
     let mut builder = world::WorldBuilder::new();
 
     // The felt.
-    builder.add_shape({
-        let mut floor = shape::Shape::default_plane();
-        let mut material = material::material();
-        material.color = color::color(0.15, 0.45, 0.25);
-        material.specular = 0.0;
-        floor.material = material;
-        floor
-    });
+    builder.add_shape(
+        shape::ShapeBuilder::plane()
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(0.15, 0.45, 0.25);
+                material.specular = 0.0;
+                material
+            })
+            .build(),
+    );
 
     // An ivory die with dark pips, showing one on top.
-    builder.add_shape({
-        let mut ivory_die = die(
+    builder.add_shape(
+        shape::ShapeBuilder::from(die(
             color::color(0.95, 0.93, 0.85),
             color::color(0.15, 0.15, 0.18),
-        );
-        ivory_die.set_transformation_matrix(
+        ))
+        .set_transform(
             matrix::Matrix4::IDENTITY
                 .scaling(0.7, 0.7, 0.7)
                 .rotation_y(-0.4)
                 .translation(-1.3, 0.7, 0.2),
-        );
-        ivory_die
-    });
+        )
+        .build(),
+    );
 
     // A red die with white pips, tipped a quarter turn onto its side so
     // three is up, then spun a little.
-    builder.add_shape({
-        let mut red_die = die(
+    builder.add_shape(
+        shape::ShapeBuilder::from(die(
             color::color(0.75, 0.15, 0.18),
             color::color(0.95, 0.95, 0.95),
-        );
-        red_die.set_transformation_matrix(
+        ))
+        .set_transform(
             matrix::Matrix4::IDENTITY
                 .scaling(0.7, 0.7, 0.7)
                 .rotation_z(std::f64::consts::FRAC_PI_2)
                 .rotation_y(0.5)
                 .translation(1.2, 0.7, -0.4),
-        );
-        red_die
-    });
+        )
+        .build(),
+    );
 
     builder.add_light_source(lights::point_light(
         tuple::Point::new(-6.0, 8.0, -8.0),
