@@ -1,0 +1,38 @@
+# A small animation exercising both kinds of frame change: a green sphere
+# slides across the floor, then the camera pulls up and back. Rendered by
+# the end to end test in `tests/render_scene_file_test.rs`.
+
+[animation]
+name = "sphere_moves"
+width = 100
+height = 75
+
+[camera]
+field_of_view = 60.0
+from = [0.0, 1.5, -5.0]
+to = [0.0, 1.0, 0.0]
+up = [0.0, 1.0, 0.0]
+
+[[lights]]
+position = [-10.0, 10.0, -10.0]
+intensity = [1.0, 1.0, 1.0]
+
+[[objects]]
+name = "floor"
+kind = "plane"
+material = { color = [0.9, 0.9, 0.9], specular = 0.0 }
+
+[[objects]]
+name = "ball"
+kind = "sphere"
+transform = [{ translate = [0.0, 1.0, 0.0] }]
+material = { color = [0.2, 0.6, 0.3] }
+
+[[frames]]
+
+[[frames]]
+objects.ball.transform = [{ translate = [1.5, 0.0, 0.0] }]
+
+[[frames]]
+objects.ball.transform = [{ translate = [3.0, 0.0, 0.0] }]
+camera.from = [0.0, 3.0, -7.0]

@@ -457,6 +457,107 @@ compare to the results they generate and smaller images are faster to render.
 </table>
 
 
+## Rendering scenes
+
+Scenes can also be described in TOML files instead of Rust (see
+`scenes/*.toml` for examples). The `render` binary reads one and writes a
+PNG:
+
+```sh
+cargo run --release --bin render -- scenes/<scene>.toml
+```
+
+`--scale N` multiplies the scene's base resolution, so the same file can
+render small while iterating and large for a shareable image. `--output
+PATH` picks the output path (the default is `<name>.png`).
+
+A scene file has a `[scene]` table naming the render and giving its base
+size, a `[camera]`, and any number of `[[lights]]` and `[[objects]]`:
+
+```toml
+[scene]
+name = "example"
+width = 100
+height = 100
+
+[camera]
+field_of_view = 60.0     # degrees
+from = [0.0, 2.5, -7.0]  # where the camera sits
+to = [0.0, 1.0, 0.0]     # what it looks at
+up = [0.0, 1.0, 0.0]
+
+[[lights]]
+position = [-8.0, 6.0, -6.0]
+intensity = [1.0, 1.0, 1.0]  # rgb
+
+# Objects have a unique name; a kind (`plane`, `sphere`, `cube`, or `obj`
+# with a `file` path to an OBJ model); an optional list of transform
+# steps; and optional material overrides.
+[[objects]]
+name = "ball"
+kind = "sphere"
+transform = [{ scale = [0.5, 0.5, 0.5] }, { translate = [0.0, 1.0, 0.0] }]
+material = { color = [0.9, 0.2, 0.2], specular = 0.3 }
+```
+
+Transform steps (`rotate_x`/`rotate_y`/`rotate_z` in degrees, `scale`, and
+`translate`) apply in list order, each in world space after the ones
+before it. Material overrides apply on top of the default material:
+`color`, `ambient`, `diffuse`, `specular`, `shininess`, `reflective`,
+`transparency`, and `refractive_index`.
+
+
+## Rendering animations
+
+An animation file (see `animations/*.toml`) uses the same format with an
+`[animation]` table in place of `[scene]`, followed by a list of
+`[[frames]]`. Each frame restates how it differs from the base scene:
+extra transform steps appended after an object's base transform, or
+replacement camera coordinates. An empty `[[frames]]` entry renders the
+base scene unchanged.
+
+```toml
+[[frames]]
+
+[[frames]]
+objects.teapot.transform = [{ rotate_y = 10.0 }]
+
+[[frames]]
+camera.from = [0.694593, 2.0, -3.939231]
+```
+
+The `animate` binary renders every frame, in parallel, to a numbered PNG:
+
+```sh
+cargo run --release --bin animate -- animations/<animation>.toml --scale 4
+```
+
+and `scripts/make_gif.sh` assembles the frames into a looping gif with
+ffmpeg:
+
+```sh
+./scripts/make_gif.sh animations/frames/<animation> animations/<animation>.gif
+```
+
+For example, these are the frames of `tests/scenes/sphere_moves.toml`: the
+first frame is the base scene, the second slides the sphere to the right,
+and the third slides it further while pulling the camera up and back.
+
+<img src="tests/fixtures/sphere_moves_0.png"
+     alt="A green sphere resting on a white floor."
+     width="100px"
+     height="75px"
+     > <img src="tests/fixtures/sphere_moves_1.png"
+     alt="The same sphere slid to the right."
+     width="100px"
+     height="75px"
+     > <img src="tests/fixtures/sphere_moves_2.png"
+     alt="The sphere slid further right, seen from a higher, more distant camera."
+     width="100px"
+     height="75px"
+     >
+
+
 ## Running benchmarks
 
 This project contains benchmarks which measure the performance and allow you to
@@ -482,7 +583,5 @@ a change that you expect to improve performance and know if it worked on not.
 
 ## Possible improvements
 
-- A file format for describing whole scenes (camera, lights, shapes) —
-  distinct from the existing OBJ model importer (`obj_file`), which only
-  loads mesh geometry, not full scene descriptions.
-- Animated GIF output.
+- Bounding boxes to speed up intersection tests against groups and
+  imported OBJ models.
