@@ -1,0 +1,146 @@
+# The camera circling the high-poly Utah teapot. The light stays
+# fixed, so the teapot passes in and out of its own shadow side.
+#
+# Render the frames, then assemble the gif:
+#
+#     cargo run --release --bin animate -- animations/teapot_orbit.toml [--scale N]
+#     ./scripts/make_gif.sh animations/frames/teapot_orbit animations/teapot_orbit.gif
+
+[animation]
+name = "teapot_orbit"
+width = 100
+height = 75
+
+[camera]
+field_of_view = 60.0
+from = [0.0, 2.0, -4.0]
+to = [0.0, 0.7, 0.0]
+up = [0.0, 1.0, 0.0]
+
+[[lights]]
+position = [-6.0, 8.0, -8.0]
+intensity = [1.0, 1.0, 1.0]
+
+[[objects]]
+name = "floor"
+kind = "plane"
+material = { color = [0.55, 0.6, 0.65], specular = 0.0 }
+
+# The model is built z-up and roughly 32 units wide: stand it up on the y
+# axis and scale it down to about three units across.
+[[objects]]
+name = "teapot"
+kind = "obj"
+file = "object_files/teapot.obj"
+transform = [{ rotate_x = -90.0 }, { scale = [0.1, 0.1, 0.1] }]
+
+
+# Each frame moves the camera a further 10 degrees around the y axis,
+# keeping it 4 units out and 2 units up, always looking at the teapot;
+# the first frame is the base scene unchanged.
+[[frames]]
+
+[[frames]]
+camera.from = [0.694593, 2.0, -3.939231]
+
+[[frames]]
+camera.from = [1.368081, 2.0, -3.758770]
+
+[[frames]]
+camera.from = [2.000000, 2.0, -3.464102]
+
+[[frames]]
+camera.from = [2.571150, 2.0, -3.064178]
+
+[[frames]]
+camera.from = [3.064178, 2.0, -2.571150]
+
+[[frames]]
+camera.from = [3.464102, 2.0, -2.000000]
+
+[[frames]]
+camera.from = [3.758770, 2.0, -1.368081]
+
+[[frames]]
+camera.from = [3.939231, 2.0, -0.694593]
+
+[[frames]]
+camera.from = [4.000000, 2.0, -0.000000]
+
+[[frames]]
+camera.from = [3.939231, 2.0, 0.694593]
+
+[[frames]]
+camera.from = [3.758770, 2.0, 1.368081]
+
+[[frames]]
+camera.from = [3.464102, 2.0, 2.000000]
+
+[[frames]]
+camera.from = [3.064178, 2.0, 2.571150]
+
+[[frames]]
+camera.from = [2.571150, 2.0, 3.064178]
+
+[[frames]]
+camera.from = [2.000000, 2.0, 3.464102]
+
+[[frames]]
+camera.from = [1.368081, 2.0, 3.758770]
+
+[[frames]]
+camera.from = [0.694593, 2.0, 3.939231]
+
+[[frames]]
+camera.from = [0.000000, 2.0, 4.000000]
+
+[[frames]]
+camera.from = [-0.694593, 2.0, 3.939231]
+
+[[frames]]
+camera.from = [-1.368081, 2.0, 3.758770]
+
+[[frames]]
+camera.from = [-2.000000, 2.0, 3.464102]
+
+[[frames]]
+camera.from = [-2.571150, 2.0, 3.064178]
+
+[[frames]]
+camera.from = [-3.064178, 2.0, 2.571150]
+
+[[frames]]
+camera.from = [-3.464102, 2.0, 2.000000]
+
+[[frames]]
+camera.from = [-3.758770, 2.0, 1.368081]
+
+[[frames]]
+camera.from = [-3.939231, 2.0, 0.694593]
+
+[[frames]]
+camera.from = [-4.000000, 2.0, 0.000000]
+
+[[frames]]
+camera.from = [-3.939231, 2.0, -0.694593]
+
+[[frames]]
+camera.from = [-3.758770, 2.0, -1.368081]
+
+[[frames]]
+camera.from = [-3.464102, 2.0, -2.000000]
+
+[[frames]]
+camera.from = [-3.064178, 2.0, -2.571150]
+
+[[frames]]
+camera.from = [-2.571150, 2.0, -3.064178]
+
+[[frames]]
+camera.from = [-2.000000, 2.0, -3.464102]
+
+[[frames]]
+camera.from = [-1.368081, 2.0, -3.758770]
+
+[[frames]]
+camera.from = [-0.694593, 2.0, -3.939231]
