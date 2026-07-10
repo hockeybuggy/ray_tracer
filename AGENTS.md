@@ -27,6 +27,11 @@ Douglas is working through the book to learn. For new chapter material:
 - `cargo bench` — criterion benchmark in `benches/simple_world.rs`
 - `./scripts/check_gallery.sh` — every fixture PNG must appear in the README
   gallery (enforced by CI)
+- `cargo run --release --bin render -- scenes/<scene>.toml [--scale N]` —
+  render a TOML-described scene to a PNG
+- `cargo run --release --bin animate -- animations/<animation>.toml
+  [--scale N]` — render animation frames; `./scripts/make_gif.sh
+  <frames_dir> <output.gif>` assembles them with ffmpeg
 
 ## Architecture
 
@@ -35,7 +40,8 @@ Library crate; all modules exposed via `src/lib.rs`. One file per concept:
 `transformation` (`Transform` trait), `ray`, `shape`, `intersection`,
 `material`, `patterns`, `lighting`, `lights`, `world` (+ `WorldBuilder`),
 `camera`, `obj_file` (Wavefront OBJ model import; sample models in
-`object_files/`).
+`object_files/`), `scene_file` (TOML scene/animation descriptions used by
+the `render` and `animate` binaries in `src/bin/`).
 
 Shapes are a single `Shape` struct with a private `ShapeType` enum
 (`src/shape.rs`), dispatched by `match` — not a trait. Adding a shape means:
