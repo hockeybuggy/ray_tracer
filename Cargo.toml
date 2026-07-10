@@ -17,6 +17,8 @@ opt-level = 2
 assert_approx_eq = "1.1.0"
 criterion = "0.8"
 image = "0.25.10"
+serde = { version = "1.0.228", features = ["derive"] }
+toml = "1.1.2"
 
 [[bench]]
 name = "simple_world"
