@@ -309,6 +309,17 @@ compare to the results they generate and smaller images are faster to render.
            >
     </td>
   </tr>
+
+  <tr>
+    <td>Earth</td>
+    <td>
+      <img src="tests/fixtures/earth.png"
+           alt="An Earth-textured globe on a pedestal above a reflective floor"
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
 </table>
 
 ### Worlds

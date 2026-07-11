@@ -1,3 +1,4 @@
+use crate::canvas;
 use crate::color;
 use crate::tuple;
 
@@ -15,6 +16,9 @@ pub enum UvPattern {
         ur: color::Color,
         bl: color::Color,
         br: color::Color,
+    },
+    Image {
+        canvas: canvas::Canvas,
     },
 }
 
@@ -42,6 +46,10 @@ impl UvPattern {
             bl,
             br,
         };
+    }
+
+    pub fn image(canvas: canvas::Canvas) -> UvPattern {
+        return UvPattern::Image { canvas };
     }
 
     pub fn uv_pattern_at(&self, u: f64, v: f64) -> color::Color {
@@ -80,6 +88,18 @@ impl UvPattern {
                     }
                 }
                 *main
+            }
+            UvPattern::Image { canvas } => {
+                // Flip v: the pattern's v=0 is the bottom, the canvas's
+                // y=0 is the top.
+                let v = 1.0 - v;
+
+                // Scale by (dimension - 1) so u=1 / v=1 land on the last
+                // pixel instead of one past it.
+                let x = u * (canvas.width - 1) as f64;
+                let y = v * (canvas.height - 1) as f64;
+
+                *canvas.pixel_at(x.round() as u32, y.round() as u32)
             }
         }
     }
@@ -234,6 +254,7 @@ pub struct CubeFaces {
 #[cfg(test)]
 mod uv_tests {
     use crate::assert_color_approx_eq;
+    use crate::canvas;
     use crate::color;
     use crate::tuple;
     use crate::uv;
@@ -507,6 +528,36 @@ mod uv_tests {
                 v,
                 expected_v
             );
+        }
+    }
+
+    // Scenario Outline: Checker pattern in 2D (image-based)
+    #[test]
+    fn test_uv_pattern_from_an_image() {
+        let ppm = "P3\n\
+                   10 10\n\
+                   10\n\
+                   0 0 0  1 1 1  2 2 2  3 3 3  4 4 4  5 5 5  6 6 6  7 7 7  8 8 8  9 9 9\n\
+                   1 1 1  2 2 2  3 3 3  4 4 4  5 5 5  6 6 6  7 7 7  8 8 8  9 9 9  0 0 0\n\
+                   2 2 2  3 3 3  4 4 4  5 5 5  6 6 6  7 7 7  8 8 8  9 9 9  0 0 0  1 1 1\n\
+                   3 3 3  4 4 4  5 5 5  6 6 6  7 7 7  8 8 8  9 9 9  0 0 0  1 1 1  2 2 2\n\
+                   4 4 4  5 5 5  6 6 6  7 7 7  8 8 8  9 9 9  0 0 0  1 1 1  2 2 2  3 3 3\n\
+                   5 5 5  6 6 6  7 7 7  8 8 8  9 9 9  0 0 0  1 1 1  2 2 2  3 3 3  4 4 4\n\
+                   6 6 6  7 7 7  8 8 8  9 9 9  0 0 0  1 1 1  2 2 2  3 3 3  4 4 4  5 5 5\n\
+                   7 7 7  8 8 8  9 9 9  0 0 0  1 1 1  2 2 2  3 3 3  4 4 4  5 5 5  6 6 6\n\
+                   8 8 8  9 9 9  0 0 0  1 1 1  2 2 2  3 3 3  4 4 4  5 5 5  6 6 6  7 7 7\n\
+                   9 9 9  0 0 0  1 1 1  2 2 2  3 3 3  4 4 4  5 5 5  6 6 6  7 7 7  8 8 8\n";
+        let canvas = canvas::canvas_from_ppm(ppm).unwrap();
+        let pattern = uv::UvPattern::image(canvas);
+
+        let cases = [
+            (0.0, 0.0, color::color(0.9, 0.9, 0.9)),
+            (0.3, 0.0, color::color(0.2, 0.2, 0.2)),
+            (0.6, 0.3, color::color(0.1, 0.1, 0.1)),
+            (1.0, 1.0, color::color(0.9, 0.9, 0.9)),
+        ];
+        for (u, v, expected) in cases {
+            assert_color_approx_eq!(pattern.uv_pattern_at(u, v), expected);
         }
     }
 }
