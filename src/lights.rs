@@ -1,4 +1,5 @@
 use crate::color;
+use crate::sequences;
 use crate::tuple;
 use crate::world;
 
@@ -10,6 +11,7 @@ pub enum LightKind {
         vvec: tuple::Vector,
         usteps: usize,
         vsteps: usize,
+        jitter: sequences::Sequence,
     },
 }
 
@@ -24,6 +26,12 @@ impl Light {
         match self.kind {
             LightKind::Point => 1,
             LightKind::Area { usteps, vsteps, .. } => usteps * vsteps,
+        }
+    }
+
+    pub fn set_jitter(&mut self, jitter_by: sequences::Sequence) {
+        if let LightKind::Area { jitter, .. } = &mut self.kind {
+            *jitter = jitter_by;
         }
     }
 }
@@ -56,16 +64,21 @@ pub fn area_light(
             vvec,
             usteps,
             vsteps,
+            jitter: sequences::Sequence::constant(0.5),
         },
     }
 }
 
 pub fn point_on_light(light: &Light, u: usize, v: usize) -> tuple::Point {
-    match light.kind {
+    match &light.kind {
         LightKind::Point => light.position,
         LightKind::Area {
-            corner, uvec, vvec, ..
-        } => corner + uvec * (u as f64 + 0.5) + vvec * (v as f64 + 0.5),
+            corner,
+            uvec,
+            vvec,
+            jitter,
+            ..
+        } => *corner + *uvec * (u as f64 + jitter.next()) + *vvec * (v as f64 + jitter.next()),
     }
 }
 
@@ -95,8 +108,10 @@ pub fn intensity_at(light: &Light, point: &tuple::Point, world: &world::World) -
 
 #[cfg(test)]
 mod lights_tests {
+    use crate::assert_tuple_approx_eq;
     use crate::color;
     use crate::lights;
+    use crate::sequences;
     use crate::tuple;
     use crate::world;
 
@@ -153,6 +168,7 @@ mod lights_tests {
                 vvec,
                 usteps,
                 vsteps,
+                ..
             } => {
                 assert_eq!(corner, tuple::Point::new(0.0, 0.0, 0.0));
                 assert_eq!(uvec, tuple::Vector::new(0.5, 0.0, 0.0));
@@ -203,6 +219,59 @@ mod lights_tests {
         ];
 
         for (point, expected) in cases {
+            let got = lights::intensity_at(&light, &point, &w);
+            assert!(
+                (got - expected).abs() < 1e-5,
+                "intensity_at({:?}) = {}, want {}",
+                point,
+                got,
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn test_finding_a_single_point_on_a_jittered_area_light() {
+        let corner = tuple::Point::new(0.0, 0.0, 0.0);
+        let v1 = tuple::Vector::new(2.0, 0.0, 0.0);
+        let v2 = tuple::Vector::new(0.0, 0.0, 1.0);
+        let mut light = lights::area_light(corner, v1, 4, v2, 2, color::white());
+        light.set_jitter(sequences::sequence(&[0.3, 0.7]));
+
+        let cases = [
+            (0, 0, tuple::Point::new(0.15, 0.0, 0.35)),
+            (1, 0, tuple::Point::new(0.65, 0.0, 0.35)),
+            (0, 1, tuple::Point::new(0.15, 0.0, 0.85)),
+            (2, 0, tuple::Point::new(1.15, 0.0, 0.35)),
+            (3, 1, tuple::Point::new(1.65, 0.0, 0.85)),
+        ];
+
+        for (u, v, expected) in cases {
+            assert_tuple_approx_eq!(lights::point_on_light(&light, u, v), expected);
+        }
+    }
+
+    #[test]
+    fn test_the_area_light_with_jittered_samples() {
+        let w = world::default_world();
+        let corner = tuple::Point::new(-0.5, -0.5, -5.0);
+        let v1 = tuple::Vector::new(1.0, 0.0, 0.0);
+        let v2 = tuple::Vector::new(0.0, 1.0, 0.0);
+
+        let cases = [
+            (tuple::Point::new(0.0, 0.0, 2.0), 0.0),
+            (tuple::Point::new(1.0, -1.0, 2.0), 0.5),
+            (tuple::Point::new(1.5, 0.0, 2.0), 0.75),
+            (tuple::Point::new(1.25, 1.25, 3.0), 0.75),
+            (tuple::Point::new(0.0, 0.0, -2.0), 1.0),
+        ];
+
+        // Each row gets a fresh light: intensity_at consumes 4 jitter values
+        // per call, so a shared cursor would drift across rows.
+        for (point, expected) in cases {
+            let mut light = lights::area_light(corner, v1, 2, v2, 2, color::white());
+            light.set_jitter(sequences::sequence(&[0.7, 0.3, 0.9, 0.1, 0.5]));
+
             let got = lights::intensity_at(&light, &point, &w);
             assert!(
                 (got - expected).abs() < 1e-5,

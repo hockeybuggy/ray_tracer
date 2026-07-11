@@ -12,6 +12,7 @@ pub mod obj_file;
 pub mod patterns;
 pub mod ray;
 pub mod scene_file;
+pub mod sequences;
 pub mod shape;
 pub mod transformation;
 pub mod tuple;
