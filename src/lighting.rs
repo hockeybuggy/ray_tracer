@@ -11,7 +11,7 @@ pub fn lighting(
     point: &tuple::Point,
     camerav: &tuple::Vector,
     normalv: &tuple::Vector,
-    in_shadow: bool,
+    intensity: f64,
 ) -> color::Color {
     let ambient: color::Color;
     let diffuse: color::Color;
@@ -35,10 +35,6 @@ pub fn lighting(
 
     // compute the ambient contribution
     ambient = effective_color * material.ambient;
-
-    if in_shadow {
-        return ambient;
-    }
 
     // light_dot_normal represents the cosine of the angle between the light vector
     // and the normal vector. A negative number means the light is on the other side
@@ -64,5 +60,5 @@ pub fn lighting(
             specular = light.intensity * material.specular * factor;
         }
     }
-    return ambient + diffuse + specular;
+    return ambient + diffuse * intensity + specular * intensity;
 }
