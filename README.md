@@ -583,6 +583,6 @@ a change that you expect to improve performance and know if it worked on not.
 
 ## Possible improvements
 
-- Bounding volume hierarchies: recursively subdividing large groups
-  (like imported OBJ models) into nested subgroups, so a ray descends
-  only into the halves of the model its path actually crosses.
+- Parallel rendering: the render loop casts each pixel's ray
+  independently, so rows could be rendered across threads (e.g. with
+  `rayon`) for a near-linear speedup on multi-core machines.
