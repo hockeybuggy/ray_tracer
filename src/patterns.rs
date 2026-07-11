@@ -2,6 +2,7 @@ use crate::color;
 use crate::matrix;
 use crate::matrix::Inverse;
 use crate::tuple;
+use crate::uv;
 
 #[derive(Debug, PartialEq)]
 enum PatternType {
@@ -10,6 +11,10 @@ enum PatternType {
     Ring,
     Checkers,
     TestPattern,
+    TextureMap {
+        uv_pattern: uv::UvPattern,
+        uv_map: uv::UvMap,
+    },
 }
 
 #[derive(Debug, PartialEq)]
@@ -66,6 +71,15 @@ impl Pattern {
         };
     }
 
+    pub fn texture_map(uv_pattern: uv::UvPattern, uv_map: uv::UvMap) -> Pattern {
+        return Pattern {
+            a: color::black(),
+            b: color::black(),
+            transform: matrix::Matrix4::IDENTITY,
+            pattern_type: PatternType::TextureMap { uv_pattern, uv_map },
+        };
+    }
+
     pub fn stripe_at(&self, point: &tuple::Point) -> color::Color {
         return if point.x.floor() % 2.0 == 0.0 {
             self.a
@@ -98,12 +112,16 @@ impl Pattern {
     }
 
     pub fn pattern_at(&self, point: &tuple::Point) -> color::Color {
-        return match self.pattern_type {
+        return match &self.pattern_type {
             PatternType::Stripe => self.stripe_at(point),
             PatternType::Gradient => self.gradient_at(point),
             PatternType::Ring => self.ring_at(point),
             PatternType::Checkers => self.checkers_at(point),
             PatternType::TestPattern => color::color(point.x, point.y, point.z),
+            PatternType::TextureMap { uv_pattern, uv_map } => {
+                let (u, v) = uv_map.map(point);
+                uv_pattern.uv_pattern_at(u, v)
+            }
         };
     }
 
@@ -133,6 +151,7 @@ mod patterns_tests {
     use crate::shape;
     use crate::transformation::Transform;
     use crate::tuple;
+    use crate::uv;
 
     #[test]
     fn test_stripe_pattern_can_be_created() {
@@ -385,5 +404,28 @@ mod patterns_tests {
             pattern.pattern_at_object(&object.transform, &tuple::Point::new(2.5, 3.0, 3.5)),
             color::color(0.75, 0.5, 0.25)
         );
+    }
+
+    // Scenario Outline: Using a texture map pattern with a spherical map
+    #[test]
+    fn test_texture_map_pattern_with_a_spherical_map() {
+        let checkers = uv::UvPattern::checkers(16, 8, color::black(), color::white());
+        let pattern = patterns::Pattern::texture_map(checkers, uv::UvMap::Spherical);
+
+        let cases = [
+            (tuple::Point::new(0.4315, 0.4670, 0.7719), color::white()),
+            (tuple::Point::new(-0.9654, 0.2552, -0.0534), color::black()),
+            (tuple::Point::new(0.1039, 0.7090, 0.6975), color::white()),
+            (tuple::Point::new(-0.4986, -0.7856, -0.3663), color::black()),
+            (tuple::Point::new(-0.0317, -0.9395, 0.3411), color::black()),
+            (tuple::Point::new(0.4809, -0.7721, 0.4154), color::black()),
+            (tuple::Point::new(0.0285, -0.9612, -0.2745), color::black()),
+            (tuple::Point::new(-0.5734, -0.2162, -0.7903), color::white()),
+            (tuple::Point::new(0.7688, -0.1470, 0.6223), color::black()),
+            (tuple::Point::new(-0.7652, 0.2175, 0.6060), color::black()),
+        ];
+        for (point, expected) in cases {
+            assert_color_approx_eq!(pattern.pattern_at(&point), expected);
+        }
     }
 }

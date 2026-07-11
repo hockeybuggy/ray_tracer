@@ -242,6 +242,31 @@ compare to the results they generate and smaller images are faster to render.
   </tr>
 </table>
 
+### Texture mapping
+
+<table>
+  <tr>
+    <th>
+      <p>Name</p>
+      <img width="300" height="1" />
+    </th>
+    <th>
+      <p>Image</p>
+    </th>
+  </tr>
+
+  <tr>
+    <td>UV Checkered Sphere</td>
+    <td>
+      <img src="tests/fixtures/uv_checkered_sphere.png"
+           alt="A sphere with a green and white checkerboard texture mapped onto its surface"
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+</table>
+
 ### Worlds
 
 <table>
