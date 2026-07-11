@@ -41,6 +41,7 @@ impl UvPattern {
 pub enum UvMap {
     Spherical,
     Planar,
+    Cylindrical,
 }
 
 impl UvMap {
@@ -48,6 +49,7 @@ impl UvMap {
         match self {
             UvMap::Spherical => spherical_map(point),
             UvMap::Planar => planar_map(point),
+            UvMap::Cylindrical => cylindrical_map(point),
         }
     }
 }
@@ -79,6 +81,18 @@ pub fn spherical_map(point: &tuple::Point) -> (f64, f64) {
 pub fn planar_map(point: &tuple::Point) -> (f64, f64) {
     let u = point.x.rem_euclid(1.0);
     let v = point.z.rem_euclid(1.0);
+
+    return (u, v);
+}
+
+/// Wraps the pattern around a unit-radius cylinder like a soup-can
+/// label; the pattern repeats every whole unit of y.
+pub fn cylindrical_map(point: &tuple::Point) -> (f64, f64) {
+    let theta = point.x.atan2(point.z);
+    let raw_u = theta / (2.0 * std::f64::consts::PI);
+    let u = 1.0 - (raw_u + 0.5);
+
+    let v = point.y.rem_euclid(1.0);
 
     return (u, v);
 }
@@ -157,6 +171,40 @@ mod uv_tests {
         ];
         for (point, expected_u, expected_v) in cases {
             let (u, v) = uv::planar_map(&point);
+            assert!(
+                (u - expected_u).abs() < 1e-5,
+                "u for {:?}: {} != {}",
+                point,
+                u,
+                expected_u
+            );
+            assert!(
+                (v - expected_v).abs() < 1e-5,
+                "v for {:?}: {} != {}",
+                point,
+                v,
+                expected_v
+            );
+        }
+    }
+
+    // Scenario Outline: Using a cylindrical mapping on a 3D point
+    #[test]
+    fn test_cylindrical_mapping_on_a_3d_point() {
+        let cases = [
+            (tuple::Point::new(0.0, 0.0, -1.0), 0.0, 0.0),
+            (tuple::Point::new(0.0, 0.5, -1.0), 0.0, 0.5),
+            (tuple::Point::new(0.0, 1.0, -1.0), 0.0, 0.0),
+            (tuple::Point::new(0.70711, 0.5, -0.70711), 0.125, 0.5),
+            (tuple::Point::new(1.0, 0.5, 0.0), 0.25, 0.5),
+            (tuple::Point::new(0.70711, 0.5, 0.70711), 0.375, 0.5),
+            (tuple::Point::new(0.0, -0.25, 1.0), 0.5, 0.75),
+            (tuple::Point::new(-0.70711, 0.5, 0.70711), 0.625, 0.5),
+            (tuple::Point::new(-1.0, 1.25, 0.0), 0.75, 0.25),
+            (tuple::Point::new(-0.70711, 0.5, -0.70711), 0.875, 0.5),
+        ];
+        for (point, expected_u, expected_v) in cases {
+            let (u, v) = uv::cylindrical_map(&point);
             assert!(
                 (u - expected_u).abs() < 1e-5,
                 "u for {:?}: {} != {}",

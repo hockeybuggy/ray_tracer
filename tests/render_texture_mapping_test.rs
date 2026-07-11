@@ -2,7 +2,10 @@ extern crate ray_tracer;
 
 mod shared_test_helpers;
 
-use ray_tracer::{camera, color, lights, material, shape, transformation, tuple, uv, world};
+use ray_tracer::transformation::Transform;
+use ray_tracer::{
+    camera, color, lights, material, matrix, shape, transformation, tuple, uv, world,
+};
 
 const SCALE: u32 = 1;
 
@@ -106,6 +109,64 @@ fn test_uv_checkered_plane() -> Result<(), std::io::Error> {
         assert!(
             false,
             "Result differed from fixture. Written canvas to `uv_checkered_plane.png`."
+        );
+    }
+    return Ok(());
+}
+
+#[test]
+fn test_uv_checkered_cylinder() -> Result<(), std::io::Error> {
+    let mut builder = world::WorldBuilder::new();
+
+    builder.add_shape(
+        shape::ShapeBuilder::cylinder(0.0, 1.0, false)
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .translation(0.0, -0.5, 0.0)
+                    .scaling(1.0, 3.1415, 1.0),
+            )
+            .set_material({
+                let checkers = uv::UvPattern::checkers(
+                    16,
+                    8,
+                    color::color(0.0, 0.5, 0.0),
+                    color::color(1.0, 1.0, 1.0),
+                );
+                let pattern =
+                    ray_tracer::patterns::Pattern::texture_map(checkers, uv::UvMap::Cylindrical);
+                let mut material = material::material();
+                material.pattern = Some(pattern);
+                material.ambient = 0.1;
+                material.specular = 0.6;
+                material.shininess = 15.0;
+                material.diffuse = 0.8;
+                material
+            })
+            .build(),
+    );
+
+    builder.add_light_source(lights::point_light(
+        tuple::Point::new(-10.0, 10.0, -10.0),
+        color::white(),
+    ));
+
+    let mut camera = camera::Camera::new(100 * SCALE, 100 * SCALE, 0.5);
+    camera.transform = transformation::view_transform(
+        &tuple::Point::new(0.0, 0.0, -10.0),
+        &tuple::Point::new(0.0, 0.0, 0.0),
+        &tuple::Vector::new(0.0, 1.0, 0.0),
+    );
+
+    let canvas = camera.render(&builder.world);
+
+    let expected_image =
+        shared_test_helpers::read_image_from_fixture_file("uv_checkered_cylinder").unwrap();
+
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(&canvas, "uv_checkered_cylinder.png").unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `uv_checkered_cylinder.png`."
         );
     }
     return Ok(());
