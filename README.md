@@ -444,6 +444,17 @@ compare to the results they generate and smaller images are faster to render.
   </tr>
 
   <tr>
+    <td>Area light (soft shadows)</td>
+    <td>
+      <img src="tests/fixtures/area_light.png"
+           alt="A white sphere lit by a rectangular area light, casting a soft shadow with a penumbra instead of a sharp edge."
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
+  <tr>
     <td>The book cover</td>
     <td>
       <img src="tests/fixtures/cover.png"

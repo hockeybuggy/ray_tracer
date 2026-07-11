@@ -49,6 +49,21 @@ fn test_rendering_a_scene_file() -> Result<(), std::io::Error> {
     return Ok(());
 }
 
+// The scene file recreates the `area_light` render test scene, including
+// its jitter seed, so it must reproduce that test's fixture exactly.
+#[test]
+fn test_rendering_a_scene_file_with_an_area_light() -> Result<(), std::io::Error> {
+    let source = std::fs::read_to_string("scenes/area_light.toml")?;
+    let scene = scene_file::SceneFile::parse(&source).unwrap();
+
+    let world = scene.build_world().unwrap();
+    let camera = scene.build_camera(SCALE);
+    let canvas = camera.render(&world);
+
+    assert_matches_fixture(&canvas, "area_light");
+    return Ok(());
+}
+
 // Every frame of the animation is compared against its own fixture: the
 // base scene unchanged, an object change, and an object plus camera change.
 #[test]

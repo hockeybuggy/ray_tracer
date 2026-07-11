@@ -24,11 +24,16 @@ use crate::lights;
 use crate::material;
 use crate::matrix;
 use crate::obj_file;
+use crate::sequences;
 use crate::shape;
 use crate::transformation;
 use crate::transformation::Transform;
 use crate::tuple;
 use crate::world;
+
+/// Seed for a scene file's area-light jitter, so renders stay reproducible
+/// across runs instead of drawing on OS randomness.
+const AREA_LIGHT_JITTER_SEED: u64 = 0x5EED;
 
 /// A still image: a base scene with no frames.
 #[derive(Deserialize)]
@@ -69,11 +74,18 @@ struct CameraDescription {
     up: [f64; 3],
 }
 
+/// A `[[lights]]` block is a point light if it has `position`, or an area
+/// light if it has `corner`/`uvec`/`usteps`/`vvec`/`vsteps` instead.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct LightDescription {
-    position: [f64; 3],
     intensity: [f64; 3],
+    position: Option<[f64; 3]>,
+    corner: Option<[f64; 3]>,
+    uvec: Option<[f64; 3]>,
+    usteps: Option<usize>,
+    vvec: Option<[f64; 3]>,
+    vsteps: Option<usize>,
 }
 
 #[derive(Deserialize)]
@@ -299,6 +311,32 @@ fn build_shape(
     return Ok(shape);
 }
 
+fn build_light(description: &LightDescription) -> Result<lights::Light, String> {
+    let intensity = to_color(description.intensity);
+
+    if let Some(position) = description.position {
+        return Ok(lights::point_light(point(position), intensity));
+    }
+
+    let missing = |field: &str| format!("light needs `position`, or `{}` for an area light", field);
+    let corner = description.corner.ok_or_else(|| missing("corner"))?;
+    let uvec = description.uvec.ok_or_else(|| missing("uvec"))?;
+    let usteps = description.usteps.ok_or_else(|| missing("usteps"))?;
+    let vvec = description.vvec.ok_or_else(|| missing("vvec"))?;
+    let vsteps = description.vsteps.ok_or_else(|| missing("vsteps"))?;
+
+    let mut light = lights::area_light(
+        point(corner),
+        vector(uvec),
+        usteps,
+        vector(vvec),
+        vsteps,
+        intensity,
+    );
+    light.set_jitter(sequences::Sequence::random(256, AREA_LIGHT_JITTER_SEED));
+    return Ok(light);
+}
+
 fn build_world(
     objects: &[ObjectDescription],
     lights: &[LightDescription],
@@ -309,10 +347,7 @@ fn build_world(
         builder.add_shape(build_shape(object, changes.get(&object.name))?);
     }
     for light in lights {
-        builder.add_light_source(lights::point_light(
-            point(light.position),
-            to_color(light.intensity),
-        ));
+        builder.add_light_source(build_light(light)?);
     }
     return Ok(builder.world);
 }
@@ -473,5 +508,46 @@ mod scene_file_tests {
 
         let error = AnimationFile::parse(&source).err().unwrap();
         assert!(error.contains("unknown object `teacup`"), "{}", error);
+    }
+
+    #[test]
+    fn test_a_light_block_with_area_light_fields_builds_an_area_light() {
+        let source = MINIMAL_ANIMATION
+            .replace("[animation]", "[scene]")
+            .replace(
+                "position = [-6.0, 8.0, -8.0]",
+                "corner = [-1.0, 2.0, 4.0]\n        uvec = [2.0, 0.0, 0.0]\n        usteps = 4\n        vvec = [0.0, 2.0, 0.0]\n        vsteps = 2",
+            )
+            .split("[[frames]]")
+            .next()
+            .unwrap()
+            .to_string();
+
+        let scene = SceneFile::parse(&source).unwrap();
+        let world = scene.build_world().unwrap();
+
+        assert_eq!(world.lights.len(), 1);
+        match world.lights[0].kind {
+            lights::LightKind::Area { usteps, vsteps, .. } => {
+                assert_eq!(usteps, 4);
+                assert_eq!(vsteps, 2);
+            }
+            lights::LightKind::Point => panic!("expected an area light"),
+        }
+    }
+
+    #[test]
+    fn test_a_light_block_missing_position_and_area_fields_is_an_error() {
+        let source = MINIMAL_ANIMATION
+            .replace("[animation]", "[scene]")
+            .replace("position = [-6.0, 8.0, -8.0]", "")
+            .split("[[frames]]")
+            .next()
+            .unwrap()
+            .to_string();
+
+        let scene = SceneFile::parse(&source).unwrap();
+        let error = scene.build_world().err().unwrap();
+        assert!(error.contains("corner"), "{}", error);
     }
 }
