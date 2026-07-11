@@ -144,7 +144,7 @@ impl<'a> Computation<'a> {
         }
         let mut surface = color::black();
         for light in world.lights.iter() {
-            let shadowed = world::is_shadowed(&world, &light, &self.over_point);
+            let shadowed = world::is_shadowed(&world, &light.position, &self.over_point);
             surface = surface
                 + lighting::lighting(
                     &self.object.material,
