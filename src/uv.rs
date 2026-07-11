@@ -40,12 +40,14 @@ impl UvPattern {
 #[derive(Debug, PartialEq)]
 pub enum UvMap {
     Spherical,
+    Planar,
 }
 
 impl UvMap {
     pub fn map(&self, point: &tuple::Point) -> (f64, f64) {
         match self {
             UvMap::Spherical => spherical_map(point),
+            UvMap::Planar => planar_map(point),
         }
     }
 }
@@ -69,6 +71,14 @@ pub fn spherical_map(point: &tuple::Point) -> (f64, f64) {
 
     // Flip phi so v is 0 at the south pole and 1 at the north pole.
     let v = 1.0 - phi / std::f64::consts::PI;
+
+    return (u, v);
+}
+
+/// Tiles the x/z plane with unit squares; y is ignored.
+pub fn planar_map(point: &tuple::Point) -> (f64, f64) {
+    let u = point.x.rem_euclid(1.0);
+    let v = point.z.rem_euclid(1.0);
 
     return (u, v);
 }
@@ -116,6 +126,37 @@ mod uv_tests {
         ];
         for (point, expected_u, expected_v) in cases {
             let (u, v) = uv::spherical_map(&point);
+            assert!(
+                (u - expected_u).abs() < 1e-5,
+                "u for {:?}: {} != {}",
+                point,
+                u,
+                expected_u
+            );
+            assert!(
+                (v - expected_v).abs() < 1e-5,
+                "v for {:?}: {} != {}",
+                point,
+                v,
+                expected_v
+            );
+        }
+    }
+
+    // Scenario Outline: Using a planar mapping on a 3D point
+    #[test]
+    fn test_planar_mapping_on_a_3d_point() {
+        let cases = [
+            (tuple::Point::new(0.25, 0.0, 0.5), 0.25, 0.5),
+            (tuple::Point::new(0.25, 0.0, -0.25), 0.25, 0.75),
+            (tuple::Point::new(0.25, 0.5, -0.25), 0.25, 0.75),
+            (tuple::Point::new(1.25, 0.0, 0.5), 0.25, 0.5),
+            (tuple::Point::new(0.25, 0.0, -1.75), 0.25, 0.25),
+            (tuple::Point::new(1.0, 0.0, -1.0), 0.0, 0.0),
+            (tuple::Point::new(0.0, 0.0, 0.0), 0.0, 0.0),
+        ];
+        for (point, expected_u, expected_v) in cases {
+            let (u, v) = uv::planar_map(&point);
             assert!(
                 (u - expected_u).abs() < 1e-5,
                 "u for {:?}: {} != {}",

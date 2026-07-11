@@ -265,6 +265,17 @@ compare to the results they generate and smaller images are faster to render.
            >
     </td>
   </tr>
+
+  <tr>
+    <td>UV Checkered Plane</td>
+    <td>
+      <img src="tests/fixtures/uv_checkered_plane.png"
+           alt="A green and white checkerboard plane stretching to the horizon"
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
 </table>
 
 ### Worlds
