@@ -94,8 +94,8 @@ pub fn default_world() -> World {
     }
 }
 
-pub fn is_shadowed(world: &World, light: &lights::Light, point: &tuple::Point) -> bool {
-    let v = light.position - *point;
+pub fn is_shadowed(world: &World, light_position: &tuple::Point, point: &tuple::Point) -> bool {
+    let v = *light_position - *point;
     let distance = tuple::magnitude(&v);
     let direction = tuple::normalize(&v);
 
@@ -255,7 +255,10 @@ mod world_tests {
         let world = world::default_world();
         let point = tuple::Point::new(0.0, 10.0, 0.0);
 
-        assert_eq!(world::is_shadowed(&world, &world.lights[0], &point), false);
+        assert_eq!(
+            world::is_shadowed(&world, &world.lights[0].position, &point),
+            false
+        );
     }
 
     #[test]
@@ -263,7 +266,10 @@ mod world_tests {
         let world = world::default_world();
         let point = tuple::Point::new(10.0, -10.0, 10.0);
 
-        assert_eq!(world::is_shadowed(&world, &world.lights[0], &point), true);
+        assert_eq!(
+            world::is_shadowed(&world, &world.lights[0].position, &point),
+            true
+        );
     }
 
     #[test]
@@ -271,7 +277,10 @@ mod world_tests {
         let world = world::default_world();
         let point = tuple::Point::new(-20.0, 20.0, -20.0);
 
-        assert_eq!(world::is_shadowed(&world, &world.lights[0], &point), false);
+        assert_eq!(
+            world::is_shadowed(&world, &world.lights[0].position, &point),
+            false
+        );
     }
 
     #[test]
@@ -279,7 +288,10 @@ mod world_tests {
         let world = world::default_world();
         let point = tuple::Point::new(-2.0, 2.0, -2.0);
 
-        assert_eq!(world::is_shadowed(&world, &world.lights[0], &point), false);
+        assert_eq!(
+            world::is_shadowed(&world, &world.lights[0].position, &point),
+            false
+        );
     }
 
     #[test]
