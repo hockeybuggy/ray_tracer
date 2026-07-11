@@ -48,7 +48,7 @@ fn test_simple_sphere_test() -> Result<(), std::io::Error> {
                         &point,
                         &camera,
                         &normal,
-                        false,
+                        1.0,
                     );
                     canvas.write_pixel(x, y, color);
                 }
@@ -118,7 +118,7 @@ fn test_translated_sphere_test() -> Result<(), std::io::Error> {
                         &point,
                         &camera,
                         &normal,
-                        false,
+                        1.0,
                     );
                     canvas.write_pixel(x, y, color);
                 }

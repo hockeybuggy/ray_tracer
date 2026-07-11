@@ -80,7 +80,7 @@ mod material_tests {
             &position,
             &camera,
             &normal,
-            false,
+            1.0,
         );
 
         let expected = color::color(1.9, 1.9, 1.9);
@@ -112,7 +112,7 @@ mod material_tests {
             &position,
             &camera,
             &normal,
-            false,
+            1.0,
         );
 
         let expected = color::color(1.0, 1.0, 1.0);
@@ -144,7 +144,7 @@ mod material_tests {
             &position,
             &camera,
             &normal,
-            false,
+            1.0,
         );
 
         let expected = color::color(0.7364, 0.7364, 0.7364);
@@ -177,7 +177,7 @@ mod material_tests {
             &position,
             &camera,
             &normal,
-            false,
+            1.0,
         );
 
         let expected = color::color(1.6364, 1.6364, 1.6364);
@@ -206,7 +206,7 @@ mod material_tests {
             &position,
             &camera,
             &normal,
-            false,
+            1.0,
         );
 
         let expected = color::color(0.1, 0.1, 0.1);
@@ -224,7 +224,7 @@ mod material_tests {
             tuple::Point::new(0.0, 0.0, -10.0),
             color::color(1.0, 1.0, 1.0),
         );
-        let in_shadow = true;
+        let intensity = 0.0;
 
         let result = lighting::lighting(
             &material,
@@ -233,11 +233,44 @@ mod material_tests {
             &position,
             &camera,
             &normal,
-            in_shadow,
+            intensity,
         );
 
         let expected = color::color(0.1, 0.1, 0.1);
         assert_color_approx_eq!(expected, result);
+    }
+
+    #[test]
+    fn test_lighting_uses_light_intensity_to_attenuate_color() {
+        let mut material = material::material();
+        material.ambient = 0.1;
+        material.diffuse = 0.9;
+        material.specular = 0.0;
+        material.color = color::white();
+        let object = shape::Shape::default_sphere();
+        let light = lights::point_light(tuple::Point::new(0.0, 0.0, -10.0), color::white());
+        let position = tuple::Point::new(0.0, 0.0, -1.0);
+        let eyev = tuple::Vector::new(0.0, 0.0, -1.0);
+        let normalv = tuple::Vector::new(0.0, 0.0, -1.0);
+
+        let cases = [
+            (1.0, color::color(1.0, 1.0, 1.0)),
+            (0.5, color::color(0.55, 0.55, 0.55)),
+            (0.0, color::color(0.1, 0.1, 0.1)),
+        ];
+
+        for (intensity, expected) in cases {
+            let result = lighting::lighting(
+                &material,
+                &object.transform,
+                &light,
+                &position,
+                &eyev,
+                &normalv,
+                intensity,
+            );
+            assert_color_approx_eq!(result, expected);
+        }
     }
 
     #[test]
@@ -264,7 +297,7 @@ mod material_tests {
             &position1,
             &camera,
             &normal,
-            false,
+            1.0,
         );
         let result2 = lighting::lighting(
             &material,
@@ -273,7 +306,7 @@ mod material_tests {
             &position2,
             &camera,
             &normal,
-            false,
+            1.0,
         );
         assert_color_approx_eq!(color::color(1.0, 1.0, 1.0), result1);
         assert_color_approx_eq!(color::color(0.0, 0.0, 0.0), result2);

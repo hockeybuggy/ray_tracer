@@ -1,5 +1,6 @@
 use crate::color;
 use crate::lighting;
+use crate::lights;
 use crate::matrix;
 use crate::matrix::{Inverse, Transpose};
 use crate::ray;
@@ -144,7 +145,7 @@ impl<'a> Computation<'a> {
         }
         let mut surface = color::black();
         for light in world.lights.iter() {
-            let shadowed = world::is_shadowed(&world, &light.position, &self.over_point);
+            let intensity = lights::intensity_at(&light, &self.over_point, &world);
             surface = surface
                 + lighting::lighting(
                     &self.object.material,
@@ -153,7 +154,7 @@ impl<'a> Computation<'a> {
                     &self.point,
                     &self.eyev,
                     &self.normalv,
-                    shadowed,
+                    intensity,
                 );
         }
         let reflected = world.reflected_color(&self, remaining);
