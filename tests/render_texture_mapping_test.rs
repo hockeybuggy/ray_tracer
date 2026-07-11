@@ -223,3 +223,86 @@ fn test_align_check_plane() -> Result<(), std::io::Error> {
     }
     return Ok(());
 }
+
+#[test]
+fn test_uv_mapped_cube() -> Result<(), std::io::Error> {
+    let red = color::color(1.0, 0.0, 0.0);
+    let yellow = color::color(1.0, 1.0, 0.0);
+    let brown = color::color(1.0, 0.5, 0.0);
+    let green = color::color(0.0, 1.0, 0.0);
+    let cyan = color::color(0.0, 1.0, 1.0);
+    let blue = color::color(0.0, 0.0, 1.0);
+    let purple = color::color(1.0, 0.0, 1.0);
+    let white = color::color(1.0, 1.0, 1.0);
+
+    let mapped_cube_material = || {
+        let pattern = ray_tracer::patterns::Pattern::cube_map(uv::CubeFaces {
+            left: uv::UvPattern::align_check(yellow, cyan, red, blue, brown),
+            front: uv::UvPattern::align_check(cyan, red, yellow, brown, green),
+            right: uv::UvPattern::align_check(red, yellow, purple, green, white),
+            back: uv::UvPattern::align_check(green, purple, cyan, white, blue),
+            up: uv::UvPattern::align_check(brown, cyan, purple, red, yellow),
+            down: uv::UvPattern::align_check(purple, brown, green, blue, white),
+        });
+        let mut material = material::material();
+        material.pattern = Some(pattern);
+        material.ambient = 0.2;
+        material.specular = 0.0;
+        material.diffuse = 0.8;
+        material
+    };
+
+    let mut builder = world::WorldBuilder::new();
+
+    let placements = [
+        (0.7854, 0.7854, -6.0, 2.0),
+        (2.3562, 0.7854, -2.0, 2.0),
+        (3.927, 0.7854, 2.0, 2.0),
+        (5.4978, 0.7854, 6.0, 2.0),
+        (0.7854, -0.7854, -6.0, -2.0),
+        (2.3562, -0.7854, -2.0, -2.0),
+        (3.927, -0.7854, 2.0, -2.0),
+        (5.4978, -0.7854, 6.0, -2.0),
+    ];
+    for (rot_y, rot_x, tx, ty) in placements {
+        builder.add_shape(
+            shape::ShapeBuilder::cube()
+                .set_transform(
+                    matrix::Matrix4::IDENTITY
+                        .rotation_y(rot_y)
+                        .rotation_x(rot_x)
+                        .translation(tx, ty, 0.0),
+                )
+                .set_material(mapped_cube_material())
+                .build(),
+        );
+    }
+
+    for (x, y) in [(0.0, 100.0), (0.0, -100.0), (-100.0, 0.0), (100.0, 0.0)] {
+        builder.add_light_source(lights::point_light(
+            tuple::Point::new(x, y, -100.0),
+            color::color(0.25, 0.25, 0.25),
+        ));
+    }
+
+    let mut camera = camera::Camera::new(200 * SCALE, 100 * SCALE, 0.8);
+    camera.transform = transformation::view_transform(
+        &tuple::Point::new(0.0, 0.0, -20.0),
+        &tuple::Point::new(0.0, 0.0, 0.0),
+        &tuple::Vector::new(0.0, 1.0, 0.0),
+    );
+
+    let canvas = camera.render(&builder.world);
+
+    let expected_image =
+        shared_test_helpers::read_image_from_fixture_file("uv_mapped_cube").unwrap();
+
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(&canvas, "uv_mapped_cube.png").unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `uv_mapped_cube.png`."
+        );
+    }
+    return Ok(());
+}

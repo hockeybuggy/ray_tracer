@@ -15,6 +15,9 @@ enum PatternType {
         uv_pattern: uv::UvPattern,
         uv_map: uv::UvMap,
     },
+    CubeMap {
+        faces: Box<uv::CubeFaces>,
+    },
 }
 
 #[derive(Debug, PartialEq)]
@@ -80,6 +83,17 @@ impl Pattern {
         };
     }
 
+    pub fn cube_map(faces: uv::CubeFaces) -> Pattern {
+        return Pattern {
+            a: color::black(),
+            b: color::black(),
+            transform: matrix::Matrix4::IDENTITY,
+            pattern_type: PatternType::CubeMap {
+                faces: Box::new(faces),
+            },
+        };
+    }
+
     pub fn stripe_at(&self, point: &tuple::Point) -> color::Color {
         return if point.x.floor() % 2.0 == 0.0 {
             self.a
@@ -121,6 +135,17 @@ impl Pattern {
             PatternType::TextureMap { uv_pattern, uv_map } => {
                 let (u, v) = uv_map.map(point);
                 uv_pattern.uv_pattern_at(u, v)
+            }
+            PatternType::CubeMap { faces } => {
+                let (face_pattern, (u, v)) = match uv::face_from_point(point) {
+                    uv::Face::Left => (&faces.left, uv::cube_uv_left(point)),
+                    uv::Face::Right => (&faces.right, uv::cube_uv_right(point)),
+                    uv::Face::Front => (&faces.front, uv::cube_uv_front(point)),
+                    uv::Face::Back => (&faces.back, uv::cube_uv_back(point)),
+                    uv::Face::Up => (&faces.up, uv::cube_uv_up(point)),
+                    uv::Face::Down => (&faces.down, uv::cube_uv_down(point)),
+                };
+                face_pattern.uv_pattern_at(u, v)
             }
         };
     }
@@ -423,6 +448,69 @@ mod patterns_tests {
             (tuple::Point::new(-0.5734, -0.2162, -0.7903), color::white()),
             (tuple::Point::new(0.7688, -0.1470, 0.6223), color::black()),
             (tuple::Point::new(-0.7652, 0.2175, 0.6060), color::black()),
+        ];
+        for (point, expected) in cases {
+            assert_color_approx_eq!(pattern.pattern_at(&point), expected);
+        }
+    }
+
+    #[test]
+    fn test_finding_the_colors_on_a_mapped_cube() {
+        let red = color::color(1.0, 0.0, 0.0);
+        let yellow = color::color(1.0, 1.0, 0.0);
+        let brown = color::color(1.0, 0.5, 0.0);
+        let green = color::color(0.0, 1.0, 0.0);
+        let cyan = color::color(0.0, 1.0, 1.0);
+        let blue = color::color(0.0, 0.0, 1.0);
+        let purple = color::color(1.0, 0.0, 1.0);
+        let white = color::color(1.0, 1.0, 1.0);
+
+        let pattern = patterns::Pattern::cube_map(uv::CubeFaces {
+            left: uv::UvPattern::align_check(yellow, cyan, red, blue, brown),
+            front: uv::UvPattern::align_check(cyan, red, yellow, brown, green),
+            right: uv::UvPattern::align_check(red, yellow, purple, green, white),
+            back: uv::UvPattern::align_check(green, purple, cyan, white, blue),
+            up: uv::UvPattern::align_check(brown, cyan, purple, red, yellow),
+            down: uv::UvPattern::align_check(purple, brown, green, blue, white),
+        });
+
+        let cases = [
+            // left face
+            (tuple::Point::new(-1.0, 0.0, 0.0), yellow),
+            (tuple::Point::new(-1.0, 0.9, -0.9), cyan),
+            (tuple::Point::new(-1.0, 0.9, 0.9), red),
+            (tuple::Point::new(-1.0, -0.9, -0.9), blue),
+            (tuple::Point::new(-1.0, -0.9, 0.9), brown),
+            // front face
+            (tuple::Point::new(0.0, 0.0, 1.0), cyan),
+            (tuple::Point::new(-0.9, 0.9, 1.0), red),
+            (tuple::Point::new(0.9, 0.9, 1.0), yellow),
+            (tuple::Point::new(-0.9, -0.9, 1.0), brown),
+            (tuple::Point::new(0.9, -0.9, 1.0), green),
+            // right face
+            (tuple::Point::new(1.0, 0.0, 0.0), red),
+            (tuple::Point::new(1.0, 0.9, 0.9), yellow),
+            (tuple::Point::new(1.0, 0.9, -0.9), purple),
+            (tuple::Point::new(1.0, -0.9, 0.9), green),
+            (tuple::Point::new(1.0, -0.9, -0.9), white),
+            // back face
+            (tuple::Point::new(0.0, 0.0, -1.0), green),
+            (tuple::Point::new(0.9, 0.9, -1.0), purple),
+            (tuple::Point::new(-0.9, 0.9, -1.0), cyan),
+            (tuple::Point::new(0.9, -0.9, -1.0), white),
+            (tuple::Point::new(-0.9, -0.9, -1.0), blue),
+            // up face
+            (tuple::Point::new(0.0, 1.0, 0.0), brown),
+            (tuple::Point::new(-0.9, 1.0, -0.9), cyan),
+            (tuple::Point::new(0.9, 1.0, -0.9), purple),
+            (tuple::Point::new(-0.9, 1.0, 0.9), red),
+            (tuple::Point::new(0.9, 1.0, 0.9), yellow),
+            // down face
+            (tuple::Point::new(0.0, -1.0, 0.0), purple),
+            (tuple::Point::new(-0.9, -1.0, 0.9), brown),
+            (tuple::Point::new(0.9, -1.0, 0.9), green),
+            (tuple::Point::new(-0.9, -1.0, -0.9), blue),
+            (tuple::Point::new(0.9, -1.0, -0.9), white),
         ];
         for (point, expected) in cases {
             assert_color_approx_eq!(pattern.pattern_at(&point), expected);
