@@ -16,6 +16,7 @@ pub mod sequences;
 pub mod shape;
 pub mod transformation;
 pub mod tuple;
+pub mod uv;
 pub mod world;
 
 mod intersection;
