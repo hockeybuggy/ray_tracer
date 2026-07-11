@@ -306,3 +306,86 @@ fn test_uv_mapped_cube() -> Result<(), std::io::Error> {
     }
     return Ok(());
 }
+
+#[test]
+fn test_earth() -> Result<(), std::io::Error> {
+    let mut builder = world::WorldBuilder::new();
+
+    builder.add_shape(
+        shape::ShapeBuilder::plane()
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(1.0, 1.0, 1.0);
+                material.diffuse = 0.1;
+                material.specular = 0.0;
+                material.ambient = 0.0;
+                material.reflective = 0.4;
+                material
+            })
+            .build(),
+    );
+
+    builder.add_shape(
+        shape::ShapeBuilder::cylinder(0.0, 0.1, true)
+            .set_material({
+                let mut material = material::material();
+                material.color = color::color(1.0, 1.0, 1.0);
+                material.diffuse = 0.2;
+                material.specular = 0.0;
+                material.ambient = 0.0;
+                material.reflective = 0.1;
+                material
+            })
+            .build(),
+    );
+
+    builder.add_shape(
+        shape::ShapeBuilder::sphere()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .rotation_y(1.9)
+                    .translation(0.0, 1.1, 0.0),
+            )
+            .set_material({
+                let ppm = std::fs::read_to_string("textures/earth.ppm").unwrap();
+                let earth_canvas = ray_tracer::canvas::canvas_from_ppm(&ppm).unwrap();
+                let pattern = ray_tracer::patterns::Pattern::texture_map(
+                    uv::UvPattern::image(earth_canvas),
+                    uv::UvMap::Spherical,
+                );
+                let mut material = material::material();
+                material.pattern = Some(pattern);
+                material.diffuse = 0.9;
+                material.specular = 0.1;
+                material.shininess = 10.0;
+                material.ambient = 0.1;
+                material
+            })
+            .build(),
+    );
+
+    builder.add_light_source(lights::point_light(
+        tuple::Point::new(-100.0, 100.0, -100.0),
+        color::white(),
+    ));
+
+    let mut camera = camera::Camera::new(200 * SCALE, 100 * SCALE, 0.8);
+    camera.transform = transformation::view_transform(
+        &tuple::Point::new(1.0, 2.0, -10.0),
+        &tuple::Point::new(0.0, 1.1, 0.0),
+        &tuple::Vector::new(0.0, 1.0, 0.0),
+    );
+
+    let canvas = camera.render(&builder.world);
+
+    let expected_image = shared_test_helpers::read_image_from_fixture_file("earth").unwrap();
+
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(&canvas, "earth.png").unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `earth.png`."
+        );
+    }
+    return Ok(());
+}
