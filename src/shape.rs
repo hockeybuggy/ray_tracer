@@ -326,6 +326,26 @@ impl Shape {
         return self.bounds().transform(&self.transform);
     }
 
+    // Removes and returns the children of a group that fit entirely inside
+    // the left and right halves of the group's bounding box. Children that
+    // straddle the dividing plane stay in the group.
+    pub fn partition_children(&mut self) -> (Vec<Shape>, Vec<Shape>) {
+        todo!("bounding volume hierarchies are not implemented yet")
+    }
+
+    // Wraps the given shapes in a new group and adds that group as a child.
+    pub fn make_subgroup(&mut self, _children: Vec<Shape>) {
+        todo!("bounding volume hierarchies are not implemented yet")
+    }
+
+    // Recursively reorganizes an aggregate's children into a tree of nested
+    // subgroups — a bounding volume hierarchy. A group with at least
+    // `threshold` children is partitioned into subgroups; the call always
+    // propagates to children. Primitives are left untouched.
+    pub fn divide(&mut self, _threshold: usize) {
+        todo!("bounding volume hierarchies are not implemented yet")
+    }
+
     fn sphere_local_normal_at(&self, object_point: tuple::Point) -> tuple::Vector {
         object_point - tuple::Point::new(0.0, 0.0, 0.0)
     }
@@ -2531,5 +2551,169 @@ mod bounding_box_tests {
         let (left, right) = csg_children(&csg);
         assert!(was_intersected(left));
         assert!(was_intersected(right));
+    }
+}
+
+#[cfg(test)]
+mod bvh_tests {
+    use crate::matrix;
+    use crate::shape;
+    use crate::transformation::Transform;
+    use crate::tuple;
+
+    fn children(group: &shape::Shape) -> &Vec<shape::Shape> {
+        match &group.shape_type {
+            shape::ShapeType::Group { children, .. } => children,
+            _ => panic!("expected a group"),
+        }
+    }
+
+    fn csg_children(csg: &shape::Shape) -> (&shape::Shape, &shape::Shape) {
+        match &csg.shape_type {
+            shape::ShapeType::Csg { left, right, .. } => (left, right),
+            _ => panic!("expected a csg shape"),
+        }
+    }
+
+    fn translated_sphere(x: f64, y: f64, z: f64) -> shape::Shape {
+        let mut sphere = shape::Shape::default_sphere();
+        sphere.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(x, y, z));
+        return sphere;
+    }
+
+    #[test]
+    fn test_partitioning_a_groups_children() {
+        let mut group = shape::Shape::default_group();
+        group.add_child(translated_sphere(-2.0, 0.0, 0.0));
+        group.add_child(translated_sphere(2.0, 0.0, 0.0));
+        group.add_child(shape::Shape::default_sphere());
+
+        let (left, right) = group.partition_children();
+
+        assert_eq!(children(&group), &vec![shape::Shape::default_sphere()]);
+        assert_eq!(left, vec![translated_sphere(-2.0, 0.0, 0.0)]);
+        assert_eq!(right, vec![translated_sphere(2.0, 0.0, 0.0)]);
+    }
+
+    #[test]
+    fn test_creating_a_subgroup_from_a_list_of_children() {
+        let mut group = shape::Shape::default_group();
+
+        group.make_subgroup(vec![
+            shape::Shape::default_sphere(),
+            shape::Shape::default_sphere(),
+        ]);
+
+        assert_eq!(children(&group).len(), 1);
+        let subgroup = &children(&group)[0];
+        assert_eq!(
+            children(subgroup),
+            &vec![
+                shape::Shape::default_sphere(),
+                shape::Shape::default_sphere(),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_subdividing_a_primitive_does_nothing() {
+        let mut sphere = shape::Shape::default_sphere();
+
+        sphere.divide(1);
+
+        assert_eq!(sphere, shape::Shape::default_sphere());
+    }
+
+    #[test]
+    fn test_subdividing_a_group_partitions_its_children() {
+        let mut s3 = shape::Shape::default_sphere();
+        s3.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(4.0, 4.0, 4.0));
+        let mut group = shape::Shape::default_group();
+        group.add_child(translated_sphere(-2.0, -2.0, 0.0));
+        group.add_child(translated_sphere(-2.0, 2.0, 0.0));
+        group.add_child(s3);
+
+        group.divide(1);
+
+        let kids = children(&group);
+        assert_eq!(kids.len(), 2);
+        let mut expected_s3 = shape::Shape::default_sphere();
+        expected_s3.set_transformation_matrix(matrix::Matrix4::IDENTITY.scaling(4.0, 4.0, 4.0));
+        assert_eq!(kids[0], expected_s3);
+        let subgroup_kids = children(&kids[1]);
+        assert_eq!(subgroup_kids.len(), 2);
+        assert_eq!(
+            children(&subgroup_kids[0]),
+            &vec![translated_sphere(-2.0, -2.0, 0.0)]
+        );
+        assert_eq!(
+            children(&subgroup_kids[1]),
+            &vec![translated_sphere(-2.0, 2.0, 0.0)]
+        );
+    }
+
+    #[test]
+    fn test_subdividing_a_group_with_too_few_children() {
+        let mut subgroup = shape::Shape::default_group();
+        subgroup.add_child(translated_sphere(-2.0, 0.0, 0.0));
+        subgroup.add_child(translated_sphere(2.0, 1.0, 0.0));
+        subgroup.add_child(translated_sphere(2.0, -1.0, 0.0));
+        let mut group = shape::Shape::default_group();
+        group.add_child(subgroup);
+        group.add_child(shape::Shape::default_sphere());
+
+        group.divide(3);
+
+        let kids = children(&group);
+        assert_eq!(kids.len(), 2);
+        assert_eq!(kids[1], shape::Shape::default_sphere());
+        let subgroup_kids = children(&kids[0]);
+        assert_eq!(subgroup_kids.len(), 2);
+        assert_eq!(
+            children(&subgroup_kids[0]),
+            &vec![translated_sphere(-2.0, 0.0, 0.0)]
+        );
+        assert_eq!(
+            children(&subgroup_kids[1]),
+            &vec![
+                translated_sphere(2.0, 1.0, 0.0),
+                translated_sphere(2.0, -1.0, 0.0),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_subdividing_a_csg_shape_subdivides_its_children() {
+        let mut left = shape::Shape::default_group();
+        left.add_child(translated_sphere(-1.5, 0.0, 0.0));
+        left.add_child(translated_sphere(1.5, 0.0, 0.0));
+        let mut right = shape::Shape::default_group();
+        right.add_child(translated_sphere(0.0, 0.0, -1.5));
+        right.add_child(translated_sphere(0.0, 0.0, 1.5));
+        let mut csg = shape::Shape::csg(shape::CsgOperation::Difference, left, right);
+
+        csg.divide(1);
+
+        let (left, right) = csg_children(&csg);
+        let left_kids = children(left);
+        assert_eq!(left_kids.len(), 2);
+        assert_eq!(
+            children(&left_kids[0]),
+            &vec![translated_sphere(-1.5, 0.0, 0.0)]
+        );
+        assert_eq!(
+            children(&left_kids[1]),
+            &vec![translated_sphere(1.5, 0.0, 0.0)]
+        );
+        let right_kids = children(right);
+        assert_eq!(right_kids.len(), 2);
+        assert_eq!(
+            children(&right_kids[0]),
+            &vec![translated_sphere(0.0, 0.0, -1.5)]
+        );
+        assert_eq!(
+            children(&right_kids[1]),
+            &vec![translated_sphere(0.0, 0.0, 1.5)]
+        );
     }
 }
