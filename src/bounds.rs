@@ -72,6 +72,13 @@ impl BoundingBox {
         return result;
     }
 
+    // Splits the box in half perpendicular to its longest axis, yielding
+    // two non-overlapping boxes that together cover the same volume. A
+    // perfect cube splits along x.
+    pub fn split(&self) -> (BoundingBox, BoundingBox) {
+        todo!("bounding volume hierarchies are not implemented yet")
+    }
+
     // Whether the box encloses no space at all: extents stay inverted
     // until a first point is added.
     pub fn is_empty(&self) -> bool {
@@ -226,6 +233,66 @@ mod bounds_tests {
             let other = bounds::BoundingBox::new(min, max);
             assert_eq!(bbox.contains_box(&other), expected);
         }
+    }
+
+    #[test]
+    fn test_splitting_a_perfect_cube() {
+        let bbox = bounds::BoundingBox::new(
+            tuple::Point::new(-1.0, -4.0, -5.0),
+            tuple::Point::new(9.0, 6.0, 5.0),
+        );
+
+        let (left, right) = bbox.split();
+
+        assert_eq!(left.min, tuple::Point::new(-1.0, -4.0, -5.0));
+        assert_eq!(left.max, tuple::Point::new(4.0, 6.0, 5.0));
+        assert_eq!(right.min, tuple::Point::new(4.0, -4.0, -5.0));
+        assert_eq!(right.max, tuple::Point::new(9.0, 6.0, 5.0));
+    }
+
+    #[test]
+    fn test_splitting_an_x_wide_box() {
+        let bbox = bounds::BoundingBox::new(
+            tuple::Point::new(-1.0, -2.0, -3.0),
+            tuple::Point::new(9.0, 5.5, 3.0),
+        );
+
+        let (left, right) = bbox.split();
+
+        assert_eq!(left.min, tuple::Point::new(-1.0, -2.0, -3.0));
+        assert_eq!(left.max, tuple::Point::new(4.0, 5.5, 3.0));
+        assert_eq!(right.min, tuple::Point::new(4.0, -2.0, -3.0));
+        assert_eq!(right.max, tuple::Point::new(9.0, 5.5, 3.0));
+    }
+
+    #[test]
+    fn test_splitting_a_y_wide_box() {
+        let bbox = bounds::BoundingBox::new(
+            tuple::Point::new(-1.0, -2.0, -3.0),
+            tuple::Point::new(5.0, 8.0, 3.0),
+        );
+
+        let (left, right) = bbox.split();
+
+        assert_eq!(left.min, tuple::Point::new(-1.0, -2.0, -3.0));
+        assert_eq!(left.max, tuple::Point::new(5.0, 3.0, 3.0));
+        assert_eq!(right.min, tuple::Point::new(-1.0, 3.0, -3.0));
+        assert_eq!(right.max, tuple::Point::new(5.0, 8.0, 3.0));
+    }
+
+    #[test]
+    fn test_splitting_a_z_wide_box() {
+        let bbox = bounds::BoundingBox::new(
+            tuple::Point::new(-1.0, -2.0, -3.0),
+            tuple::Point::new(5.0, 3.0, 7.0),
+        );
+
+        let (left, right) = bbox.split();
+
+        assert_eq!(left.min, tuple::Point::new(-1.0, -2.0, -3.0));
+        assert_eq!(left.max, tuple::Point::new(5.0, 3.0, 2.0));
+        assert_eq!(right.min, tuple::Point::new(-1.0, -2.0, 2.0));
+        assert_eq!(right.max, tuple::Point::new(5.0, 3.0, 7.0));
     }
 
     #[test]
