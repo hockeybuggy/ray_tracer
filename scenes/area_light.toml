@@ -1,0 +1,35 @@
+# A white sphere lit by a rectangular area light instead of a point light,
+# casting a soft shadow with a penumbra. The same scene as the `area_light`
+# render test.
+#
+#     cargo run --release --bin render -- scenes/area_light.toml [--scale N]
+
+[scene]
+name = "area_light"
+width = 100
+height = 100
+
+[camera]
+field_of_view = 60.0
+from = [0.0, 2.5, -7.0]
+to = [0.0, 1.0, 0.0]
+up = [0.0, 1.0, 0.0]
+
+[[lights]]
+corner = [-2.0, 5.0, -6.0]
+uvec = [4.0, 0.0, 0.0]
+usteps = 8
+vvec = [0.0, 0.0, 3.0]
+vsteps = 8
+intensity = [1.5, 1.5, 1.5]
+
+[[objects]]
+name = "floor"
+kind = "plane"
+material = { color = [1.0, 1.0, 1.0], specular = 0.0 }
+
+[[objects]]
+name = "ball"
+kind = "sphere"
+transform = [{ translate = [0.0, 1.0, 0.0] }]
+material = { color = [0.9, 0.9, 0.9] }
