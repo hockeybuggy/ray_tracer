@@ -583,5 +583,6 @@ a change that you expect to improve performance and know if it worked on not.
 
 ## Possible improvements
 
-- Bounding boxes to speed up intersection tests against groups and
-  imported OBJ models.
+- Bounding volume hierarchies: recursively subdividing large groups
+  (like imported OBJ models) into nested subgroups, so a ray descends
+  only into the halves of the model its path actually crosses.

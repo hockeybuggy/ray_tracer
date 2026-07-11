@@ -25,6 +25,10 @@ enum ShapeType {
     },
     Group {
         children: Vec<Shape>,
+        // The box enclosing every child, grown as children are added.
+        // Recomputing it by walking the children on every intersection
+        // would cost more than the per-child tests it is meant to avoid.
+        bounds: bounds::BoundingBox,
     },
     Triangle {
         p1: tuple::Point,
@@ -48,6 +52,9 @@ enum ShapeType {
         operation: CsgOperation,
         left: Box<Shape>,
         right: Box<Shape>,
+        // The box enclosing both children, fixed at construction since a
+        // CSG shape's children never change afterwards.
+        bounds: bounds::BoundingBox,
     },
     // A stand-in shape for tests: it records that an intersection was
     // attempted, so tests can observe whether an aggregate shape's bounding
@@ -165,18 +172,27 @@ impl Shape {
             material: material::material(),
             shape_type: ShapeType::Group {
                 children: Vec::new(),
+                bounds: bounds::BoundingBox::empty(),
             },
         };
     }
 
     pub fn add_child(&mut self, child: Shape) {
+        let child_bounds = child.parent_space_bounds();
         match &mut self.shape_type {
-            ShapeType::Group { children } => children.push(child),
+            ShapeType::Group { children, bounds } => {
+                bounds.add_box(&child_bounds);
+                children.push(child);
+            }
             _ => panic!("only groups can contain children"),
         }
     }
 
     pub fn csg(operation: CsgOperation, left: Shape, right: Shape) -> Shape {
+        let mut bounds = bounds::BoundingBox::empty();
+        bounds.add_box(&left.parent_space_bounds());
+        bounds.add_box(&right.parent_space_bounds());
+
         return Shape {
             transform: matrix::Matrix4::IDENTITY,
             material: material::material(),
@@ -184,6 +200,7 @@ impl Shape {
                 operation,
                 left: Box::new(left),
                 right: Box::new(right),
+                bounds,
             },
         };
     }
@@ -258,13 +275,55 @@ impl Shape {
     // The shape's axis-aligned bounding box, in object space (before the
     // shape's own transform is applied).
     pub fn bounds(&self) -> bounds::BoundingBox {
-        todo!("bounding boxes are not implemented yet")
+        match &self.shape_type {
+            ShapeType::Sphere | ShapeType::Cube => bounds::BoundingBox::new(
+                tuple::Point::new(-1.0, -1.0, -1.0),
+                tuple::Point::new(1.0, 1.0, 1.0),
+            ),
+            // A plane is infinite in x and z but has no thickness in y.
+            ShapeType::Plane => bounds::BoundingBox::new(
+                tuple::Point::new(f64::NEG_INFINITY, 0.0, f64::NEG_INFINITY),
+                tuple::Point::new(f64::INFINITY, 0.0, f64::INFINITY),
+            ),
+            ShapeType::Cylinder {
+                minimum, maximum, ..
+            } => bounds::BoundingBox::new(
+                tuple::Point::new(-1.0, *minimum, -1.0),
+                tuple::Point::new(1.0, *maximum, 1.0),
+            ),
+            // A cone's walls slope at 45 degrees, so its radius at either
+            // extent equals that extent's distance from the apex.
+            ShapeType::Cone {
+                minimum, maximum, ..
+            } => {
+                let limit = minimum.abs().max(maximum.abs());
+                bounds::BoundingBox::new(
+                    tuple::Point::new(-limit, *minimum, -limit),
+                    tuple::Point::new(limit, *maximum, limit),
+                )
+            }
+            ShapeType::Triangle { p1, p2, p3, .. }
+            | ShapeType::SmoothTriangle { p1, p2, p3, .. } => {
+                let mut bbox = bounds::BoundingBox::empty();
+                bbox.add_point(*p1);
+                bbox.add_point(*p2);
+                bbox.add_point(*p3);
+                bbox
+            }
+            ShapeType::Group { bounds, .. } => *bounds,
+            ShapeType::Csg { bounds, .. } => *bounds,
+            #[cfg(test)]
+            ShapeType::Test { .. } => bounds::BoundingBox::new(
+                tuple::Point::new(-1.0, -1.0, -1.0),
+                tuple::Point::new(1.0, 1.0, 1.0),
+            ),
+        }
     }
 
     // The shape's bounding box in the space of its parent: the object-space
     // box carried through this shape's own transform.
     pub fn parent_space_bounds(&self) -> bounds::BoundingBox {
-        todo!("bounding boxes are not implemented yet")
+        return self.bounds().transform(&self.transform);
     }
 
     fn sphere_local_normal_at(&self, object_point: tuple::Point) -> tuple::Vector {
@@ -407,7 +466,10 @@ impl Shape {
                 maximum,
                 closed,
             } => self.cone_local_intersect(local_ray, minimum, maximum, closed),
-            ShapeType::Group { ref children } => self.group_local_intersect(children, local_ray),
+            ShapeType::Group {
+                ref children,
+                ref bounds,
+            } => self.group_local_intersect(children, bounds, local_ray),
             ShapeType::Triangle { p1, e1, e2, .. } => {
                 self.triangle_local_intersect(local_ray, p1, e1, e2)
             }
@@ -417,8 +479,9 @@ impl Shape {
             ShapeType::Csg {
                 ref left,
                 ref right,
+                ref bounds,
                 ..
-            } => self.csg_local_intersect(left, right, local_ray),
+            } => self.csg_local_intersect(left, right, bounds, local_ray),
             #[cfg(test)]
             ShapeType::Test {
                 ref intersect_called,
@@ -470,8 +533,15 @@ impl Shape {
     fn group_local_intersect<'a>(
         &'a self,
         children: &'a [Shape],
+        bounds: &bounds::BoundingBox,
         local_ray: ray::Ray,
     ) -> Vec<intersection::Intersection<'a>> {
+        // A ray that misses the box enclosing every child cannot hit any
+        // of them, so all the per-child tests can be skipped.
+        if !bounds.intersects(&local_ray) {
+            return vec![];
+        }
+
         let mut intersections: Vec<intersection::Intersection<'a>> = children
             .iter()
             .flat_map(|child| child.intersect(&local_ray))
@@ -492,8 +562,15 @@ impl Shape {
         &'a self,
         left: &'a Shape,
         right: &'a Shape,
+        bounds: &bounds::BoundingBox,
         local_ray: ray::Ray,
     ) -> Vec<intersection::Intersection<'a>> {
+        // As with groups, a ray that misses the box enclosing both
+        // children cannot hit either of them.
+        if !bounds.intersects(&local_ray) {
+            return vec![];
+        }
+
         let mut intersections = left.intersect(&local_ray);
         intersections.extend(right.intersect(&local_ray));
 
@@ -548,7 +625,7 @@ impl Shape {
     // shapes on both sides of a CSG operation.
     fn includes(&self, other: &Shape) -> bool {
         match &self.shape_type {
-            ShapeType::Group { children } => children.iter().any(|child| child.includes(other)),
+            ShapeType::Group { children, .. } => children.iter().any(|child| child.includes(other)),
             ShapeType::Csg { left, right, .. } => left.includes(other) || right.includes(other),
             _ => std::ptr::eq(self, other),
         }
@@ -910,7 +987,7 @@ mod shape_builder_tests {
         let built = shape::ShapeBuilder::group().add_child(child).build();
 
         match &built.shape_type {
-            shape::ShapeType::Group { children } => assert_eq!(children.len(), 1),
+            shape::ShapeType::Group { children, .. } => assert_eq!(children.len(), 1),
             _ => panic!("expected a group shape"),
         }
     }
@@ -1618,7 +1695,7 @@ mod group_tests {
 
     fn children(group: &shape::Shape) -> &Vec<shape::Shape> {
         match &group.shape_type {
-            shape::ShapeType::Group { children } => children,
+            shape::ShapeType::Group { children, .. } => children,
             _ => panic!("expected a group"),
         }
     }
@@ -2005,6 +2082,7 @@ mod csg_tests {
                 operation,
                 left,
                 right,
+                ..
             } => (operation, left.as_ref(), right.as_ref()),
             _ => panic!("expected a csg shape"),
         }
@@ -2377,7 +2455,7 @@ mod bounding_box_tests {
 
     fn children(group: &shape::Shape) -> &Vec<shape::Shape> {
         match &group.shape_type {
-            shape::ShapeType::Group { children } => children,
+            shape::ShapeType::Group { children, .. } => children,
             _ => panic!("expected a group"),
         }
     }
