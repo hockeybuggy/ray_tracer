@@ -1,5 +1,6 @@
 #![allow(clippy::style)]
 
+pub mod bounds;
 pub mod camera;
 pub mod canvas;
 pub mod color;
