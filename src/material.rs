@@ -313,6 +313,60 @@ mod material_tests {
     }
 
     #[test]
+    fn test_lighting_samples_the_area_light() {
+        let corner = tuple::Point::new(-0.5, -0.5, -5.0);
+        let v1 = tuple::Vector::new(1.0, 0.0, 0.0);
+        let v2 = tuple::Vector::new(0.0, 1.0, 0.0);
+        let light = lights::area_light(corner, v1, 2, v2, 2, color::white());
+
+        let mut material = material::material();
+        material.ambient = 0.1;
+        material.diffuse = 0.9;
+        material.specular = 0.0;
+        material.color = color::white();
+        let object = shape::Shape::default_sphere();
+        let eye = tuple::Point::new(0.0, 0.0, -5.0);
+
+        let cases = [
+            (
+                tuple::Point::new(0.0, 0.0, -1.0),
+                color::color(0.9965, 0.9965, 0.9965),
+            ),
+            (
+                tuple::Point::new(0.0, 0.7071, -0.7071),
+                color::color(0.6232, 0.6232, 0.6232),
+            ),
+        ];
+
+        for (point, expected) in cases {
+            let eyev = tuple::normalize(&(eye - point));
+            let normalv = tuple::Vector::new(point.x, point.y, point.z);
+
+            let result = lighting::lighting(
+                &material,
+                &object.transform,
+                &light,
+                &point,
+                &eyev,
+                &normalv,
+                1.0,
+            );
+
+            // The book's expected values are only given to 4 decimal
+            // places, so a 1e-5 tolerance is occasionally too tight.
+            assert!(
+                (result.r - expected.r).abs() < 1e-4
+                    && (result.g - expected.g).abs() < 1e-4
+                    && (result.b - expected.b).abs() < 1e-4,
+                "lighting({:?}) = {:?}, want {:?}",
+                point,
+                result,
+                expected
+            );
+        }
+    }
+
+    #[test]
     fn test_transparency_and_refactive_index_for_the_default_material() {
         let material = material::material();
         assert_eq!(material.transparency, 0.0);
