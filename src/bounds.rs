@@ -72,10 +72,22 @@ impl BoundingBox {
         return result;
     }
 
+    // Whether the box encloses no space at all: extents stay inverted
+    // until a first point is added.
+    pub fn is_empty(&self) -> bool {
+        self.min.x > self.max.x || self.min.y > self.max.y || self.min.z > self.max.z
+    }
+
     // Whether the ray strikes the box. This is the cube intersection
     // generalized to arbitrary extents, except only the yes/no answer is
     // needed, not the `t` values.
     pub fn intersects(&self, ray: &ray::Ray) -> bool {
+        // An empty box's inverted extents would be swapped by `check_axis`
+        // into an infinite box that accepts every ray.
+        if self.is_empty() {
+            return false;
+        }
+
         let (xtmin, xtmax) = check_axis(ray.origin.x, ray.direction.x, self.min.x, self.max.x);
         let (ytmin, ytmax) = check_axis(ray.origin.y, ray.direction.y, self.min.y, self.max.y);
         let (ztmin, ztmax) = check_axis(ray.origin.z, ray.direction.z, self.min.z, self.max.z);
