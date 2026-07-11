@@ -328,22 +328,74 @@ impl Shape {
 
     // Removes and returns the children of a group that fit entirely inside
     // the left and right halves of the group's bounding box. Children that
-    // straddle the dividing plane stay in the group.
+    // straddle the dividing plane stay in the group. The group's cached
+    // bounds are left alone: `divide` adds the removed children back as
+    // subgroups, so the enclosed volume never actually changes.
     pub fn partition_children(&mut self) -> (Vec<Shape>, Vec<Shape>) {
-        todo!("bounding volume hierarchies are not implemented yet")
+        let (left_bounds, right_bounds) = self.bounds().split();
+        match &mut self.shape_type {
+            ShapeType::Group { children, .. } => {
+                let mut left = Vec::new();
+                let mut right = Vec::new();
+                let mut remaining = Vec::new();
+                for child in children.drain(..) {
+                    let child_bounds = child.parent_space_bounds();
+                    if left_bounds.contains_box(&child_bounds) {
+                        left.push(child);
+                    } else if right_bounds.contains_box(&child_bounds) {
+                        right.push(child);
+                    } else {
+                        remaining.push(child);
+                    }
+                }
+                *children = remaining;
+                return (left, right);
+            }
+            _ => panic!("only groups can be partitioned"),
+        }
     }
 
     // Wraps the given shapes in a new group and adds that group as a child.
-    pub fn make_subgroup(&mut self, _children: Vec<Shape>) {
-        todo!("bounding volume hierarchies are not implemented yet")
+    pub fn make_subgroup(&mut self, children: Vec<Shape>) {
+        let mut subgroup = Shape::default_group();
+        for child in children {
+            subgroup.add_child(child);
+        }
+        self.add_child(subgroup);
     }
 
     // Recursively reorganizes an aggregate's children into a tree of nested
     // subgroups — a bounding volume hierarchy. A group with at least
     // `threshold` children is partitioned into subgroups; the call always
     // propagates to children. Primitives are left untouched.
-    pub fn divide(&mut self, _threshold: usize) {
-        todo!("bounding volume hierarchies are not implemented yet")
+    pub fn divide(&mut self, threshold: usize) {
+        if let ShapeType::Csg { left, right, .. } = &mut self.shape_type {
+            left.divide(threshold);
+            right.divide(threshold);
+            return;
+        }
+
+        let child_count = match &self.shape_type {
+            ShapeType::Group { children, .. } => children.len(),
+            // Primitives are indivisible.
+            _ => return,
+        };
+
+        if threshold <= child_count {
+            let (left, right) = self.partition_children();
+            if !left.is_empty() {
+                self.make_subgroup(left);
+            }
+            if !right.is_empty() {
+                self.make_subgroup(right);
+            }
+        }
+
+        if let ShapeType::Group { children, .. } = &mut self.shape_type {
+            for child in children {
+                child.divide(threshold);
+            }
+        }
     }
 
     fn sphere_local_normal_at(&self, object_point: tuple::Point) -> tuple::Vector {

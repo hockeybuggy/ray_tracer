@@ -96,6 +96,13 @@ impl Parser {
     }
 
     pub fn into_group(self) -> shape::Shape {
+        // Imported meshes have thousands of triangles in a flat group, so
+        // reorganize them into a bounding volume hierarchy: rays then skip
+        // whole subtrees instead of testing every triangle. Groups smaller
+        // than the threshold are left flat, since below a handful of
+        // children the extra box tests cost more than they save.
+        const BVH_THRESHOLD: usize = 8;
+
         let mut model = shape::Shape::default_group();
 
         let mut groups = vec![self.default_group];
@@ -116,6 +123,7 @@ impl Parser {
             model.add_child(group);
         }
 
+        model.divide(BVH_THRESHOLD);
         return model;
     }
 

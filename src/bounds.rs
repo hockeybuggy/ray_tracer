@@ -76,7 +76,29 @@ impl BoundingBox {
     // two non-overlapping boxes that together cover the same volume. A
     // perfect cube splits along x.
     pub fn split(&self) -> (BoundingBox, BoundingBox) {
-        todo!("bounding volume hierarchies are not implemented yet")
+        let dx = self.max.x - self.min.x;
+        let dy = self.max.y - self.min.y;
+        let dz = self.max.z - self.min.z;
+
+        // The two boxes keep the original extents except along the split
+        // axis, where they meet at its midpoint.
+        let mut mid_min = self.min;
+        let mut mid_max = self.max;
+        if dx >= dy && dx >= dz {
+            mid_min.x = self.min.x + dx / 2.0;
+            mid_max.x = mid_min.x;
+        } else if dy >= dz {
+            mid_min.y = self.min.y + dy / 2.0;
+            mid_max.y = mid_min.y;
+        } else {
+            mid_min.z = self.min.z + dz / 2.0;
+            mid_max.z = mid_min.z;
+        }
+
+        return (
+            BoundingBox::new(self.min, mid_max),
+            BoundingBox::new(mid_min, self.max),
+        );
     }
 
     // Whether the box encloses no space at all: extents stay inverted
