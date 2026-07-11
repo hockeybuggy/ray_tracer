@@ -9,6 +9,13 @@ pub enum UvPattern {
         a: color::Color,
         b: color::Color,
     },
+    AlignCheck {
+        main: color::Color,
+        ul: color::Color,
+        ur: color::Color,
+        bl: color::Color,
+        br: color::Color,
+    },
 }
 
 impl UvPattern {
@@ -18,6 +25,22 @@ impl UvPattern {
             height,
             a,
             b,
+        };
+    }
+
+    pub fn align_check(
+        main: color::Color,
+        ul: color::Color,
+        ur: color::Color,
+        bl: color::Color,
+        br: color::Color,
+    ) -> UvPattern {
+        return UvPattern::AlignCheck {
+            main,
+            ul,
+            ur,
+            bl,
+            br,
         };
     }
 
@@ -32,6 +55,31 @@ impl UvPattern {
                 let u2 = (u * *width as f64).floor() as i64;
                 let v2 = (v * *height as f64).floor() as i64;
                 if (u2 + v2) % 2 == 0 { *a } else { *b }
+            }
+            UvPattern::AlignCheck {
+                main,
+                ul,
+                ur,
+                bl,
+                br,
+            } => {
+                // v=0 is the bottom of the square, v=1 is the top.
+                if v > 0.8 {
+                    if u < 0.2 {
+                        return *ul;
+                    }
+                    if u > 0.8 {
+                        return *ur;
+                    }
+                } else if v < 0.2 {
+                    if u < 0.2 {
+                        return *bl;
+                    }
+                    if u > 0.8 {
+                        return *br;
+                    }
+                }
+                *main
             }
         }
     }
@@ -219,6 +267,28 @@ mod uv_tests {
                 v,
                 expected_v
             );
+        }
+    }
+
+    // Scenario Outline: Layout of the "align check" pattern
+    #[test]
+    fn test_layout_of_the_align_check_pattern() {
+        let main = color::color(1.0, 1.0, 1.0);
+        let ul = color::color(1.0, 0.0, 0.0);
+        let ur = color::color(1.0, 1.0, 0.0);
+        let bl = color::color(0.0, 1.0, 0.0);
+        let br = color::color(0.0, 1.0, 1.0);
+        let pattern = uv::UvPattern::align_check(main, ul, ur, bl, br);
+
+        let cases = [
+            (0.5, 0.5, main),
+            (0.1, 0.9, ul),
+            (0.9, 0.9, ur),
+            (0.1, 0.1, bl),
+            (0.9, 0.1, br),
+        ];
+        for (u, v, expected) in cases {
+            assert_color_approx_eq!(pattern.uv_pattern_at(u, v), expected);
         }
     }
 }

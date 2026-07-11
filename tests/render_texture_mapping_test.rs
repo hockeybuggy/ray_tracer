@@ -171,3 +171,55 @@ fn test_uv_checkered_cylinder() -> Result<(), std::io::Error> {
     }
     return Ok(());
 }
+
+#[test]
+fn test_align_check_plane() -> Result<(), std::io::Error> {
+    let mut builder = world::WorldBuilder::new();
+
+    builder.add_shape(
+        shape::ShapeBuilder::plane()
+            .set_material({
+                let align_check = uv::UvPattern::align_check(
+                    color::color(1.0, 1.0, 1.0), // main: white
+                    color::color(1.0, 0.0, 0.0), // ul: red
+                    color::color(1.0, 1.0, 0.0), // ur: yellow
+                    color::color(0.0, 1.0, 0.0), // bl: green
+                    color::color(0.0, 1.0, 1.0), // br: cyan
+                );
+                let pattern =
+                    ray_tracer::patterns::Pattern::texture_map(align_check, uv::UvMap::Planar);
+                let mut material = material::material();
+                material.pattern = Some(pattern);
+                material.ambient = 0.1;
+                material.diffuse = 0.8;
+                material
+            })
+            .build(),
+    );
+
+    builder.add_light_source(lights::point_light(
+        tuple::Point::new(-10.0, 10.0, -10.0),
+        color::white(),
+    ));
+
+    let mut camera = camera::Camera::new(100 * SCALE, 100 * SCALE, 0.5);
+    camera.transform = transformation::view_transform(
+        &tuple::Point::new(1.0, 2.0, -5.0),
+        &tuple::Point::new(0.0, 0.0, 0.0),
+        &tuple::Vector::new(0.0, 1.0, 0.0),
+    );
+
+    let canvas = camera.render(&builder.world);
+
+    let expected_image =
+        shared_test_helpers::read_image_from_fixture_file("align_check_plane").unwrap();
+
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(&canvas, "align_check_plane.png").unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `align_check_plane.png`."
+        );
+    }
+    return Ok(());
+}
