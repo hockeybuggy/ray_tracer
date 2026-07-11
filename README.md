@@ -298,6 +298,17 @@ compare to the results they generate and smaller images are faster to render.
            >
     </td>
   </tr>
+
+  <tr>
+    <td>UV Mapped Cube</td>
+    <td>
+      <img src="tests/fixtures/uv_mapped_cube.png"
+           alt="Eight rotated cubes with align-check textures showing seamless corners"
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
 </table>
 
 ### Worlds

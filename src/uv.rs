@@ -145,6 +145,92 @@ pub fn cylindrical_map(point: &tuple::Point) -> (f64, f64) {
     return (u, v);
 }
 
+#[derive(Debug, PartialEq)]
+pub enum Face {
+    Left,
+    Right,
+    Front,
+    Back,
+    Up,
+    Down,
+}
+
+/// The face of the unit cube (corners at (-1,-1,-1) and (1,1,1)) a point
+/// lies on: whichever coordinate has the largest absolute value.
+pub fn face_from_point(point: &tuple::Point) -> Face {
+    let abs_x = point.x.abs();
+    let abs_y = point.y.abs();
+    let abs_z = point.z.abs();
+    let coord = abs_x.max(abs_y).max(abs_z);
+
+    if coord == point.x {
+        return Face::Right;
+    }
+    if coord == -point.x {
+        return Face::Left;
+    }
+    if coord == point.y {
+        return Face::Up;
+    }
+    if coord == -point.y {
+        return Face::Down;
+    }
+    if coord == point.z {
+        return Face::Front;
+    }
+    return Face::Back;
+}
+
+// Each face maps its two in-plane coordinates onto (u, v) so that
+// adjacent faces share edges without seams. `rem_euclid(2.0)` keeps
+// points outside [-1, 1] tiling instead of going negative.
+
+pub fn cube_uv_front(point: &tuple::Point) -> (f64, f64) {
+    let u = (point.x + 1.0).rem_euclid(2.0) / 2.0;
+    let v = (point.y + 1.0).rem_euclid(2.0) / 2.0;
+    return (u, v);
+}
+
+pub fn cube_uv_back(point: &tuple::Point) -> (f64, f64) {
+    let u = (1.0 - point.x).rem_euclid(2.0) / 2.0;
+    let v = (point.y + 1.0).rem_euclid(2.0) / 2.0;
+    return (u, v);
+}
+
+pub fn cube_uv_left(point: &tuple::Point) -> (f64, f64) {
+    let u = (point.z + 1.0).rem_euclid(2.0) / 2.0;
+    let v = (point.y + 1.0).rem_euclid(2.0) / 2.0;
+    return (u, v);
+}
+
+pub fn cube_uv_right(point: &tuple::Point) -> (f64, f64) {
+    let u = (1.0 - point.z).rem_euclid(2.0) / 2.0;
+    let v = (point.y + 1.0).rem_euclid(2.0) / 2.0;
+    return (u, v);
+}
+
+pub fn cube_uv_up(point: &tuple::Point) -> (f64, f64) {
+    let u = (point.x + 1.0).rem_euclid(2.0) / 2.0;
+    let v = (1.0 - point.z).rem_euclid(2.0) / 2.0;
+    return (u, v);
+}
+
+pub fn cube_uv_down(point: &tuple::Point) -> (f64, f64) {
+    let u = (point.x + 1.0).rem_euclid(2.0) / 2.0;
+    let v = (point.z + 1.0).rem_euclid(2.0) / 2.0;
+    return (u, v);
+}
+
+#[derive(Debug, PartialEq)]
+pub struct CubeFaces {
+    pub left: UvPattern,
+    pub right: UvPattern,
+    pub front: UvPattern,
+    pub back: UvPattern,
+    pub up: UvPattern,
+    pub down: UvPattern,
+}
+
 #[cfg(test)]
 mod uv_tests {
     use crate::assert_color_approx_eq;
@@ -289,6 +375,138 @@ mod uv_tests {
         ];
         for (u, v, expected) in cases {
             assert_color_approx_eq!(pattern.uv_pattern_at(u, v), expected);
+        }
+    }
+
+    // Scenario Outline: Identifying the face of a cube from a point
+    #[test]
+    fn test_identifying_the_face_of_a_cube_from_a_point() {
+        let cases = [
+            (tuple::Point::new(-1.0, 0.5, -0.25), uv::Face::Left),
+            (tuple::Point::new(1.1, -0.75, 0.8), uv::Face::Right),
+            (tuple::Point::new(0.1, 0.6, 0.9), uv::Face::Front),
+            (tuple::Point::new(-0.7, 0.0, -2.0), uv::Face::Back),
+            (tuple::Point::new(0.5, 1.0, 0.9), uv::Face::Up),
+            (tuple::Point::new(-0.2, -1.3, 1.1), uv::Face::Down),
+        ];
+        for (point, expected) in cases {
+            assert_eq!(
+                uv::face_from_point(&point),
+                expected,
+                "face for {:?}",
+                point
+            );
+        }
+    }
+
+    // Scenario Outlines: UV mapping each face of a cube
+    #[test]
+    fn test_uv_mapping_the_faces_of_a_cube() {
+        type CubeUvFn = fn(&tuple::Point) -> (f64, f64);
+        let cases: [(&str, CubeUvFn, tuple::Point, f64, f64); 12] = [
+            (
+                "front",
+                uv::cube_uv_front,
+                tuple::Point::new(-0.5, 0.5, 1.0),
+                0.25,
+                0.75,
+            ),
+            (
+                "front",
+                uv::cube_uv_front,
+                tuple::Point::new(0.5, -0.5, 1.0),
+                0.75,
+                0.25,
+            ),
+            (
+                "back",
+                uv::cube_uv_back,
+                tuple::Point::new(0.5, 0.5, -1.0),
+                0.25,
+                0.75,
+            ),
+            (
+                "back",
+                uv::cube_uv_back,
+                tuple::Point::new(-0.5, -0.5, -1.0),
+                0.75,
+                0.25,
+            ),
+            (
+                "left",
+                uv::cube_uv_left,
+                tuple::Point::new(-1.0, 0.5, -0.5),
+                0.25,
+                0.75,
+            ),
+            (
+                "left",
+                uv::cube_uv_left,
+                tuple::Point::new(-1.0, -0.5, 0.5),
+                0.75,
+                0.25,
+            ),
+            (
+                "right",
+                uv::cube_uv_right,
+                tuple::Point::new(1.0, 0.5, 0.5),
+                0.25,
+                0.75,
+            ),
+            (
+                "right",
+                uv::cube_uv_right,
+                tuple::Point::new(1.0, -0.5, -0.5),
+                0.75,
+                0.25,
+            ),
+            (
+                "up",
+                uv::cube_uv_up,
+                tuple::Point::new(-0.5, 1.0, -0.5),
+                0.25,
+                0.75,
+            ),
+            (
+                "up",
+                uv::cube_uv_up,
+                tuple::Point::new(0.5, 1.0, 0.5),
+                0.75,
+                0.25,
+            ),
+            (
+                "down",
+                uv::cube_uv_down,
+                tuple::Point::new(-0.5, -1.0, 0.5),
+                0.25,
+                0.75,
+            ),
+            (
+                "down",
+                uv::cube_uv_down,
+                tuple::Point::new(0.5, -1.0, -0.5),
+                0.75,
+                0.25,
+            ),
+        ];
+        for (face, uv_fn, point, expected_u, expected_v) in cases {
+            let (u, v) = uv_fn(&point);
+            assert!(
+                (u - expected_u).abs() < 1e-5,
+                "u on {} for {:?}: {} != {}",
+                face,
+                point,
+                u,
+                expected_u
+            );
+            assert!(
+                (v - expected_v).abs() < 1e-5,
+                "v on {} for {:?}: {} != {}",
+                face,
+                point,
+                v,
+                expected_v
+            );
         }
     }
 }
