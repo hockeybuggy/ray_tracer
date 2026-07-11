@@ -389,3 +389,80 @@ fn test_earth() -> Result<(), std::io::Error> {
     }
     return Ok(());
 }
+
+#[test]
+fn test_skybox() -> Result<(), std::io::Error> {
+    let mut builder = world::WorldBuilder::new();
+
+    builder.add_shape(
+        shape::ShapeBuilder::sphere()
+            .set_transform(
+                matrix::Matrix4::IDENTITY
+                    .scaling(0.75, 0.75, 0.75)
+                    .translation(0.0, 0.0, 5.0),
+            )
+            .set_material({
+                let mut material = material::material();
+                material.diffuse = 0.4;
+                material.specular = 0.6;
+                material.shininess = 20.0;
+                material.reflective = 0.6;
+                material.ambient = 0.0;
+                material
+            })
+            .build(),
+    );
+
+    let face_from_ppm = |name: &str| {
+        let path = format!("textures/skybox/{}.ppm", name);
+        let ppm = std::fs::read_to_string(&path).unwrap();
+        uv::UvPattern::image(ray_tracer::canvas::canvas_from_ppm(&ppm).unwrap())
+    };
+
+    builder.add_shape(
+        shape::ShapeBuilder::cube()
+            .set_transform(matrix::Matrix4::IDENTITY.scaling(1000.0, 1000.0, 1000.0))
+            .set_material({
+                let pattern = ray_tracer::patterns::Pattern::cube_map(uv::CubeFaces {
+                    left: face_from_ppm("negx"),
+                    right: face_from_ppm("posx"),
+                    front: face_from_ppm("posz"),
+                    back: face_from_ppm("negz"),
+                    up: face_from_ppm("posy"),
+                    down: face_from_ppm("negy"),
+                });
+                let mut material = material::material();
+                material.pattern = Some(pattern);
+                material.diffuse = 0.0;
+                material.specular = 0.0;
+                material.ambient = 1.0;
+                material
+            })
+            .build(),
+    );
+
+    builder.add_light_source(lights::point_light(
+        tuple::Point::new(0.0, 100.0, 0.0),
+        color::white(),
+    ));
+
+    let mut camera = camera::Camera::new(200 * SCALE, 100 * SCALE, 1.2);
+    camera.transform = transformation::view_transform(
+        &tuple::Point::new(0.0, 0.0, 0.0),
+        &tuple::Point::new(0.0, 0.0, 5.0),
+        &tuple::Vector::new(0.0, 1.0, 0.0),
+    );
+
+    let canvas = camera.render(&builder.world);
+
+    let expected_image = shared_test_helpers::read_image_from_fixture_file("skybox").unwrap();
+
+    if expected_image != canvas.canvas_to_image() {
+        shared_test_helpers::write_image_to_file(&canvas, "skybox.png").unwrap();
+        assert!(
+            false,
+            "Result differed from fixture. Written canvas to `skybox.png`."
+        );
+    }
+    return Ok(());
+}

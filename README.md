@@ -320,6 +320,17 @@ compare to the results they generate and smaller images are faster to render.
            >
     </td>
   </tr>
+
+  <tr>
+    <td>Skybox</td>
+    <td>
+      <img src="tests/fixtures/skybox.png"
+           alt="A reflective sphere floating inside a photographic chapel skybox"
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
 </table>
 
 ### Worlds
