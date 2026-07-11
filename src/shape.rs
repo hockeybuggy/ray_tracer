@@ -1,3 +1,4 @@
+use crate::bounds;
 use crate::intersection;
 use crate::material;
 use crate::matrix;
@@ -47,6 +48,13 @@ enum ShapeType {
         operation: CsgOperation,
         left: Box<Shape>,
         right: Box<Shape>,
+    },
+    // A stand-in shape for tests: it records that an intersection was
+    // attempted, so tests can observe whether an aggregate shape's bounding
+    // box check skipped its children.
+    #[cfg(test)]
+    Test {
+        intersect_called: std::cell::Cell<bool>,
     },
 }
 
@@ -136,6 +144,17 @@ impl Shape {
                 minimum,
                 maximum,
                 closed,
+            },
+        };
+    }
+
+    #[cfg(test)]
+    pub(crate) fn test_shape() -> Shape {
+        return Shape {
+            transform: matrix::Matrix4::IDENTITY,
+            material: material::material(),
+            shape_type: ShapeType::Test {
+                intersect_called: std::cell::Cell::new(false),
             },
         };
     }
@@ -236,6 +255,18 @@ impl Shape {
         return self.local_intersect(local_ray);
     }
 
+    // The shape's axis-aligned bounding box, in object space (before the
+    // shape's own transform is applied).
+    pub fn bounds(&self) -> bounds::BoundingBox {
+        todo!("bounding boxes are not implemented yet")
+    }
+
+    // The shape's bounding box in the space of its parent: the object-space
+    // box carried through this shape's own transform.
+    pub fn parent_space_bounds(&self) -> bounds::BoundingBox {
+        todo!("bounding boxes are not implemented yet")
+    }
+
     fn sphere_local_normal_at(&self, object_point: tuple::Point) -> tuple::Vector {
         object_point - tuple::Point::new(0.0, 0.0, 0.0)
     }
@@ -329,6 +360,10 @@ impl Shape {
             // filtered intersections reference the primitive child that was
             // hit, so the child computes the normal.
             ShapeType::Csg { .. } => panic!("csg shapes do not have a local normal"),
+            #[cfg(test)]
+            ShapeType::Test { .. } => {
+                tuple::Vector::new(object_point.x, object_point.y, object_point.z)
+            }
         }
     }
 
@@ -384,6 +419,13 @@ impl Shape {
                 ref right,
                 ..
             } => self.csg_local_intersect(left, right, local_ray),
+            #[cfg(test)]
+            ShapeType::Test {
+                ref intersect_called,
+            } => {
+                intersect_called.set(true);
+                vec![]
+            }
         }
     }
 
@@ -2137,5 +2179,279 @@ mod csg_tests {
         assert_eq!(intersections[0].object, left);
         assert_eq!(intersections[1].t, 6.5);
         assert_eq!(intersections[1].object, right);
+    }
+}
+
+#[cfg(test)]
+mod bounding_box_tests {
+    use crate::matrix;
+    use crate::ray;
+    use crate::shape;
+    use crate::transformation::Transform;
+    use crate::tuple;
+
+    #[test]
+    fn test_a_sphere_has_a_bounding_box() {
+        let shape = shape::Shape::default_sphere();
+
+        let bbox = shape.bounds();
+
+        assert_eq!(bbox.min, tuple::Point::new(-1.0, -1.0, -1.0));
+        assert_eq!(bbox.max, tuple::Point::new(1.0, 1.0, 1.0));
+    }
+
+    #[test]
+    fn test_a_plane_has_a_bounding_box() {
+        let shape = shape::Shape::default_plane();
+
+        let bbox = shape.bounds();
+
+        assert_eq!(
+            bbox.min,
+            tuple::Point::new(f64::NEG_INFINITY, 0.0, f64::NEG_INFINITY)
+        );
+        assert_eq!(
+            bbox.max,
+            tuple::Point::new(f64::INFINITY, 0.0, f64::INFINITY)
+        );
+    }
+
+    #[test]
+    fn test_a_cube_has_a_bounding_box() {
+        let shape = shape::Shape::default_cube();
+
+        let bbox = shape.bounds();
+
+        assert_eq!(bbox.min, tuple::Point::new(-1.0, -1.0, -1.0));
+        assert_eq!(bbox.max, tuple::Point::new(1.0, 1.0, 1.0));
+    }
+
+    #[test]
+    fn test_an_unbounded_cylinder_has_a_bounding_box() {
+        let shape = shape::Shape::default_cylinder();
+
+        let bbox = shape.bounds();
+
+        assert_eq!(bbox.min, tuple::Point::new(-1.0, f64::NEG_INFINITY, -1.0));
+        assert_eq!(bbox.max, tuple::Point::new(1.0, f64::INFINITY, 1.0));
+    }
+
+    #[test]
+    fn test_a_bounded_cylinder_has_a_bounding_box() {
+        let shape = shape::Shape::cylinder(-5.0, 3.0, false);
+
+        let bbox = shape.bounds();
+
+        assert_eq!(bbox.min, tuple::Point::new(-1.0, -5.0, -1.0));
+        assert_eq!(bbox.max, tuple::Point::new(1.0, 3.0, 1.0));
+    }
+
+    #[test]
+    fn test_an_unbounded_cone_has_a_bounding_box() {
+        let shape = shape::Shape::default_cone();
+
+        let bbox = shape.bounds();
+
+        assert_eq!(
+            bbox.min,
+            tuple::Point::new(f64::NEG_INFINITY, f64::NEG_INFINITY, f64::NEG_INFINITY)
+        );
+        assert_eq!(
+            bbox.max,
+            tuple::Point::new(f64::INFINITY, f64::INFINITY, f64::INFINITY)
+        );
+    }
+
+    #[test]
+    fn test_a_bounded_cone_has_a_bounding_box() {
+        let shape = shape::Shape::cone(-5.0, 3.0, false);
+
+        let bbox = shape.bounds();
+
+        assert_eq!(bbox.min, tuple::Point::new(-5.0, -5.0, -5.0));
+        assert_eq!(bbox.max, tuple::Point::new(5.0, 3.0, 5.0));
+    }
+
+    #[test]
+    fn test_a_triangle_has_a_bounding_box() {
+        let shape = shape::Shape::triangle(
+            tuple::Point::new(-3.0, 7.0, 2.0),
+            tuple::Point::new(6.0, 2.0, -4.0),
+            tuple::Point::new(2.0, -1.0, -1.0),
+        );
+
+        let bbox = shape.bounds();
+
+        assert_eq!(bbox.min, tuple::Point::new(-3.0, -1.0, -4.0));
+        assert_eq!(bbox.max, tuple::Point::new(6.0, 7.0, 2.0));
+    }
+
+    // Not from the book: this implementation has smooth triangles as a
+    // distinct shape type, and their extent comes from the same three
+    // corners.
+    #[test]
+    fn test_a_smooth_triangle_has_a_bounding_box() {
+        let shape = shape::Shape::smooth_triangle(
+            tuple::Point::new(-3.0, 7.0, 2.0),
+            tuple::Point::new(6.0, 2.0, -4.0),
+            tuple::Point::new(2.0, -1.0, -1.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+        );
+
+        let bbox = shape.bounds();
+
+        assert_eq!(bbox.min, tuple::Point::new(-3.0, -1.0, -4.0));
+        assert_eq!(bbox.max, tuple::Point::new(6.0, 7.0, 2.0));
+    }
+
+    #[test]
+    fn test_a_test_shape_has_arbitrary_bounds() {
+        let shape = shape::Shape::test_shape();
+
+        let bbox = shape.bounds();
+
+        assert_eq!(bbox.min, tuple::Point::new(-1.0, -1.0, -1.0));
+        assert_eq!(bbox.max, tuple::Point::new(1.0, 1.0, 1.0));
+    }
+
+    #[test]
+    fn test_querying_a_shapes_bounding_box_in_its_parents_space() {
+        let mut shape = shape::Shape::default_sphere();
+        shape.set_transformation_matrix(
+            matrix::Matrix4::IDENTITY
+                .scaling(0.5, 2.0, 4.0)
+                .translation(1.0, -3.0, 5.0),
+        );
+
+        let bbox = shape.parent_space_bounds();
+
+        assert_eq!(bbox.min, tuple::Point::new(0.5, -5.0, 1.0));
+        assert_eq!(bbox.max, tuple::Point::new(1.5, -1.0, 9.0));
+    }
+
+    #[test]
+    fn test_a_group_has_a_bounding_box_that_contains_its_children() {
+        let mut sphere = shape::Shape::default_sphere();
+        sphere.set_transformation_matrix(
+            matrix::Matrix4::IDENTITY
+                .scaling(2.0, 2.0, 2.0)
+                .translation(2.0, 5.0, -3.0),
+        );
+        let mut cylinder = shape::Shape::cylinder(-2.0, 2.0, false);
+        cylinder.set_transformation_matrix(
+            matrix::Matrix4::IDENTITY
+                .scaling(0.5, 1.0, 0.5)
+                .translation(-4.0, -1.0, 4.0),
+        );
+        let mut group = shape::Shape::default_group();
+        group.add_child(sphere);
+        group.add_child(cylinder);
+
+        let bbox = group.bounds();
+
+        assert_eq!(bbox.min, tuple::Point::new(-4.5, -3.0, -5.0));
+        assert_eq!(bbox.max, tuple::Point::new(4.0, 7.0, 4.5));
+    }
+
+    #[test]
+    fn test_a_csg_shape_has_a_bounding_box_that_contains_its_children() {
+        let left = shape::Shape::default_sphere();
+        let mut right = shape::Shape::default_sphere();
+        right.set_transformation_matrix(matrix::Matrix4::IDENTITY.translation(2.0, 3.0, 4.0));
+        let csg = shape::Shape::csg(shape::CsgOperation::Difference, left, right);
+
+        let bbox = csg.bounds();
+
+        assert_eq!(bbox.min, tuple::Point::new(-1.0, -1.0, -1.0));
+        assert_eq!(bbox.max, tuple::Point::new(3.0, 4.0, 5.0));
+    }
+
+    fn was_intersected(shape: &shape::Shape) -> bool {
+        match &shape.shape_type {
+            shape::ShapeType::Test { intersect_called } => intersect_called.get(),
+            _ => panic!("expected a test shape"),
+        }
+    }
+
+    fn children(group: &shape::Shape) -> &Vec<shape::Shape> {
+        match &group.shape_type {
+            shape::ShapeType::Group { children } => children,
+            _ => panic!("expected a group"),
+        }
+    }
+
+    fn csg_children(csg: &shape::Shape) -> (&shape::Shape, &shape::Shape) {
+        match &csg.shape_type {
+            shape::ShapeType::Csg { left, right, .. } => (left, right),
+            _ => panic!("expected a csg shape"),
+        }
+    }
+
+    #[test]
+    fn test_intersecting_a_group_skips_the_children_if_the_box_is_missed() {
+        let mut group = shape::Shape::default_group();
+        group.add_child(shape::Shape::test_shape());
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+        );
+
+        group.intersect(&ray);
+
+        assert!(!was_intersected(&children(&group)[0]));
+    }
+
+    #[test]
+    fn test_intersecting_a_group_tests_the_children_if_the_box_is_hit() {
+        let mut group = shape::Shape::default_group();
+        group.add_child(shape::Shape::test_shape());
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+
+        group.intersect(&ray);
+
+        assert!(was_intersected(&children(&group)[0]));
+    }
+
+    #[test]
+    fn test_intersecting_a_csg_shape_skips_the_children_if_the_box_is_missed() {
+        let csg = shape::Shape::csg(
+            shape::CsgOperation::Difference,
+            shape::Shape::test_shape(),
+            shape::Shape::test_shape(),
+        );
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 1.0, 0.0),
+        );
+
+        csg.intersect(&ray);
+
+        let (left, right) = csg_children(&csg);
+        assert!(!was_intersected(left));
+        assert!(!was_intersected(right));
+    }
+
+    #[test]
+    fn test_intersecting_a_csg_shape_tests_the_children_if_the_box_is_hit() {
+        let csg = shape::Shape::csg(
+            shape::CsgOperation::Difference,
+            shape::Shape::test_shape(),
+            shape::Shape::test_shape(),
+        );
+        let ray = ray::ray(
+            tuple::Point::new(0.0, 0.0, -5.0),
+            tuple::Vector::new(0.0, 0.0, 1.0),
+        );
+
+        csg.intersect(&ray);
+
+        let (left, right) = csg_children(&csg);
+        assert!(was_intersected(left));
+        assert!(was_intersected(right));
     }
 }
