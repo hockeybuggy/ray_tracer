@@ -556,6 +556,17 @@ compare to the results they generate and smaller images are faster to render.
     </td>
   </tr>
 
+  <tr>
+    <td>Spotlight</td>
+    <td>
+      <img src="tests/fixtures/spotlight.png"
+           alt="Three spheres in the dark under a spotlight aimed at the middle one, its beam pooling on the floor and fading at the edges."
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
 </table>
 
 
