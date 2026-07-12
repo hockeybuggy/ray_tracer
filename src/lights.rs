@@ -45,10 +45,26 @@ impl Light {
 
     /// The fraction of this light's intensity that reaches `point`,
     /// ignoring shadowing: only a spotlight's cone attenuates it.
-    pub fn attenuation_at(&self, _point: &tuple::Point) -> f64 {
+    pub fn attenuation_at(&self, point: &tuple::Point) -> f64 {
         match &self.kind {
             LightKind::Point | LightKind::Area { .. } => 1.0,
-            LightKind::Spot { .. } => todo!("spotlights are not implemented yet"),
+            LightKind::Spot {
+                direction,
+                cone_angle,
+                fade_angle,
+            } => {
+                let to_point = tuple::normalize(&(*point - self.position));
+                // Rounding can push the dot product of two unit vectors
+                // just past ±1, where `acos` returns NaN.
+                let angle = tuple::dot(&to_point, direction).clamp(-1.0, 1.0).acos();
+                if angle <= *cone_angle {
+                    1.0
+                } else if angle >= *fade_angle {
+                    0.0
+                } else {
+                    (fade_angle - angle) / (fade_angle - cone_angle)
+                }
+            }
         }
     }
 }
