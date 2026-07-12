@@ -9,7 +9,11 @@
 //! coordinates. An empty `[[frames]]` entry renders the base scene
 //! unchanged.
 //!
-//! Angles (rotations and the camera field of view) are in degrees.
+//! A `[[lights]]` entry is a point light, an area light, or a spotlight —
+//! see `LightDescription` for how the fields select between them.
+//!
+//! Angles (rotations, the camera field of view, and spotlight cones) are
+//! in degrees.
 //! Transform steps apply in list order, each in world space after the ones
 //! before it, matching the fluent `Transform` trait. See `scenes/*.toml`
 //! and `animations/*.toml` for examples.
@@ -74,18 +78,34 @@ struct CameraDescription {
     up: [f64; 3],
 }
 
-/// A `[[lights]]` block is a point light if it has `position`, or an area
-/// light if it has `corner`/`uvec`/`usteps`/`vvec`/`vsteps` instead.
+/// A `[[lights]]` block is a point light if it has `position` (a spotlight
+/// when a `spot` table restricts it to a cone), or an area light if it has
+/// `corner`/`uvec`/`usteps`/`vvec`/`vsteps` instead.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct LightDescription {
     intensity: [f64; 3],
     position: Option<[f64; 3]>,
+    /// Present alongside `position` for a spotlight.
+    spot: Option<SpotDescription>,
     corner: Option<[f64; 3]>,
     uvec: Option<[f64; 3]>,
     usteps: Option<usize>,
     vvec: Option<[f64; 3]>,
     vsteps: Option<usize>,
+}
+
+/// The cone of a spotlight, e.g.
+/// `spot = { to = [0.0, 1.0, 0.0], cone_angle = 10.0, fade_angle = 20.0 }`.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SpotDescription {
+    /// The point the light is aimed at.
+    to: [f64; 3],
+    /// Half-angle of the full-intensity cone, in degrees.
+    cone_angle: f64,
+    /// Half-angle past which the light contributes nothing, in degrees.
+    fade_angle: f64,
 }
 
 #[derive(Deserialize)]
@@ -315,6 +335,15 @@ fn build_light(description: &LightDescription) -> Result<lights::Light, String> 
     let intensity = to_color(description.intensity);
 
     if let Some(position) = description.position {
+        if let Some(spot) = &description.spot {
+            return Ok(lights::spot_light(
+                point(position),
+                point(spot.to) - point(position),
+                spot.cone_angle.to_radians(),
+                spot.fade_angle.to_radians(),
+                intensity,
+            ));
+        }
         return Ok(lights::point_light(point(position), intensity));
     }
 
@@ -497,6 +526,31 @@ mod scene_file_tests {
         );
         assert_eq!(base_camera.transform, expected_base);
         assert_eq!(moved_camera.transform, expected_moved);
+    }
+
+    #[test]
+    fn test_a_light_with_a_spot_table_becomes_a_spotlight() {
+        let source = MINIMAL_ANIMATION
+            .replace("[animation]", "[scene]")
+            .split("[[frames]]")
+            .next()
+            .unwrap()
+            .replace(
+                "intensity = [1.0, 1.0, 1.0]",
+                "intensity = [1.0, 1.0, 1.0]\n\
+                 spot = { to = [0.0, 0.0, 0.0], cone_angle = 10.0, fade_angle = 20.0 }",
+            );
+
+        let scene = SceneFile::parse(&source).unwrap();
+        let world = scene.build_world().unwrap();
+
+        // Full intensity at the aimed point, nothing far outside the cone.
+        let light = &world.lights[0];
+        assert_eq!(light.attenuation_at(&tuple::Point::new(0.0, 0.0, 0.0)), 1.0);
+        assert_eq!(
+            light.attenuation_at(&tuple::Point::new(20.0, 8.0, -8.0)),
+            0.0
+        );
     }
 
     #[test]

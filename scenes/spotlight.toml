@@ -1,0 +1,45 @@
+# Three spheres under a single spotlight aimed at the middle one: the
+# beam makes a pool of light on the floor, and the outer spheres sit in
+# the fade band at the edge of the cone. The same scene as the
+# `spotlight` render test.
+#
+#     cargo run --release --bin render -- scenes/spotlight.toml [--scale N]
+
+[scene]
+name = "spotlight"
+width = 100
+height = 100
+
+[camera]
+field_of_view = 60.0
+from = [0.0, 2.5, -7.0]
+to = [0.0, 1.0, 0.0]
+up = [0.0, 1.0, 0.0]
+
+[[lights]]
+position = [0.0, 8.0, -2.0]
+intensity = [1.0, 1.0, 1.0]
+spot = { to = [0.0, 1.0, 0.0], cone_angle = 10.0, fade_angle = 20.0 }
+
+[[objects]]
+name = "floor"
+kind = "plane"
+material = { color = [0.9, 0.9, 0.9], specular = 0.0 }
+
+[[objects]]
+name = "left"
+kind = "sphere"
+transform = [{ translate = [-2.2, 1.0, 0.0] }]
+material = { color = [0.8, 0.3, 0.3] }
+
+[[objects]]
+name = "middle"
+kind = "sphere"
+transform = [{ translate = [0.0, 1.0, 0.0] }]
+material = { color = [0.3, 0.8, 0.4] }
+
+[[objects]]
+name = "right"
+kind = "sphere"
+transform = [{ translate = [2.2, 1.0, 0.0] }]
+material = { color = [0.3, 0.4, 0.8] }
