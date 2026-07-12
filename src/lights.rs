@@ -13,6 +13,14 @@ pub enum LightKind {
         vsteps: usize,
         jitter: sequences::Sequence,
     },
+    Spot {
+        /// Normalized direction the cone points, away from `position`.
+        direction: tuple::Vector,
+        /// Half-angle (radians) of the inner cone of full intensity.
+        cone_angle: f64,
+        /// Half-angle (radians) beyond which the light contributes nothing.
+        fade_angle: f64,
+    },
 }
 
 pub struct Light {
@@ -24,7 +32,7 @@ pub struct Light {
 impl Light {
     pub fn samples(&self) -> usize {
         match self.kind {
-            LightKind::Point => 1,
+            LightKind::Point | LightKind::Spot { .. } => 1,
             LightKind::Area { usteps, vsteps, .. } => usteps * vsteps,
         }
     }
@@ -32,6 +40,15 @@ impl Light {
     pub fn set_jitter(&mut self, jitter_by: sequences::Sequence) {
         if let LightKind::Area { jitter, .. } = &mut self.kind {
             *jitter = jitter_by;
+        }
+    }
+
+    /// The fraction of this light's intensity that reaches `point`,
+    /// ignoring shadowing: only a spotlight's cone attenuates it.
+    pub fn attenuation_at(&self, _point: &tuple::Point) -> f64 {
+        match &self.kind {
+            LightKind::Point | LightKind::Area { .. } => 1.0,
+            LightKind::Spot { .. } => todo!("spotlights are not implemented yet"),
         }
     }
 }
@@ -69,9 +86,29 @@ pub fn area_light(
     }
 }
 
+/// A point light restricted to a cone: full intensity within `cone_angle`
+/// of `direction`, fading linearly to nothing at `fade_angle`.
+pub fn spot_light(
+    position: tuple::Point,
+    direction: tuple::Vector,
+    cone_angle: f64,
+    fade_angle: f64,
+    intensity: color::Color,
+) -> Light {
+    Light {
+        position,
+        intensity,
+        kind: LightKind::Spot {
+            direction: tuple::normalize(&direction),
+            cone_angle,
+            fade_angle,
+        },
+    }
+}
+
 pub fn point_on_light(light: &Light, u: usize, v: usize) -> tuple::Point {
     match &light.kind {
-        LightKind::Point => light.position,
+        LightKind::Point | LightKind::Spot { .. } => light.position,
         LightKind::Area {
             corner,
             uvec,
@@ -103,11 +140,20 @@ pub fn intensity_at(light: &Light, point: &tuple::Point, world: &world::World) -
             }
             total / light.samples() as f64
         }
+        LightKind::Spot { .. } => {
+            if world::is_shadowed(world, &light.position, point) {
+                0.0
+            } else {
+                light.attenuation_at(point)
+            }
+        }
     }
 }
 
 #[cfg(test)]
 mod lights_tests {
+    use std::f64::consts::PI;
+
     use crate::assert_tuple_approx_eq;
     use crate::color;
     use crate::lights;
@@ -176,7 +222,7 @@ mod lights_tests {
                 assert_eq!(vvec, tuple::Vector::new(0.0, 0.0, 0.5));
                 assert_eq!(vsteps, 2);
             }
-            lights::LightKind::Point => panic!("expected an area light"),
+            _ => panic!("expected an area light"),
         }
         assert_eq!(light.samples(), 8);
         assert_eq!(light.position, tuple::Point::new(1.0, 0.0, 0.5));
@@ -272,6 +318,119 @@ mod lights_tests {
             let mut light = lights::area_light(corner, v1, 2, v2, 2, color::white());
             light.set_jitter(sequences::sequence(&[0.7, 0.3, 0.9, 0.1, 0.5]));
 
+            let got = lights::intensity_at(&light, &point, &w);
+            assert!(
+                (got - expected).abs() < 1e-5,
+                "intensity_at({:?}) = {}, want {}",
+                point,
+                got,
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn test_spot_light_has_position_and_intensity() {
+        let intensity = color::color(1.0, 1.0, 1.0);
+        let position = tuple::Point::new(0.0, 1.0, 0.0);
+
+        let light = lights::spot_light(
+            position,
+            tuple::Vector::new(0.0, -1.0, 0.0),
+            PI / 6.0,
+            PI / 4.0,
+            intensity,
+        );
+
+        assert_eq!(light.position, position);
+        assert_eq!(light.intensity, intensity);
+        assert_eq!(light.samples(), 1);
+    }
+
+    #[test]
+    fn test_a_point_light_reaches_everywhere_at_full_intensity() {
+        let light = lights::point_light(tuple::Point::new(0.0, 0.0, 0.0), color::white());
+
+        let attenuation = light.attenuation_at(&tuple::Point::new(3.0, -2.0, 7.0));
+
+        assert_eq!(attenuation, 1.0);
+    }
+
+    // A spotlight one unit up, shining straight down with a 30 degree
+    // full-intensity cone that fades out at 45 degrees.
+    fn downward_spot_light() -> lights::Light {
+        lights::spot_light(
+            tuple::Point::new(0.0, 1.0, 0.0),
+            tuple::Vector::new(0.0, -1.0, 0.0),
+            PI / 6.0,
+            PI / 4.0,
+            color::white(),
+        )
+    }
+
+    #[test]
+    fn test_a_spot_light_is_full_intensity_inside_its_cone() {
+        let light = downward_spot_light();
+
+        // Directly below the light, and slightly off-axis (about 14
+        // degrees), both inside the 30 degree cone.
+        assert_eq!(light.attenuation_at(&tuple::Point::new(0.0, 0.0, 0.0)), 1.0);
+        assert_eq!(
+            light.attenuation_at(&tuple::Point::new(0.25, 0.0, 0.0)),
+            1.0
+        );
+    }
+
+    #[test]
+    fn test_a_spot_light_is_dark_outside_its_fade_angle() {
+        let light = downward_spot_light();
+
+        // About 63 degrees off-axis, past the 45 degree fade angle.
+        assert_eq!(light.attenuation_at(&tuple::Point::new(2.0, 0.0, 0.0)), 0.0);
+        // Directly behind the light.
+        assert_eq!(light.attenuation_at(&tuple::Point::new(0.0, 2.0, 0.0)), 0.0);
+    }
+
+    #[test]
+    fn test_a_spot_light_fades_between_its_cone_and_fade_angles() {
+        // A 30 degree cone fading out at 60 degrees, so a point 45 degrees
+        // off-axis is halfway through the fade band.
+        let light = lights::spot_light(
+            tuple::Point::new(0.0, 0.0, 0.0),
+            tuple::Vector::new(0.0, -1.0, 0.0),
+            PI / 6.0,
+            PI / 3.0,
+            color::white(),
+        );
+
+        let attenuation = light.attenuation_at(&tuple::Point::new(1.0, -1.0, 0.0));
+
+        assert!((attenuation - 0.5).abs() < 1e-5, "{}", attenuation);
+    }
+
+    #[test]
+    fn test_spot_lights_evaluate_intensity_at_a_given_point() {
+        // The default world's light, restricted to a 30 degree cone aimed
+        // at the origin that fades out at 45 degrees.
+        let w = world::default_world();
+        let light = lights::spot_light(
+            tuple::Point::new(-10.0, 10.0, -10.0),
+            tuple::Vector::new(10.0, -10.0, 10.0),
+            PI / 6.0,
+            PI / 4.0,
+            color::white(),
+        );
+
+        let cases = [
+            // Unshadowed and nearly on-axis.
+            (tuple::Point::new(0.0, 0.0, -1.0001), 1.0),
+            // Unshadowed but far outside the fade angle.
+            (tuple::Point::new(0.0, 15.0, 0.0), 0.0),
+            // On-axis but shadowed by the sphere at the origin.
+            (tuple::Point::new(0.0, 0.0, 1.0001), 0.0),
+        ];
+
+        for (point, expected) in cases {
             let got = lights::intensity_at(&light, &point, &w);
             assert!(
                 (got - expected).abs() < 1e-5,

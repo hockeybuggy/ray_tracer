@@ -31,7 +31,7 @@ pub fn lighting(
     let ambient = effective_color * material.ambient;
 
     let (usteps, vsteps) = match &light.kind {
-        lights::LightKind::Point => (1, 1),
+        lights::LightKind::Point | lights::LightKind::Spot { .. } => (1, 1),
         lights::LightKind::Area { usteps, vsteps, .. } => (*usteps, *vsteps),
     };
 
