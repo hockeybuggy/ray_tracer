@@ -532,7 +532,7 @@ mod scene_file_tests {
                 assert_eq!(usteps, 4);
                 assert_eq!(vsteps, 2);
             }
-            lights::LightKind::Point => panic!("expected an area light"),
+            _ => panic!("expected an area light"),
         }
     }
 
