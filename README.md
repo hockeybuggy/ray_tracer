@@ -703,6 +703,20 @@ and the third slides it further while pulling the camera up and back.
      height="75px"
      >
 
+The two animations in `animations/` put the high-poly Utah teapot through
+a full turn — first spinning the teapot in place, then orbiting the camera
+around it while the light stays fixed:
+
+<img src="images/teapot_spin.gif"
+     alt="The Utah teapot spinning in place through a full turn."
+     width="400px"
+     height="300px"
+     > <img src="images/teapot_orbit.gif"
+     alt="The camera circling the teapot, which passes in and out of its own shadow side."
+     width="400px"
+     height="300px"
+     >
+
 
 ## Running benchmarks
 
@@ -732,3 +746,12 @@ a change that you expect to improve performance and know if it worked on not.
 - Parallel rendering: the render loop casts each pixel's ray
   independently, so rows could be rendered across threads (e.g. with
   `rayon`) for a near-linear speedup on multi-core machines.
+- Soft shadow example with the teapot
+- Performance testing of the teapot render
+- Higher resolution rendering of the earth scene
+- Skybox and texture support for the scene definition DSL
+- The dragon scene from the bounding box bonus chapter
+- Focal blur
+- Anti-aliasing
+- Normal perturbations
+- Torus primitive
