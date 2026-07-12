@@ -34,18 +34,44 @@ fn assert_matches_fixture(canvas: &canvas::Canvas, name: &str) {
     }
 }
 
-// A spotlight over three spheres: only the middle one sits fully inside
-// the cone, its neighbours catch the fade band, and the beam leaves a
-// pool of light on the floor.
-#[test]
-fn test_spotlight() -> Result<(), std::io::Error> {
-    let source = std::fs::read_to_string("scenes/spotlight.toml")?;
+// Render `scenes/<name>.toml` and compare it against its fixture.
+fn assert_scene_matches_fixture(name: &str) -> Result<(), std::io::Error> {
+    let source = std::fs::read_to_string(format!("scenes/{}.toml", name))?;
     let scene = scene_file::SceneFile::parse(&source).unwrap();
 
     let world = scene.build_world().unwrap();
     let camera = scene.build_camera(SCALE);
     let canvas = camera.render(&world);
 
-    assert_matches_fixture(&canvas, "spotlight");
+    assert_matches_fixture(&canvas, name);
     return Ok(());
+}
+
+// A spotlight over three spheres: only the middle one sits fully inside
+// the cone, its neighbours catch the fade band, and the beam leaves a
+// pool of light on the floor.
+#[test]
+fn test_spotlight() -> Result<(), std::io::Error> {
+    return assert_scene_matches_fixture("spotlight");
+}
+
+// The same scene with the cone and fade angles nearly equal: a tight,
+// hard-edged beam that covers little more than the middle sphere.
+#[test]
+fn test_spotlight_narrow() -> Result<(), std::io::Error> {
+    return assert_scene_matches_fixture("spotlight_narrow");
+}
+
+// The same scene with a wide cone and a long fade band: all three spheres
+// are fully lit and the floor darkens gradually toward the corners.
+#[test]
+fn test_spotlight_wide() -> Result<(), std::io::Error> {
+    return assert_scene_matches_fixture("spotlight_wide");
+}
+
+// The same scene lit from over the viewer's left shoulder: the beam
+// stretches into an ellipse and throws the shadows to the right.
+#[test]
+fn test_spotlight_side() -> Result<(), std::io::Error> {
+    return assert_scene_matches_fixture("spotlight_side");
 }

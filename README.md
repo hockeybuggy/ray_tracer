@@ -567,6 +567,39 @@ compare to the results they generate and smaller images are faster to render.
     </td>
   </tr>
 
+  <tr>
+    <td>Spotlight (narrow beam)</td>
+    <td>
+      <img src="tests/fixtures/spotlight_narrow.png"
+           alt="The spotlight scene with a tight, hard-edged beam lighting little more than the top of the middle sphere."
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Spotlight (wide beam)</td>
+    <td>
+      <img src="tests/fixtures/spotlight_wide.png"
+           alt="The spotlight scene with a wide, soft beam lighting all three spheres, the floor darkening toward the corners."
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
+  <tr>
+    <td>Spotlight (side lit)</td>
+    <td>
+      <img src="tests/fixtures/spotlight_side.png"
+           alt="The spotlight scene lit at an angle from the left, the beam stretched into an ellipse with shadows thrown right."
+           width="100px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
 </table>
 
 
