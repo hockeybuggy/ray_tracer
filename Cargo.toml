@@ -23,3 +23,7 @@ toml = "1.1.2"
 [[bench]]
 name = "simple_world"
 harness = false
+
+[[bench]]
+name = "teapot"
+harness = false
