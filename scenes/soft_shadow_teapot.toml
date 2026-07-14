@@ -1,0 +1,40 @@
+# The low-poly Utah teapot lit by a rectangular area light: the spout and
+# handle cast soft shadows whose penumbras widen the further the shadow
+# falls from the body. The same scene as the `soft_shadow_teapot` render
+# test.
+#
+#     cargo run --release --bin render -- scenes/soft_shadow_teapot.toml [--scale N]
+
+[scene]
+name = "soft_shadow_teapot"
+width = 100
+height = 75
+
+[camera]
+field_of_view = 60.0
+from = [0.5, 2.5, -5.0]
+to = [0.5, 0.6, 0.0]
+up = [0.0, 1.0, 0.0]
+
+# Up and to the left, so the shadow stretches to the right of the teapot
+# where the camera can see it.
+[[lights]]
+corner = [-7.0, 5.0, -2.0]
+uvec = [3.0, 0.0, 0.0]
+usteps = 8
+vvec = [0.0, 0.0, 3.0]
+vsteps = 8
+intensity = [1.5, 1.5, 1.5]
+
+[[objects]]
+name = "floor"
+kind = "plane"
+material = { color = [1.0, 1.0, 1.0], specular = 0.0 }
+
+# The model is built z-up and roughly 32 units wide: stand it up on the y
+# axis and scale it down to about three units across.
+[[objects]]
+name = "teapot"
+kind = "obj"
+file = "object_files/teapot-low.obj"
+transform = [{ rotate_x = -90.0 }, { scale = [0.1, 0.1, 0.1] }]

@@ -546,6 +546,17 @@ compare to the results they generate and smaller images are faster to render.
   </tr>
 
   <tr>
+    <td>Soft shadow teapot</td>
+    <td>
+      <img src="tests/fixtures/soft_shadow_teapot.png"
+           alt="The low-poly Utah teapot under a rectangular area light, its spout and handle casting soft shadows that blur with distance."
+           width="150px"
+           height="100px"
+           >
+    </td>
+  </tr>
+
+  <tr>
     <td>The book cover</td>
     <td>
       <img src="tests/fixtures/cover.png"
@@ -746,7 +757,6 @@ a change that you expect to improve performance and know if it worked on not.
 - Parallel rendering: the render loop casts each pixel's ray
   independently, so rows could be rendered across threads (e.g. with
   `rayon`) for a near-linear speedup on multi-core machines.
-- Soft shadow example with the teapot
 - Performance testing of the teapot render
 - Higher resolution rendering of the earth scene
 - Skybox and texture support for the scene definition DSL
