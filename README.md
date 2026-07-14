@@ -732,7 +732,11 @@ around it while the light stays fixed:
 ## Running benchmarks
 
 This project contains benchmarks which measure the performance and allow you to
-compare how quickly the ray tracer is able to render scenes.
+compare how quickly the ray tracer is able to render scenes. There are two
+benchmark suites: `simple_world` renders a small sphere scene, and `teapot`
+renders the OBJ teapot models — the low- and high-poly meshes under a point
+light (mostly measuring BVH traversal), and the low-poly mesh under an 8x8
+area light (measuring the cost of soft shadows).
 
 ```sh
 cargo bench
@@ -757,7 +761,6 @@ a change that you expect to improve performance and know if it worked on not.
 - Parallel rendering: the render loop casts each pixel's ray
   independently, so rows could be rendered across threads (e.g. with
   `rayon`) for a near-linear speedup on multi-core machines.
-- Performance testing of the teapot render
 - Higher resolution rendering of the earth scene
 - Skybox and texture support for the scene definition DSL
 - The dragon scene from the bounding box bonus chapter
